@@ -18,7 +18,7 @@
       }: let
         overlay = final: prev: let
           jdk = prev.graalvmPackages.graalvm-ce;
-          nodejs = prev.nodejs_22;
+          nodejs = prev.nodejs_24;
           clojure = prev.clojure.override {inherit jdk;};
           pnpm = prev.pnpm_10.override {inherit nodejs;};
         in {
