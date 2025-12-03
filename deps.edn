@@ -1,0 +1,28 @@
+{:deps
+ {org.clojure/clojure {:mvn/version "1.12.3"}
+  org.clojure/tools.logging {:mvn/version "1.3.0"}
+  org.clojure/data.json {:mvn/version "2.5.1"}
+  org.slf4j/slf4j-simple {:mvn/version "2.0.17"}
+
+  com.github.clj-easy/graal-config-slf4j-simple
+  {:git/url "https://github.com/clj-easy/graal-config"
+   :git/sha "a8852eab1264ba9322f596e3b7ea4c9142290ac7"
+   :deps/root "config/org.slf4j/slf4j-simple"}
+  com.github.clj-easy/graal-build-time {:mvn/version "1.0.5"}}
+
+ :aliases
+ {:dev {:extra-paths ["dev"]
+        :extra-deps {lambdaisland/kaocha {:mvn/version "1.91.1392"}
+                     com.stuartsierra/component.repl {:mvn/version "1.0.0"}}}
+  :cljs {:extra-deps {org.clojure/clojurescript {:mvn/version "1.12.116"}
+                      thheller/shadow-cljs {:mvn/version "3.3.2"}
+                      reagent/reagent {:mvn/version "2.0.1"}}}
+  :repl {:extra-deps {nrepl/nrepl {:mvn/version "1.5.1"}
+                      cider/cider-nrepl {:mvn/version "0.58.0"}}
+         :jvm-opts ["-Djdk.attach.allowAttachSelf"]
+         :main-opts ["-m" "nrepl.cmdline"
+                     "--interactive"
+                     "--middleware" "[cider.nrepl/cider-middleware]"]}
+  :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.11"}}
+          :ns-default build
+          :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}}
