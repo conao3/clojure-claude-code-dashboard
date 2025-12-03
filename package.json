@@ -1,0 +1,18 @@
+{
+  "name": "clojure-claude-code-dashboard",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@10.24.0",
+  "engines": {
+    "node": "^24.11.1"
+  },
+  "dependencies": {
+    "process": "^0.11.10",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "scheduler": "^0.27.0"
+  },
+  "devDependencies": {
+    "shadow-cljs": "^3.3.2"
+  }
+}
