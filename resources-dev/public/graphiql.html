@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GraphiQL</title>
+    <link rel="icon" href="https://clojurescript.org/images/cljs-logo-icon-32.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/graphiql/3.0.10/graphiql.min.css">
+    <style>
+      body {
+        margin: 0;
+        height: 100vh;
+      }
+      #graphiql {
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="graphiql">Loading...</div>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/graphiql/3.0.10/graphiql.min.js"></script>
+    <script>
+      const fetcher = GraphiQL.createFetcher({
+        url: 'http://localhost:4000',
+      });
+
+      ReactDOM.createRoot(document.getElementById('graphiql')).render(
+        React.createElement(GraphiQL, { fetcher: fetcher })
+      );
+    </script>
+  </body>
+</html>
