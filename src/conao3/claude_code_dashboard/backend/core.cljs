@@ -5,14 +5,32 @@
    ["fs" :as fs]
    ["path" :as path]))
 
-(def type-defs
+(defonce server-state (atom nil))
+
+(defn load-type-defs []
   (fs/readFileSync (path/join js/__dirname ".." ".." "resources" "schema.graphql") "utf-8"))
 
 (def resolvers
   #js {:Query #js {:hello (fn [] "Hello from Apollo Server!")}})
 
+(defn start-server []
+  (let [server (apollo/ApolloServer. #js {:typeDefs (load-type-defs) :resolvers resolvers})]
+    (-> (apollo.standalone/startStandaloneServer server #js {:listen #js {:port 4000}})
+        (.then (fn [res]
+                 (reset! server-state {:server server :url (.-url res)})
+                 (println (str "Server ready at " (.-url res))))))))
+
+(defn stop-server []
+  (when-let [{:keys [server]} @server-state]
+    (-> (.stop server)
+        (.then (fn []
+                 (reset! server-state nil)
+                 (println "Server stopped"))))))
+
+(defn ^:dev/after-load reload []
+  (println "Reloading...")
+  (-> (stop-server)
+      (.then start-server)))
+
 (defn main [& _args]
-  (-> (apollo/ApolloServer. #js {:typeDefs type-defs :resolvers resolvers})
-      (apollo.standalone/startStandaloneServer #js {:listen #js {:port 4000}})
-      (.then (fn [res]
-               (println (str "Server ready at " (.-url res)))))))
+  (start-server))
