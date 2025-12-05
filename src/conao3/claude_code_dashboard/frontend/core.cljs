@@ -8,7 +8,7 @@
 
 (defonce apollo-client
   (apollo/ApolloClient. #js {:link (apollo/HttpLink. #js {:uri "http://localhost:4000"})
-                      :cache (apollo/InMemoryCache.)}))
+                             :cache (apollo/InMemoryCache.)}))
 
 (defn HelloMessage []
   (let [result (apollo.react/useQuery (apollo/gql "query Hello { hello }"))
