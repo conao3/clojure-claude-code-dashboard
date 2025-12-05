@@ -7,17 +7,18 @@
  {:frontend
   {:target :browser
    :output-dir "resources-dev/public/dist/js"
+   :asset-path "/dist/js"
    :release {:output-dir "resources/public/dist/js"}
    :modules
    {:main
-    {:init-fn conao3.claude-code-dashboard.frontend.core/start}}}
+    {:preloads [conao3.claude-code-dashboard.frontend.preload]
+     :init-fn conao3.claude-code-dashboard.frontend.core/start}}}}
 
   :backend
   {:target :node-script
    :output-to "resources-dev/backend/main.js"
    :release {:output-to "resources/backend/main.js"}
-   :main conao3.claude-code-dashboard.backend.core/main
-   :dev {:compiler-options {:closure-defines {conao3.claude-code-dashboard.backend.core/DEV true}}}}
+   :main conao3.claude-code-dashboard.backend.core/main}
 
   :test-frontend
   {:target :browser-test

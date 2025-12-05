@@ -9,8 +9,6 @@
    ["fs" :as fs]
    ["path" :as path]))
 
-(goog-define DEV false)
-
 (defonce server-state (atom nil))
 
 (defn load-type-defs []
@@ -27,15 +25,15 @@
                                                 :resolvers resolvers
                                                 :plugins #js [(apollo.landing/ApolloServerPluginLandingPageLocalDefault)]})
         app (express)]
-    (-> (js/Promise.all #js [(.start api-server) (when DEV (.start admin-server))])
+    (-> (js/Promise.all #js [(.start api-server) (when goog.DEBUG (.start admin-server))])
         (.then (fn []
                  (.use app "/api/graphql" (cors) (express/json) (apollo.express/expressMiddleware api-server))
-                 (when DEV
+                 (when goog.DEBUG
                    (.use app "/admin/apollo" (cors) (express/json) (apollo.express/expressMiddleware admin-server)))
                  (let [server (.listen app 4000)]
                    (reset! server-state {:server server :api-server api-server :admin-server admin-server})
                    (println "Server ready at http://localhost:4000/api/graphql")
-                   (when DEV
+                   (when goog.DEBUG
                      (println "Apollo Sandbox at http://localhost:4000/admin/apollo"))))))))
 
 (defn stop-server []
