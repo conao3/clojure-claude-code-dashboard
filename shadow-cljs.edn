@@ -9,17 +9,20 @@
    :modules
    {:main
     {:init-fn conao3.claude-code-dashboard.frontend.core/start}}}
+
   :backend
   {:target :node-script
    :output-to "resources-dev/backend/main.js"
    :release {:output-to "resources/backend/main.js"}
    :main conao3.claude-code-dashboard.backend.core/main}
+
   :test-frontend
   {:target :browser-test
    :test-dir "target/test/frontend"
    :ns-regexp "conao3.claude-code-dashboard.frontend.*-test$"
    :devtools {:http-port 9100
               :http-root "target/test/frontend"}}
+
   :test-backend
   {:target :node-test
    :output-to "target/test/backend/test.js"
