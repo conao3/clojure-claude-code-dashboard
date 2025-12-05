@@ -1,9 +1,15 @@
 (ns conao3.claude-code-dashboard.backend.core
   (:require
    ["@apollo/server" :as apollo]
-   ["@apollo/server/standalone" :as apollo.standalone]
+   ["@apollo/server/plugin/disabled" :as apollo.plugin.disabled]
+   ["@apollo/server/plugin/landingPage/default" :as apollo.landing]
+   ["@as-integrations/express5" :as apollo.express]
+   ["cors" :as cors]
+   ["express" :as express]
    ["fs" :as fs]
    ["path" :as path]))
+
+(goog-define DEV false)
 
 (defonce server-state (atom nil))
 
@@ -14,16 +20,29 @@
   #js {:Query #js {:hello (fn [] "Hello from Apollo Server!")}})
 
 (defn start-server []
-  (let [server (apollo/ApolloServer. #js {:typeDefs (load-type-defs) :resolvers resolvers})]
-    (-> (apollo.standalone/startStandaloneServer server #js {:listen #js {:port 4000}})
-        (.then (fn [res]
-                 (reset! server-state {:server server :url (.-url res)})
-                 (println (str "Server ready at " (.-url res))))))))
+  (let [api-server (apollo/ApolloServer. #js {:typeDefs (load-type-defs)
+                                              :resolvers resolvers
+                                              :plugins #js [(apollo.plugin.disabled/ApolloServerPluginLandingPageDisabled)]})
+        admin-server (apollo/ApolloServer. #js {:typeDefs (load-type-defs)
+                                                :resolvers resolvers
+                                                :plugins #js [(apollo.landing/ApolloServerPluginLandingPageLocalDefault)]})
+        app (express)]
+    (-> (js/Promise.all #js [(.start api-server) (when DEV (.start admin-server))])
+        (.then (fn []
+                 (.use app "/api/graphql" (cors) (.json express) (apollo.express/expressMiddleware api-server))
+                 (when DEV
+                   (.use app "/admin/apollo" (cors) (.json express) (apollo.express/expressMiddleware admin-server)))
+                 (let [server (.listen app 4000)]
+                   (reset! server-state {:server server :api-server api-server :admin-server admin-server})
+                   (println "Server ready at http://localhost:4000/api/graphql")
+                   (when DEV
+                     (println "Apollo Sandbox at http://localhost:4000/admin/apollo"))))))))
 
 (defn stop-server []
-  (when-let [{:keys [server]} @server-state]
-    (-> (.stop server)
+  (when-let [{:keys [server api-server admin-server]} @server-state]
+    (-> (js/Promise.all #js [(.stop api-server) (when admin-server (.stop admin-server))])
         (.then (fn []
+                 (.close server)
                  (reset! server-state nil)
                  (println "Server stopped"))))))
 

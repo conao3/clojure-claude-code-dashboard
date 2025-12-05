@@ -7,7 +7,7 @@
 (enable-console-print!)
 
 (defonce apollo-client
-  (apollo/ApolloClient. #js {:link (apollo/HttpLink. #js {:uri "http://localhost:4000"})
+  (apollo/ApolloClient. #js {:link (apollo/HttpLink. #js {:uri "/api/graphql"})
                              :cache (apollo/InMemoryCache.)}))
 
 (defn HelloMessage []

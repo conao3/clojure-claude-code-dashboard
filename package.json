@@ -9,10 +9,13 @@
   "dependencies": {
     "@apollo/client": "^4.0.9",
     "@apollo/server": "^5.2.0",
+    "@as-integrations/express5": "^1.1.2",
     "@wry/caches": "^1.0.1",
     "@wry/context": "^0.7.4",
     "@wry/equality": "^0.5.7",
     "@wry/trie": "^0.5.0",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
     "graphql": "^16.12.0",
     "graphql-tag": "^2.12.6",
     "optimism": "^0.18.1",
