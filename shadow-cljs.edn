@@ -12,7 +12,7 @@
    :modules
    {:main
     {:preloads [conao3.claude-code-dashboard.frontend.preload]
-     :init-fn conao3.claude-code-dashboard.frontend.core/start}}}}
+     :init-fn conao3.claude-code-dashboard.frontend.core/start}}}
 
   :backend
   {:target :node-script

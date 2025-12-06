@@ -6,22 +6,19 @@
    ["@as-integrations/express5" :as apollo.express]
    ["cors" :as cors]
    ["express" :as express]
-   ["fs" :as fs]
-   ["path" :as path]))
+   [shadow.resource :as shadow.resource]))
 
 (defonce server-state (atom nil))
-
-(defn load-type-defs []
-  (fs/readFileSync (path/join js/__dirname ".." ".." "resources" "schema.graphql") "utf-8"))
 
 (def resolvers
   #js {:Query #js {:hello (fn [] "Hello from Apollo Server!")}})
 
 (defn start-server []
-  (let [api-server (apollo/ApolloServer. #js {:typeDefs (load-type-defs)
+  (let [type-defs (shadow.resource/inline "schema.graphql")
+        api-server (apollo/ApolloServer. #js {:typeDefs type-defs
                                               :resolvers resolvers
                                               :plugins #js [(apollo.plugin.disabled/ApolloServerPluginLandingPageDisabled)]})
-        admin-server (apollo/ApolloServer. #js {:typeDefs (load-type-defs)
+        admin-server (apollo/ApolloServer. #js {:typeDefs type-defs
                                                 :resolvers resolvers
                                                 :plugins #js [(apollo.landing/ApolloServerPluginLandingPageLocalDefault)]})
         app (express)]
@@ -51,3 +48,5 @@
 
 (defn main [& _args]
   (start-server))
+1
+1
