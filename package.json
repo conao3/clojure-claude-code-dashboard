@@ -30,7 +30,7 @@
     "stack-trace": "^0.0.10",
     "stacktrace-js": "^2.0.2",
     "tslib": "^2.8.1",
-    "ws": "^7.3.1"
+    "ws": "^7.5.10"
   },
   "devDependencies": {
     "shadow-cljs": "^3.3.2"
