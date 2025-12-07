@@ -72,7 +72,12 @@
                 messageId
                 rawMessage
                 userMessage: message {
-                  content
+                  content {
+                    type
+                    text
+                    tool_use_id
+                    content
+                  }
                 }
               }
               ... on UnknownMessage {
@@ -100,7 +105,7 @@
 (defn FlexRow [{:keys [class]} & children]
   (into [:div {:class (str/join " " ["flex flex-row" class])}] children))
 
-(defn CopyButton [{:keys [text label class]}]
+(defn CopyButton []
   (let [copied? (r/atom false)]
     (fn [{:keys [text label class]}]
       [:button.px-2.py-1.rounded.bg-background-layer-1.opacity-0.group-hover:opacity-70.hover:opacity-100
@@ -156,13 +161,29 @@
          [CopyButton {:text (:rawMessage message) :label "Copy Raw"}]]
         [:pre.p-2.whitespace-pre-wrap.break-all yaml-text]]]]]))
 
+(defn UserContentBlock [{:keys [block]}]
+  (case (:type block)
+    "text"
+    [:div.p-2.whitespace-pre-wrap.break-all (:text block)]
+
+    "tool_result"
+    [:div.m-2.p-2.rounded.bg-background-layer-1
+     [:div.font-semibold "Tool Result"]
+     [:div.text-xs.opacity-70 (str "Tool Use ID: " (:tool_use_id block))]
+     (when (:content block)
+       [:pre.mt-2.p-2.whitespace-pre-wrap.break-all (:content block)])]
+
+    [:div.m-2.p-2.rounded.bg-notice-background.text-white
+     [:div.font-semibold (str "Unknown: " (:type block))]]))
+
 (defn UserMessage [{:keys [message]}]
   (let [yaml-text (-> (:rawMessage message) js/JSON.parse yaml/dump)
-        content (get-in message [:message :content])]
+        content-blocks (get-in message [:message :content])]
     [:li {:key (:id message)}
      [:details.rounded.bg-background-layer-2.border-l-4.border-accent-background
       [:summary.p-2.cursor-pointer [:code (str "User: " (:messageId message))]]
-      [:div.p-2.whitespace-pre-wrap.break-all content]
+      (for [[idx block] (map-indexed vector content-blocks)]
+        ^{:key idx} [UserContentBlock {:block block}])
       [:details.m-2.p-2.rounded.bg-background-layer-1
        [:summary.cursor-pointer "Raw"]
        [:div.relative.group
@@ -229,17 +250,26 @@
                                                         :content (.-content block)})
                                                      (.-content assistant-msg))}
                                      user-msg
-                                     {:content (.-content user-msg)})}))]
+                                     {:content (mapv (fn [^js block]
+                                                       {:type (.-type block)
+                                                        :text (.-text block)
+                                                        :tool_use_id (.-tool_use_id block)
+                                                        :content (.-content block)})
+                                                     (.-content user-msg))})}))]
         (if (empty? messages)
           [:p.text-neutral-subdued-content "No messages"]
-          [:ul.space-y-2
-           (for [message messages]
-             (case (:__typename message)
-               "AssistantMessage" [AssistantMessage {:key (:id message) :message message}]
-               "UserMessage" [UserMessage {:key (:id message) :message message}]
-               "UnknownMessage" [UnknownMessage {:key (:id message) :message message}]
-               "BrokenMessage" [BrokenMessage {:key (:id message) :message message}]
-               nil))])))))
+          (into [:ul.space-y-2]
+                (map-indexed
+                 (fn [idx message]
+                   ^{:key idx}
+                   [(case (:__typename message)
+                      "AssistantMessage" AssistantMessage
+                      "UserMessage" UserMessage
+                      "UnknownMessage" UnknownMessage
+                      "BrokenMessage" BrokenMessage
+                      :div)
+                    {:message message}])
+                 messages)))))))
 
 (defn SessionList [sessions]
   (let [selected-id @selected-session-id]

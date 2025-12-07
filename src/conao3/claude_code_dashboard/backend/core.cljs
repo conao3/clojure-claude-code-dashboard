@@ -79,6 +79,19 @@
     content
     (js/JSON.stringify (clj->js content))))
 
+(defn- parse-user-content-block [block]
+  (if (string? block)
+    {:type "text" :text block}
+    {:type (:type block)
+     :text (:text block)
+     :tool_use_id (:tool_use_id block)
+     :content (when-let [c (:content block)] (content->string c))}))
+
+(defn- parse-user-content [content]
+  (if (string? content)
+    [{:type "text" :text content}]
+    (mapv parse-user-content-block content)))
+
 (defn- parse-user-message [data project-id session-id message-id line]
   {:__typename "UserMessage"
    :id (encode-id "Message" (str project-id "/" session-id "/" message-id))
@@ -94,7 +107,7 @@
    :gitBranch (:gitBranch data)
    :timestamp (:timestamp data)
    :message {:role (get-in data [:message :role])
-             :content (content->string (get-in data [:message :content]))}
+             :content (parse-user-content (get-in data [:message :content]))}
    :thinkingMetadata (when-let [tm (:thinkingMetadata data)]
                        {:level (:level tm)
                         :disabled (boolean (:disabled tm))

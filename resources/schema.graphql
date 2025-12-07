@@ -64,9 +64,16 @@ type AssistantMessage implements Node & Message {
   version: String!
 }
 
+type UserMessageContent {
+  type: String!
+  text: String
+  tool_use_id: String
+  content: String
+}
+
 type UserMessageMessage {
   role: String!
-  content: String!
+  content: [UserMessageContent!]!
 }
 
 type UserMessageThinkingMetadata {
