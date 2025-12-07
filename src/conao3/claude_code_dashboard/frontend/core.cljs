@@ -11,7 +11,9 @@
 
 (defonce apollo-client
   (apollo/ApolloClient. #js {:link (apollo/HttpLink. #js {:uri "/api/graphql"})
-                             :cache (apollo/InMemoryCache.)}))
+                             :cache (apollo/InMemoryCache.)
+                             :defaultOptions #js {:query #js {:errorPolicy "all"}
+                                                  :watchQuery #js {:errorPolicy "all"}}}))
 
 (def projects-query
   (apollo/gql "query Projects {

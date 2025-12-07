@@ -151,7 +151,7 @@ type QueueOperationMessage implements Node & Message {
 }
 
 type MessageConnection { edges: [MessageEdge!]! pageInfo: PageInfo! }
-type MessageEdge { cursor: String! node: Message! }
+type MessageEdge { cursor: String! node: Message }
 interface Message {
   projectId: String!
   sessionId: String!
@@ -160,7 +160,7 @@ interface Message {
 }
 
 type SessionConnection { edges: [SessionEdge!]! pageInfo: PageInfo! }
-type SessionEdge { cursor: String! node: Session! }
+type SessionEdge { cursor: String! node: Session }
 type Session implements Node {
   id: ID!
   projectId: String!
@@ -171,7 +171,7 @@ type Session implements Node {
 }
 
 type ProjectConnection { edges: [ProjectEdge!]! pageInfo: PageInfo! }
-type ProjectEdge { cursor: String! node: Project! }
+type ProjectEdge { cursor: String! node: Project }
 type Project implements Node {
   id: ID!
   projectId: String!
