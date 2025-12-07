@@ -85,52 +85,68 @@
 (defn FlexRow [{:keys [class]} & children]
   (into [:div {:class (str/join " " ["flex flex-row" class])}] children))
 
-(defn CopyButton [{:keys [text]}]
+(defn CopyButton [{:keys [text label class]}]
   (let [copied? (r/atom false)]
-    (fn [{:keys [text]}]
-      [:button.absolute.top-1.right-1.px-2.py-1.rounded.bg-background-layer-1.opacity-0.group-hover:opacity-70.hover:opacity-100
-       {:on-click (fn [e]
+    (fn [{:keys [text label class]}]
+      [:button.px-2.py-1.rounded.bg-background-layer-1.opacity-0.group-hover:opacity-70.hover:opacity-100
+       {:class class
+        :on-click (fn [e]
                     (.stopPropagation e)
                     (-> js/navigator .-clipboard (.writeText text))
                     (reset! copied? true)
                     (js/setTimeout #(reset! copied? false) 1000))}
-       (if @copied? "Copied!" "Copy")])))
+       (if @copied? "Copied!" (or label "Copy"))])))
 
 (defn AssistantMessage [{:keys [message]}]
-  [:li {:key (:id message)}
-   [:details.rounded.bg-background-layer-2.border-l-4.border-transparent
-    [:summary.p-2.cursor-pointer [:code (str "Assistant: " (:messageId message))]]
-    [:div.relative.group
-     [CopyButton {:text (:rawMessage message)}]
-     [:pre.p-2.whitespace-pre-wrap.break-all
-      (-> (:rawMessage message) js/JSON.parse yaml/dump)]]]])
+  (let [yaml-text (-> (:rawMessage message) js/JSON.parse yaml/dump)]
+    [:li {:key (:id message)}
+     [:details.rounded.bg-background-layer-2.border-l-4.border-transparent
+      [:summary.p-2.cursor-pointer [:code (str "Assistant: " (:messageId message))]]
+      [:details.m-2.p-2.rounded.bg-background-layer-1
+       [:summary.cursor-pointer "Raw"]
+       [:div.relative.group
+        [:div.absolute.top-1.right-1.flex.gap-1
+         [CopyButton {:text yaml-text :label "Copy"}]
+         [CopyButton {:text (:rawMessage message) :label "Copy Raw"}]]
+        [:pre.p-2.whitespace-pre-wrap.break-all yaml-text]]]]]))
 
 (defn UserMessage [{:keys [message]}]
-  [:li {:key (:id message)}
-   [:details.rounded.bg-background-layer-2.border-l-4.border-accent-background
-    [:summary.p-2.cursor-pointer [:code (str "User: " (:messageId message))]]
-    [:div.relative.group
-     [CopyButton {:text (:rawMessage message)}]
-     [:pre.p-2.whitespace-pre-wrap.break-all
-      (-> (:rawMessage message) js/JSON.parse yaml/dump)]]]])
+  (let [yaml-text (-> (:rawMessage message) js/JSON.parse yaml/dump)]
+    [:li {:key (:id message)}
+     [:details.rounded.bg-background-layer-2.border-l-4.border-accent-background
+      [:summary.p-2.cursor-pointer [:code (str "User: " (:messageId message))]]
+      [:details.m-2.p-2.rounded.bg-background-layer-1
+       [:summary.cursor-pointer "Raw"]
+       [:div.relative.group
+        [:div.absolute.top-1.right-1.flex.gap-1
+         [CopyButton {:text yaml-text :label "Copy"}]
+         [CopyButton {:text (:rawMessage message) :label "Copy Raw"}]]
+        [:pre.p-2.whitespace-pre-wrap.break-all yaml-text]]]]]))
 
 (defn UnknownMessage [{:keys [message]}]
-  [:li {:key (:id message)}
-   [:details.rounded.bg-notice-background.text-white.border-l-4.border-transparent
-    [:summary.p-2.cursor-pointer [:code (str "Unknown: " (:messageId message))]]
-    [:div.relative.group
-     [CopyButton {:text (:rawMessage message)}]
-     [:pre.p-2.whitespace-pre-wrap.break-all
-      (-> (:rawMessage message) js/JSON.parse yaml/dump)]]]])
+  (let [yaml-text (-> (:rawMessage message) js/JSON.parse yaml/dump)]
+    [:li {:key (:id message)}
+     [:details.rounded.bg-notice-background.text-white.border-l-4.border-transparent
+      [:summary.p-2.cursor-pointer [:code (str "Unknown: " (:messageId message))]]
+      [:details.m-2.p-2.rounded.bg-background-layer-1.text-neutral-content
+       [:summary.cursor-pointer "Raw"]
+       [:div.relative.group
+        [:div.absolute.top-1.right-1.flex.gap-1
+         [CopyButton {:text yaml-text :label "Copy"}]
+         [CopyButton {:text (:rawMessage message) :label "Copy Raw"}]]
+        [:pre.p-2.whitespace-pre-wrap.break-all yaml-text]]]]]))
 
 (defn BrokenMessage [{:keys [message]}]
   [:li {:key (:id message)}
    [:details.rounded.bg-negative-background.text-white.border-l-4.border-transparent
     [:summary.p-2.cursor-pointer [:code (str "Broken: " (:messageId message))]]
-    [:div.relative.group
-     [CopyButton {:text (:rawMessage message)}]
-     [:pre.p-2.whitespace-pre-wrap.break-all
-      (:rawMessage message)]]]])
+    [:details.m-2.p-2.rounded.bg-background-layer-1.text-neutral-content
+     [:summary.cursor-pointer "Raw"]
+     [:div.relative.group
+      [:div.absolute.top-1.right-1.flex.gap-1
+       [CopyButton {:text (:rawMessage message) :label "Copy Raw"}]]
+      [:pre.p-2.whitespace-pre-wrap.break-all
+       (:rawMessage message)]]]]])
 
 (defn MessageList []
   (let [session-id @selected-session-id
