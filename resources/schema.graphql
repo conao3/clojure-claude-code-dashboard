@@ -9,6 +9,13 @@ type PageInfo {
   endCursor: String
 }
 
+type MessageConnection { edges: [MessageEdge!]! pageInfo: PageInfo! }
+type MessageEdge { cursor: String! node: Message! }
+type Message implements Node {
+  id: ID!
+  messageId: String!
+}
+
 type SessionConnection { edges: [SessionEdge!]! pageInfo: PageInfo! }
 type SessionEdge { cursor: String! node: Session! }
 type Session implements Node {
@@ -16,6 +23,8 @@ type Session implements Node {
   projectId: String!
   sessionId: String!
   createdAt: String!
+  "Currently all arguments are ignored"
+  messages(first: Int, after: String, last: Int, before: String): MessageConnection!
 }
 
 type ProjectConnection { edges: [ProjectEdge!]! pageInfo: PageInfo! }

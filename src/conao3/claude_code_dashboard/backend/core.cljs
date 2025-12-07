@@ -68,6 +68,29 @@
                         :startCursor (some-> (first sessions) :id)
                         :endCursor (some-> (last sessions) :id)}}))
 
+(defn- list-messages [project-id session-id]
+  (let [file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))
+        content (try (.readFileSync fs file-path "utf-8") (catch :default _ ""))
+        lines (->> (.split content "\n")
+                   (filter #(not= % "")))]
+    (->> lines
+         (map-indexed (fn [idx line]
+                        (let [data (js->clj (js/JSON.parse line) :keywordize-keys true)
+                              message-id (or (:uuid data) (:messageId data) (str idx))]
+                          {:id (encode-id "Message" (str project-id "/" session-id "/" message-id))
+                           :messageId message-id})))
+         vec)))
+
+(defn- messages-resolver [parent]
+  (let [project-id (aget parent "projectId")
+        session-id (aget parent "sessionId")
+        messages (list-messages project-id session-id)]
+    #js {:edges (clj->js (map (fn [m] {:cursor (:id m) :node m}) messages))
+         :pageInfo #js {:hasNextPage false
+                        :hasPreviousPage false
+                        :startCursor (some-> (first messages) :id)
+                        :endCursor (some-> (last messages) :id)}}))
+
 (def resolvers
   (clj->js
    {"Query" {"hello" (fn [] "Hello from Apollo Server!")
@@ -97,8 +120,13 @@
                                                :projectId project-id
                                                :sessionId session-id
                                                :createdAt (.toISOString (.-birthtime stat))})))
+                          "Message" (let [[project-id session-id message-id] (.split raw-id "/")]
+                                      #js {:__typename "Message"
+                                           :id (.-id args)
+                                           :messageId message-id})
                           nil)))}
-    "Project" {"sessions" sessions-resolver}}))
+    "Project" {"sessions" sessions-resolver}
+    "Session" {"messages" messages-resolver}}))
 
 (defn start-server []
   (let [type-defs (shadow.resource/inline "schema.graphql")
