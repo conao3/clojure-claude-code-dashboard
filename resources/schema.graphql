@@ -9,12 +9,22 @@ type PageInfo {
   endCursor: String
 }
 
+type SessionConnection { edges: [SessionEdge!]! pageInfo: PageInfo! }
+type SessionEdge { cursor: String! node: Session! }
+type Session implements Node {
+  id: ID!
+  sessionId: String!
+  createdAt: String!
+}
+
 type ProjectConnection { edges: [ProjectEdge!]! pageInfo: PageInfo! }
 type ProjectEdge { cursor: String! node: Project! }
 type Project implements Node {
   id: ID!
   rawName: String!
   name: String!
+  "Currently all arguments are ignored"
+  sessions(first: Int, after: String, last: Int, before: String): SessionConnection!
 }
 
 

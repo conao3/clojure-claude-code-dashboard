@@ -30,6 +30,26 @@
 (defn- path->slug [p]
   (.replace p (js/RegExp. "/" "g") "-"))
 
+(defn- projects-dir []
+  (.join path (.homedir os) ".claude" "projects"))
+
+(defn- list-sessions [project-raw-name]
+  (let [project-dir (.join path (projects-dir) project-raw-name)
+        files (try (js->clj (.readdirSync fs project-dir)) (catch :default _ []))]
+    (->> files
+         (filter #(and (.endsWith % ".jsonl") (not (.startsWith % "agent-"))))
+         (map (fn [filename]
+                (let [session-id (.replace filename ".jsonl" "")
+                      file-path (.join path project-dir filename)
+                      stat (.statSync fs file-path)
+                      created-at (.toISOString (.-birthtime stat))]
+                  {:id (encode-id "Session" (str project-raw-name "/" session-id))
+                   :sessionId session-id
+                   :createdAt created-at})))
+         (sort-by :createdAt)
+         (reverse)
+         (vec))))
+
 (defn- list-projects []
   (let [claude-json (read-claude-json)]
     (->> (:projects claude-json)
@@ -39,25 +59,45 @@
                    :rawName (path->slug project-path)
                    :name project-path}))))))
 
+(defn- sessions-resolver [parent]
+  (let [raw-name (aget parent "rawName")
+        sessions (list-sessions raw-name)]
+    #js {:edges (clj->js (map (fn [s] {:cursor (:id s) :node s}) sessions))
+         :pageInfo #js {:hasNextPage false
+                        :hasPreviousPage false
+                        :startCursor (some-> (first sessions) :id)
+                        :endCursor (some-> (last sessions) :id)}}))
+
 (def resolvers
-  #js {:Query #js {:hello (fn [] "Hello from Apollo Server!")
-                   :projects (fn []
-                               (let [projects (list-projects)]
-                                 #js {:edges (clj->js (map (fn [p] {:cursor (:id p) :node p}) projects))
-                                      :pageInfo #js {:hasNextPage false
-                                                     :hasPreviousPage false
-                                                     :startCursor (some-> (first projects) :id)
-                                                     :endCursor (some-> (last projects) :id)}}))
-                   :node (fn [_ args]
-                           (let [{:keys [type raw-id]} (decode-id (.-id args))]
-                             (case type
-                               "Project" (let [claude-json (read-claude-json)
-                                               project-path raw-id]
-                                           (when (get-in claude-json [:projects (keyword project-path)])
-                                             #js {:id (.-id args)
-                                                  :rawName (path->slug project-path)
-                                                  :name project-path}))
-                               nil)))}})
+  (clj->js
+   {"Query" {"hello" (fn [] "Hello from Apollo Server!")
+             "projects" (fn []
+                          (let [projects (list-projects)]
+                            #js {:edges (clj->js (map (fn [p] {:cursor (:id p) :node p}) projects))
+                                 :pageInfo #js {:hasNextPage false
+                                                :hasPreviousPage false
+                                                :startCursor (some-> (first projects) :id)
+                                                :endCursor (some-> (last projects) :id)}}))
+             "node" (fn [_ args]
+                      (let [{:keys [type raw-id]} (decode-id (.-id args))]
+                        (case type
+                          "Project" (let [claude-json (read-claude-json)
+                                          project-path raw-id]
+                                      (when (get-in claude-json [:projects (keyword project-path)])
+                                        #js {:__typename "Project"
+                                             :id (.-id args)
+                                             :rawName (path->slug project-path)
+                                             :name project-path}))
+                          "Session" (let [[project-raw-name session-id] (.split raw-id "/")
+                                          file-path (.join path (projects-dir) project-raw-name (str session-id ".jsonl"))]
+                                      (when (.existsSync fs file-path)
+                                        (let [stat (.statSync fs file-path)]
+                                          #js {:__typename "Session"
+                                               :id (.-id args)
+                                               :sessionId session-id
+                                               :createdAt (.toISOString (.-birthtime stat))})))
+                          nil)))}
+    "Project" {"sessions" sessions-resolver}}))
 
 (defn start-server []
   (let [type-defs (shadow.resource/inline "schema.graphql")
