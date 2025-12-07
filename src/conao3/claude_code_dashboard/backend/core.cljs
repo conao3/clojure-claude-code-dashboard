@@ -71,15 +71,16 @@
 (defn- list-messages [project-id session-id]
   (let [file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))
         content (try (.readFileSync fs file-path "utf-8") (catch :default _ ""))
-        lines (->> (.split content "\n")
-                   (filter #(not= % "")))]
+        lines (->> (.split content "\n") (filter #(not= % "")))]
     (->> lines
          (map-indexed (fn [idx line]
                         (let [data (js->clj (js/JSON.parse line) :keywordize-keys true)
                               message-id (or (:uuid data) (:messageId data) (str idx))]
                           {:id (encode-id "Message" (str project-id "/" session-id "/" message-id))
-                           :messageId message-id})))
-         vec)))
+                           :projectId project-id
+                           :sessionId session-id
+                           :messageId message-id
+                           :rawMessage line}))))))
 
 (defn- messages-resolver [parent]
   (let [project-id (aget parent "projectId")
@@ -120,10 +121,22 @@
                                                :projectId project-id
                                                :sessionId session-id
                                                :createdAt (.toISOString (.-birthtime stat))})))
-                          "Message" (let [[project-id session-id message-id] (.split raw-id "/")]
-                                      #js {:__typename "Message"
-                                           :id (.-id args)
-                                           :messageId message-id})
+                          "Message" (let [[project-id session-id message-id] (.split raw-id "/")
+                                          file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))
+                                          content (try (.readFileSync fs file-path "utf-8") (catch :default _ ""))
+                                          lines (->> (.split content "\n") (filter #(not= % "")))
+                                          line (->> lines
+                                                    (filter (fn [l]
+                                                              (let [data (js->clj (js/JSON.parse l) :keywordize-keys true)]
+                                                                (= message-id (or (:uuid data) (:messageId data))))))
+                                                    first)]
+                                      (when line
+                                        #js {:__typename "Message"
+                                             :id (.-id args)
+                                             :projectId project-id
+                                             :sessionId session-id
+                                             :messageId message-id
+                                             :rawMessage line}))
                           nil)))}
     "Project" {"sessions" sessions-resolver}
     "Session" {"messages" messages-resolver}}))

@@ -49,6 +49,7 @@
             node {
               id
               messageId
+              rawMessage
             }
           }
         }
@@ -77,14 +78,17 @@
       (let [messages (for [edge (-> data .-node .-messages .-edges)]
                        (let [^js node (.-node edge)]
                          {:id (.-id node)
-                          :messageId (.-messageId node)}))]
+                          :messageId (.-messageId node)
+                          :rawMessage (.-rawMessage node)}))]
         (if (empty? messages)
           [:p.text-neutral-subdued-content "No messages"]
           [:ul.space-y-2
            (for [message messages]
-             [:li.p-2.bg-background-layer-2.rounded.text-sm.font-mono
+             [:li.p-2.bg-background-layer-2.rounded
               {:key (:id message)}
-              (:messageId message)])])))))
+              [:div.text-xs.text-disabled-content.mb-1 (:messageId message)]
+              [:pre.text-sm.font-mono.whitespace-pre-wrap.break-all
+               (:rawMessage message)]])])))))
 
 (defn SessionList [sessions]
   (let [selected-id @selected-session-id]

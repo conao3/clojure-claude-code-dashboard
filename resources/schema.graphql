@@ -13,7 +13,10 @@ type MessageConnection { edges: [MessageEdge!]! pageInfo: PageInfo! }
 type MessageEdge { cursor: String! node: Message! }
 type Message implements Node {
   id: ID!
+  projectId: String!
+  sessionId: String!
   messageId: String!
+  rawMessage: String!
 }
 
 type SessionConnection { edges: [SessionEdge!]! pageInfo: PageInfo! }
