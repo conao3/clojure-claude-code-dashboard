@@ -33,8 +33,8 @@
 (defn- projects-dir []
   (.join path (.homedir os) ".claude" "projects"))
 
-(defn- list-sessions [project-raw-name]
-  (let [project-dir (.join path (projects-dir) project-raw-name)
+(defn- list-sessions [project-id]
+  (let [project-dir (.join path (projects-dir) project-id)
         files (try (js->clj (.readdirSync fs project-dir)) (catch :default _ []))]
     (->> files
          (filter #(and (.endsWith % ".jsonl") (not (.startsWith % "agent-"))))
@@ -43,7 +43,8 @@
                       file-path (.join path project-dir filename)
                       stat (.statSync fs file-path)
                       created-at (.toISOString (.-birthtime stat))]
-                  {:id (encode-id "Session" (str project-raw-name "/" session-id))
+                  {:id (encode-id "Session" (str project-id "/" session-id))
+                   :projectId project-id
                    :sessionId session-id
                    :createdAt created-at})))
          (sort-by :createdAt)
@@ -56,12 +57,12 @@
          (map (fn [[k _v]]
                 (let [project-path (subs (str k) 1)]
                   {:id (encode-id "Project" project-path)
-                   :rawName (path->slug project-path)
+                   :projectId (path->slug project-path)
                    :name project-path}))))))
 
 (defn- sessions-resolver [parent]
-  (let [raw-name (aget parent "rawName")
-        sessions (list-sessions raw-name)]
+  (let [project-id (aget parent "projectId")
+        sessions (list-sessions project-id)]
     #js {:edges (clj->js (map (fn [s] {:cursor (:id s) :node s}) sessions))
          :pageInfo #js {:hasNextPage false
                         :hasPreviousPage false
@@ -86,14 +87,15 @@
                                       (when (get-in claude-json [:projects (keyword project-path)])
                                         #js {:__typename "Project"
                                              :id (.-id args)
-                                             :rawName (path->slug project-path)
+                                             :projectId (path->slug project-path)
                                              :name project-path}))
-                          "Session" (let [[project-raw-name session-id] (.split raw-id "/")
-                                          file-path (.join path (projects-dir) project-raw-name (str session-id ".jsonl"))]
+                          "Session" (let [[project-id session-id] (.split raw-id "/")
+                                          file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))]
                                       (when (.existsSync fs file-path)
                                         (let [stat (.statSync fs file-path)]
                                           #js {:__typename "Session"
                                                :id (.-id args)
+                                               :projectId project-id
                                                :sessionId session-id
                                                :createdAt (.toISOString (.-birthtime stat))})))
                           nil)))}

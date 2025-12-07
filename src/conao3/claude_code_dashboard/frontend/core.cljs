@@ -18,11 +18,12 @@
         node {
           id
           name
-          rawName
+          projectId
           sessions {
             edges {
               node {
                 id
+                projectId
                 sessionId
                 createdAt
               }
@@ -58,11 +59,12 @@
                        (let [^js project (.-node project-edge)]
                          {:id (.-id project)
                           :name (.-name project)
-                          :rawName (.-rawName project)
+                          :projectId (.-projectId project)
                           :sessions
                           (for [session-edge (-> project .-sessions .-edges)]
                             (let [^js session (.-node session-edge)]
                               {:id (.-id session)
+                               :projectId (.-projectId session)
                                :sessionId (.-sessionId session)
                                :createdAt (.-createdAt session)}))}))
             selected-project (some #(when (= (:id %) @selected-project-id) %) projects)
