@@ -368,6 +368,7 @@
   --color-static-turquoise-400: rgb(111, 221, 228);
   --color-static-turquoise-600: rgb(15, 177, 192);
   --color-static-turquoise-800: rgb(10, 141, 153);
+  --color-gradient-stop-1-avatar: 0;
   --color-gradient-stop-2-avatar: 0.6666;
   --color-gradient-stop-3-avatar: 1;
 }

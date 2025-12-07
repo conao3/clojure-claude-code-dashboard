@@ -13,7 +13,7 @@ const colorPalette = await getFileTokens("color-palette.json");
 
 const cssLines = ["@theme {"];
 for (const [key, value] of Object.entries(colorPalette)) {
-  if (value.value) {
+  if (value.value != null) {
     cssLines.push(`  --color-${key}: ${value.value};`);
   } else if (value.sets?.[THEME]?.value) {
     cssLines.push(`  --color-${key}: ${value.sets[THEME].value};`);
