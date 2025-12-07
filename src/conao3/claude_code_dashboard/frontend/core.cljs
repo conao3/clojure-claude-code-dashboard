@@ -20,7 +20,7 @@
         data (.-data result)]
     (cond
       loading [:p.text-gray-500 "Loading..."]
-      error [:p.text-negative-900 (str "Error: " (.-message error))]
+      error [:p.text-negative-content (str "Error: " (.-message error))]
       :else [:ul.space-y-2
              (for [edge (-> data .-projects .-edges)]
                (let [node (.-node edge)]

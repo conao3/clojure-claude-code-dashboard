@@ -71,25 +71,78 @@ Colors are generated from three token files:
 | `semantic-color-palette.json` | Semantic colors (accent, informative, negative, etc.) |
 | `color-aliases.json` | Contextual aliases (background, content, border colors) |
 
+### Color Structure
+
+Colors are organized in a semantic system with the following categories:
+
+| Category | Purpose | Base Color |
+|----------|---------|------------|
+| `neutral` | Default UI elements | gray |
+| `neutral-subdued` | Secondary/muted elements | gray (lighter) |
+| `accent` | Primary actions, links | blue |
+| `informative` | Info messages | blue |
+| `negative` | Errors, destructive actions | red |
+| `positive` | Success messages | green |
+| `notice` | Warnings | orange |
+| `disabled` | Disabled elements | gray (very light) |
+
+Each category has the following color types:
+
+| Type | Usage | Example |
+|------|-------|---------|
+| `*-content` | Text color | `text-neutral-content` |
+| `*-background` | Background color | `bg-accent-background` |
+| `*-visual` | Icons, indicators | `text-accent-visual` |
+| `*-border` | Border color (negative only) | `border-negative-border` |
+
 ### Usage Examples
 
-#### Background Colors
+#### Text Colors (content)
 
 ```clojure
-:div.bg-background-base      ; Base background
-:div.bg-background-layer-1   ; Layer 1 background
-:div.bg-background-layer-2   ; Layer 2 background
+:p.text-neutral-content          ; Default text (gray-800)
+:p.text-neutral-subdued-content  ; Secondary text (gray-700)
+:p.text-accent-content           ; Accent/link text (blue-900)
+:p.text-negative-content         ; Error text (red-900)
+:p.text-disabled-content         ; Disabled text (gray-400)
 ```
 
-#### Text Colors
+#### Background Colors (background)
 
 ```clojure
-:p.text-neutral-content   ; Default text
-:p.text-accent-content    ; Accent text
-:p.text-negative-900      ; Error text
+:div.bg-neutral-background       ; Neutral button (gray-800)
+:div.bg-neutral-subdued-background ; Secondary button (gray-500)
+:div.bg-accent-background        ; Primary button (blue-800)
+:div.bg-informative-background   ; Info badge (blue-800)
+:div.bg-negative-background      ; Error/delete button (red-800)
+:div.bg-positive-background      ; Success badge (green-800)
+:div.bg-notice-background        ; Warning badge (orange-900)
+:div.bg-disabled-background      ; Disabled element (gray-100)
 ```
 
-#### Semantic Colors
+#### Icon Colors (visual)
+
+```clojure
+:span.text-neutral-visual        ; Default icon (gray-600)
+:span.text-accent-visual         ; Accent icon (blue-900)
+:span.text-informative-visual    ; Info icon (blue-900)
+:span.text-negative-visual       ; Error icon (red-900)
+:span.text-positive-visual       ; Success icon (green-900)
+:span.text-notice-visual         ; Warning icon (orange-900)
+```
+
+#### Page Background Layers
+
+```clojure
+:div.bg-background-base          ; Base background (gray-25)
+:div.bg-background-layer-1       ; Layer 1 (gray-50)
+:div.bg-background-layer-2       ; Layer 2 (gray-75)
+:div.bg-background-elevated      ; Elevated/modal (gray-75)
+```
+
+#### Semantic Color Scale (100-1600)
+
+Each semantic color has a full scale for advanced usage:
 
 ```clojure
 :div.bg-accent-900        ; Accent (blue)
@@ -99,12 +152,20 @@ Colors are generated from three token files:
 :div.bg-notice-900        ; Notice/Warning (orange)
 ```
 
-#### Base Colors
+#### Base Color Scale
+
+Available base colors (each with scale 100-1600, gray has 25-1000):
+
+- `gray`, `blue`, `red`, `orange`, `yellow`
+- `green`, `cyan`, `indigo`, `purple`, `fuchsia`
+- `magenta`, `pink`, `turquoise`, `seafoam`, `celery`
+- `chartreuse`, `brown`, `cinnamon`, `silver`
 
 ```clojure
-:div.bg-gray-100   ; Gray scale (25-1000)
-:div.bg-blue-900   ; Blue scale
-:div.bg-red-900    ; Red scale
+:div.bg-gray-500   ; Gray background
+:div.text-gray-800 ; Gray text
+:div.bg-blue-900   ; Blue background
+:div.bg-red-900    ; Red background
 ```
 
 ### Regenerating Colors
