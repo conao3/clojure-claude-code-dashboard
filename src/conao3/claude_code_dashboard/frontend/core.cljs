@@ -2,6 +2,7 @@
   (:require
    ["@apollo/client" :as apollo]
    ["@apollo/client/react" :as apollo.react]
+   ["js-yaml" :as yaml]
    [clojure.string :as str]
    [reagent.core :as r]
    [reagent.dom.client :as reagent.dom.client]))
@@ -88,7 +89,7 @@
               {:key (:id message)}
               [:div.text-xs.text-disabled-content.mb-1 (:messageId message)]
               [:pre.text-sm.font-mono.whitespace-pre-wrap.break-all
-               (:rawMessage message)]])])))))
+               (-> (:rawMessage message) js/JSON.parse yaml/dump)]])])))))
 
 (defn SessionList [sessions]
   (let [selected-id @selected-session-id]
