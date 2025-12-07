@@ -89,28 +89,28 @@
   [:li {:key (:id message)}
    [:details.rounded.bg-background-layer-2.border-l-4.border-transparent
     [:summary.p-2.cursor-pointer [:code (str "Assistant: " (:messageId message))]]
-    [:pre.p-2.font-mono.whitespace-pre-wrap.break-all
+    [:pre.p-2.whitespace-pre-wrap.break-all
      (-> (:rawMessage message) js/JSON.parse yaml/dump)]]])
 
 (defn UserMessage [{:keys [message]}]
   [:li {:key (:id message)}
-   [:details.rounded.bg-background-layer-1.border-l-4.border-accent-background
+   [:details.rounded.bg-background-layer-2.border-l-4.border-accent-background
     [:summary.p-2.cursor-pointer [:code (str "User: " (:messageId message))]]
-    [:pre.p-2.font-mono.whitespace-pre-wrap.break-all
+    [:pre.p-2.whitespace-pre-wrap.break-all
      (-> (:rawMessage message) js/JSON.parse yaml/dump)]]])
 
 (defn UnknownMessage [{:keys [message]}]
   [:li {:key (:id message)}
    [:details.rounded.bg-notice-background.text-white.border-l-4.border-transparent
     [:summary.p-2.cursor-pointer [:code (str "Unknown: " (:messageId message))]]
-    [:pre.p-2.font-mono.whitespace-pre-wrap.break-all
+    [:pre.p-2.whitespace-pre-wrap.break-all
      (-> (:rawMessage message) js/JSON.parse yaml/dump)]]])
 
 (defn BrokenMessage [{:keys [message]}]
   [:li {:key (:id message)}
    [:details.rounded.bg-negative-background.text-white.border-l-4.border-transparent
     [:summary.p-2.cursor-pointer [:code (str "Broken: " (:messageId message))]]
-    [:pre.p-2.font-mono.whitespace-pre-wrap.break-all
+    [:pre.p-2.whitespace-pre-wrap.break-all
      (:rawMessage message)]]])
 
 (defn MessageList []
