@@ -48,9 +48,24 @@
         messages {
           edges {
             node {
-              id
-              messageId
-              rawMessage
+              ... on AssistantMessage {
+                __typename
+                id
+                messageId
+                rawMessage
+              }
+              ... on UserMessage {
+                __typename
+                id
+                messageId
+                rawMessage
+              }
+              ... on UnknownMessage {
+                __typename
+                id
+                messageId
+                rawMessage
+              }
             }
           }
         }
@@ -63,6 +78,27 @@
 
 (defn FlexRow [{:keys [class]} & children]
   (into [:div {:class (str/join " " ["flex flex-row" class])}] children))
+
+(defn AssistantMessage [{:keys [message]}]
+  [:li.p-2.rounded.bg-accent-background.text-white
+   {:key (:id message)}
+   [:div.text-xs.opacity-70.mb-1 (str "Assistant: " (:messageId message))]
+   [:pre.text-sm.font-mono.whitespace-pre-wrap.break-all
+    (-> (:rawMessage message) js/JSON.parse yaml/dump)]])
+
+(defn UserMessage [{:keys [message]}]
+  [:li.p-2.rounded.bg-background-layer-2
+   {:key (:id message)}
+   [:div.text-xs.text-disabled-content.mb-1 (str "User: " (:messageId message))]
+   [:pre.text-sm.font-mono.whitespace-pre-wrap.break-all
+    (-> (:rawMessage message) js/JSON.parse yaml/dump)]])
+
+(defn UnknownMessage [{:keys [message]}]
+  [:li.p-2.rounded.bg-notice-background.text-white
+   {:key (:id message)}
+   [:div.text-xs.opacity-70.mb-1 (str "Unknown: " (:messageId message))]
+   [:pre.text-sm.font-mono.whitespace-pre-wrap.break-all
+    (-> (:rawMessage message) js/JSON.parse yaml/dump)]])
 
 (defn MessageList []
   (let [session-id @selected-session-id
@@ -78,18 +114,19 @@
       :else
       (let [messages (for [edge (-> data .-node .-messages .-edges)]
                        (let [^js node (.-node edge)]
-                         {:id (.-id node)
+                         {:__typename (.-__typename node)
+                          :id (.-id node)
                           :messageId (.-messageId node)
                           :rawMessage (.-rawMessage node)}))]
         (if (empty? messages)
           [:p.text-neutral-subdued-content "No messages"]
           [:ul.space-y-2
            (for [message messages]
-             [:li.p-2.bg-background-layer-2.rounded
-              {:key (:id message)}
-              [:div.text-xs.text-disabled-content.mb-1 (:messageId message)]
-              [:pre.text-sm.font-mono.whitespace-pre-wrap.break-all
-               (-> (:rawMessage message) js/JSON.parse yaml/dump)]])])))))
+             (case (:__typename message)
+               "AssistantMessage" [AssistantMessage {:key (:id message) :message message}]
+               "UserMessage" [UserMessage {:key (:id message) :message message}]
+               "UnknownMessage" [UnknownMessage {:key (:id message) :message message}]
+               nil))])))))
 
 (defn SessionList [sessions]
   (let [selected-id @selected-session-id]

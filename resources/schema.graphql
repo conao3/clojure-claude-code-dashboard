@@ -9,10 +9,33 @@ type PageInfo {
   endCursor: String
 }
 
+type AssistantMessage implements Node & Message {
+  id: ID!
+  projectId: String!
+  sessionId: String!
+  messageId: String!
+  rawMessage: String!
+}
+
+type UserMessage implements Node & Message {
+  id: ID!
+  projectId: String!
+  sessionId: String!
+  messageId: String!
+  rawMessage: String!
+}
+
+type UnknownMessage implements Node & Message {
+  id: ID!
+  projectId: String!
+  sessionId: String!
+  messageId: String!
+  rawMessage: String!
+}
+
 type MessageConnection { edges: [MessageEdge!]! pageInfo: PageInfo! }
 type MessageEdge { cursor: String! node: Message! }
-type Message implements Node {
-  id: ID!
+interface Message {
   projectId: String!
   sessionId: String!
   messageId: String!

@@ -68,19 +68,31 @@
                         :startCursor (some-> (first sessions) :id)
                         :endCursor (some-> (last sessions) :id)}}))
 
+(defn- message-type->typename [type]
+  (case type
+    "assistant" "AssistantMessage"
+    "user" "UserMessage"
+    "UnknownMessage"))
+
+(defn- parse-message-line [project-id session-id idx line]
+  (try
+    (let [data (js->clj (js/JSON.parse line) :keywordize-keys true)
+          message-id (or (:uuid data) (:messageId data) (str idx))]
+      {:__typename (message-type->typename (:type data))
+       :id (encode-id "Message" (str project-id "/" session-id "/" message-id))
+       :projectId project-id
+       :sessionId session-id
+       :messageId message-id
+       :rawMessage line})
+    (catch :default _e nil)))
+
 (defn- list-messages [project-id session-id]
   (let [file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))
         content (try (.readFileSync fs file-path "utf-8") (catch :default _ ""))
         lines (->> (.split content "\n") (filter #(not= % "")))]
     (->> lines
-         (map-indexed (fn [idx line]
-                        (let [data (js->clj (js/JSON.parse line) :keywordize-keys true)
-                              message-id (or (:uuid data) (:messageId data) (str idx))]
-                          {:id (encode-id "Message" (str project-id "/" session-id "/" message-id))
-                           :projectId project-id
-                           :sessionId session-id
-                           :messageId message-id
-                           :rawMessage line}))))))
+         (map-indexed (fn [idx line] (parse-message-line project-id session-id idx line)))
+         (filter :__typename))))
 
 (defn- messages-resolver [parent]
   (let [project-id (aget parent "projectId")
@@ -131,15 +143,17 @@
                                                                 (= message-id (or (:uuid data) (:messageId data))))))
                                                     first)]
                                       (when line
-                                        #js {:__typename "Message"
-                                             :id (.-id args)
-                                             :projectId project-id
-                                             :sessionId session-id
-                                             :messageId message-id
-                                             :rawMessage line}))
+                                        (let [data (js->clj (js/JSON.parse line) :keywordize-keys true)]
+                                          #js {:__typename (message-type->typename (:type data))
+                                               :id (.-id args)
+                                               :projectId project-id
+                                               :sessionId session-id
+                                               :messageId message-id
+                                               :rawMessage line})))
                           nil)))}
     "Project" {"sessions" sessions-resolver}
-    "Session" {"messages" messages-resolver}}))
+    "Session" {"messages" messages-resolver}
+    "Message" {"__resolveType" (fn [obj] (aget obj "__typename"))}}))
 
 (defn start-server []
   (let [type-defs (shadow.resource/inline "schema.graphql")
