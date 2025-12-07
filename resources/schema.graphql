@@ -9,55 +9,12 @@ type PageInfo {
   endCursor: String
 }
 
-type SdkMessageAssistant implements Node {
+type ProjectConnection { edges: [ProjectEdge!]! pageInfo: PageInfo! }
+type ProjectEdge { cursor: String! node: Project! }
+type Project implements Node {
   id: ID!
-  sessionId: ID!
-  type: String!
-  content: String!
-}
-
-type SdkMessageUser implements Node {
-  id: ID!
-  sessionId: ID!
-  type: String!
-  content: String!
-}
-
-type SdkMessageResult implements Node {
-  id: ID!
-  sessionId: ID!
-  type: String!
-  success: Boolean!
-  error: String
-}
-
-type SdkMessageSystem implements Node {
-  id: ID!
-  sessionId: ID!
-  type: String!
-  content: String!
-}
-
-type SdkMessageConnection { edges: [SdkMessageEdge!]! pageInfo: PageInfo! }
-type SdkMessageEdge { cursor: String! node: SdkMessage! }
-union SdkMessage = SdkMessageAssistant | SdkMessageUser | SdkMessageResult | SdkMessageSystem
-
-type SessionConnection { edges: [SessionEdge!]! pageInfo: PageInfo! }
-type SessionEdge { cursor: String! node: Session! }
-type Session implements Node {
-  id: ID!
-  sdkMessages(first: Int, after: String, last: Int, before: String): SdkMessageConnection!
-}
-
-
-### Payload
-
-type SendMessagePayload {
-  sessionId: ID!
-}
-
-type InterruptSessionPayload {
-  success: Boolean!
+  rawName: String!
+  name: String!
 }
 
 
@@ -66,14 +23,5 @@ type InterruptSessionPayload {
 type Query {
   hello: String
   node(id: ID!): Node
-  sessions(first: Int, after: String, last: Int, before: String): SessionConnection!
-}
-
-type Mutation {
-  sendMessage(prompt: String!, sessionId: ID, continue: Boolean, forkSessionId: ID): SendMessagePayload!
-  interruptSession(sessionId: ID!): InterruptSessionPayload!
-}
-
-type Subscription {
-  messageStream(sessionId: ID!): SdkMessage!
+  projects(first: Int, after: String, last: Int, before: String): ProjectConnection!
 }
