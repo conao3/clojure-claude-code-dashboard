@@ -30,4 +30,3 @@
 
 (defn ^:dev/after-load start []
   (reagent.dom.client/render root [App]))
- 

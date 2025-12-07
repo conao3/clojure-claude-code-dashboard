@@ -1,5 +1,6 @@
 (ns conao3.claude-code-dashboard.backend.core
   (:require
+   ["@anthropic-ai/claude-agent-sdk" :as claude]
    ["@apollo/server" :as apollo]
    ["@apollo/server/plugin/disabled" :as apollo.plugin.disabled]
    ["@apollo/server/plugin/landingPage/default" :as apollo.landing]
@@ -48,4 +49,3 @@
 
 (defn main [& _args]
   (start-server))
-
