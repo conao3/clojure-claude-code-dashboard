@@ -146,7 +146,7 @@ type QueueOperationMessage implements Node & Message {
   rawMessage: String!
   operation: String!
   timestamp: String!
-  content: String!
+  content: String
   queueSessionId: String!
 }
 
