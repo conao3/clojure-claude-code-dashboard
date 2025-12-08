@@ -1,2 +1,4 @@
 @import "tailwindcss";
+@plugin "tailwindcss-react-aria-components";
+@plugin "tailwindcss-animate";
 @import "./spectrum-colors.css";
