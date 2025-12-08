@@ -20,7 +20,7 @@ jobs:
         uses: DeterminateSystems/magic-nix-cache-action@v8
 
       - name: Resolve Clojure dependencies
-        run: nix develop --command clojure -P
+        run: nix develop --command make ci-backend
 
   frontend:
     name: Frontend Dependencies
@@ -35,7 +35,7 @@ jobs:
         uses: DeterminateSystems/magic-nix-cache-action@v8
 
       - name: Resolve npm dependencies
-        run: nix develop --command pnpm install --frozen-lockfile
+        run: nix develop --command make ci-frontend
 
   integration:
     name: Integration (GraphQL Validation)
@@ -50,8 +50,5 @@ jobs:
       - name: Setup Nix cache
         uses: DeterminateSystems/magic-nix-cache-action@v8
 
-      - name: Install dependencies
-        run: nix develop --command pnpm install --frozen-lockfile
-
-      - name: Validate GraphQL queries against schema
-        run: nix develop --command make validate-graphql
+      - name: Run integration tests
+        run: nix develop --command make ci-integration

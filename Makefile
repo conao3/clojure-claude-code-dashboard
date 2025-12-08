@@ -59,6 +59,19 @@ run-backend:
 validate-graphql:
 	node tools/validate-graphql/validate.mjs
 
+### CI targets
+
+.PHONY: ci-backend
+ci-backend:
+	clojure -P
+
+.PHONY: ci-frontend
+ci-frontend:
+	pnpm install --frozen-lockfile
+
+.PHONY: ci-integration
+ci-integration: ci-frontend validate-graphql
+
 .PHONY: clean
 clean:
 	rm -rf target .shadow-cljs .cpcache resources-dev/public/dist resources-dev/backend
