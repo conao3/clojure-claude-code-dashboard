@@ -54,4 +54,4 @@ jobs:
         run: nix develop --command pnpm install --frozen-lockfile
 
       - name: Validate GraphQL queries against schema
-        run: nix develop --command pnpm run validate:graphql
+        run: nix develop --command make validate-graphql

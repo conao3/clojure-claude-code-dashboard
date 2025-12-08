@@ -6,9 +6,6 @@
   "engines": {
     "node": "^24.11.1"
   },
-  "scripts": {
-    "validate:graphql": "node tools/validate-graphql/validate.mjs"
-  },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.1.59",
     "@apollo/client": "^4.0.9",

@@ -55,6 +55,10 @@ test: test-frontend test-backend
 run-backend:
 	node resources-dev/backend/main.js
 
+.PHONY: validate-graphql
+validate-graphql:
+	node tools/validate-graphql/validate.mjs
+
 .PHONY: clean
 clean:
 	rm -rf target .shadow-cljs .cpcache resources-dev/public/dist resources-dev/backend
