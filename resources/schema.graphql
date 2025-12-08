@@ -176,6 +176,16 @@ type SystemMessage implements Node & Message {
   compactMetadata: SystemMessageCompactMetadata
 }
 
+type SummaryMessage implements Node & Message {
+  id: ID!
+  projectId: String!
+  sessionId: String!
+  messageId: String!
+  rawMessage: String!
+  summary: String!
+  leafUuid: String!
+}
+
 type MessageConnection { edges: [MessageEdge!]! pageInfo: PageInfo! }
 type MessageEdge { cursor: String! node: Message }
 interface Message {

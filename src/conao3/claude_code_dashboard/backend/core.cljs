@@ -206,6 +206,16 @@
                       {:trigger (:trigger cm)
                        :preTokens (:preTokens cm)})})
 
+(defn- parse-summary-message [data project-id session-id message-id line]
+  {:__typename "SummaryMessage"
+   :id (encode-id "Message" (str project-id "/" session-id "/" message-id))
+   :projectId project-id
+   :sessionId session-id
+   :messageId message-id
+   :rawMessage line
+   :summary (:summary data)
+   :leafUuid (:leafUuid data)})
+
 (defn- parse-message-line [project-id session-id idx line]
   (try
     (let [data (js->clj (js/JSON.parse line) :keywordize-keys true)
@@ -216,6 +226,7 @@
         "file-history-snapshot" (parse-file-history-snapshot-message data project-id session-id message-id line)
         "queue-operation" (parse-queue-operation-message data project-id session-id message-id line)
         "system" (parse-system-message data project-id session-id message-id line)
+        "summary" (parse-summary-message data project-id session-id message-id line)
         {:__typename "UnknownMessage"
          :id (encode-id "Message" (str project-id "/" session-id "/" message-id))
          :projectId project-id

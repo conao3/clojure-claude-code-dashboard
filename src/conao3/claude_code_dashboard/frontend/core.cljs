@@ -101,6 +101,10 @@
                   preTokens
                 }
               }
+              ... on SummaryMessage {
+                summary
+                leafUuid
+              }
             }
           }
         }
@@ -300,6 +304,23 @@
          [CopyButton {:text (:rawMessage message) :label "Copy Raw"}]]
         [:pre.p-2.whitespace-pre-wrap.break-all yaml-text]]]]]))
 
+(defn SummaryMessage [{:keys [message]}]
+  (let [yaml-text (-> (:rawMessage message) js/JSON.parse yaml/dump)]
+    [:li {:key (:id message)}
+     [:details.rounded.bg-background-layer-2.border-l-4.border-positive-background.opacity-50
+      [:summary.p-2.cursor-pointer
+       [:code "Summary"]]
+      [:div.m-2.p-2.rounded.bg-background-layer-1
+       [:div.text-sm [:span.font-semibold "Summary: "] (:summary message)]
+       [:div.text-xs.opacity-70 (str "Leaf UUID: " (:leafUuid message))]]
+      [:details.m-2.p-2.rounded.bg-background-layer-1
+       [:summary.cursor-pointer "Raw"]
+       [:div.relative.group
+        [:div.absolute.top-1.right-1.flex.gap-1
+         [CopyButton {:text yaml-text :label "Copy"}]
+         [CopyButton {:text (:rawMessage message) :label "Copy Raw"}]]
+        [:pre.p-2.whitespace-pre-wrap.break-all yaml-text]]]]]))
+
 (defn MessageList []
   (let [session-id @selected-session-id
         result (apollo.react/useQuery session-messages-query #js {:variables #js {:id session-id}
@@ -336,6 +357,8 @@
                           :compactMetadata (when-let [cm (.-compactMetadata node)]
                                              {:trigger (.-trigger cm)
                                               :preTokens (.-preTokens cm)})
+                          :summary (.-summary node)
+                          :leafUuid (.-leafUuid node)
                           :message (cond
                                      assistant-msg
                                      {:content (mapv (fn [^js block]
@@ -380,6 +403,7 @@
                       "FileHistorySnapshotMessage" FileHistorySnapshotMessage
                       "QueueOperationMessage" QueueOperationMessage
                       "SystemMessage" SystemMessage
+                      "SummaryMessage" SummaryMessage
                       :div)
                     (case (:__typename message)
                       "AssistantMessage" {:message message :tool-results tool-results}
