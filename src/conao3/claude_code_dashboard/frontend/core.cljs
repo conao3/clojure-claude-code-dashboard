@@ -3,6 +3,7 @@
    ["@apollo/client" :as apollo]
    ["@apollo/client/react" :as apollo.react]
    ["js-yaml" :as yaml]
+   ["react-aria-components" :as rac]
    [clojure.string :as str]
    [reagent.core :as r]
    [reagent.dom.client :as reagent.dom.client]))
@@ -121,13 +122,12 @@
 (defn CopyButton []
   (let [copied? (r/atom false)]
     (fn [{:keys [text label class]}]
-      [:button.px-2.py-1.rounded.bg-background-layer-1.opacity-0.group-hover:opacity-70.hover:opacity-100
-       {:class class
-        :on-click (fn [e]
-                    (.stopPropagation e)
-                    (-> js/navigator .-clipboard (.writeText text))
-                    (reset! copied? true)
-                    (js/setTimeout #(reset! copied? false) 1000))}
+      [:> rac/Button
+       {:className (str "px-2 py-1 rounded bg-background-layer-1 opacity-0 group-hover:opacity-70 hover:opacity-100 pressed:opacity-100 " class)
+        :onPress (fn []
+                   (-> js/navigator .-clipboard (.writeText text))
+                   (reset! copied? true)
+                   (js/setTimeout #(reset! copied? false) 1000))}
        (if @copied? "Copied!" (or label "Copy"))])))
 
 (defn ToolResultBlock [{:keys [block]}]
@@ -412,19 +412,23 @@
                  messages)))))))
 
 (defn SessionList [sessions]
-  (let [selected-id @selected-session-id]
-    (if (empty? sessions)
-      [:p.text-neutral-subdued-content "No sessions"]
-      [:ul.space-y-2
-       (for [session sessions]
-         [:li.p-3.rounded.cursor-pointer
-          {:key (:id session)
-           :class (if (= (:id session) selected-id)
-                    "bg-accent-background text-white"
-                    "bg-background-layer-2 text-neutral-content hover:bg-gray-200")
-           :on-click #(reset! selected-session-id (:id session))}
-          [:div.text-sm (:sessionId session)]
-          [:div.text-xs.opacity-70 (:createdAt session)]])])))
+  (if (empty? sessions)
+    [:p.text-neutral-subdued-content "No sessions"]
+    [:> rac/ListBox
+     {:aria-label "Sessions"
+      :selectionMode "single"
+      :selectedKeys (if-let [id @selected-session-id] #js [id] #js [])
+      :onSelectionChange (fn [keys]
+                           (reset! selected-session-id (first (js->clj (js/Array.from keys)))))
+      :className "space-y-2 outline-none"}
+     (for [session sessions]
+       ^{:key (:id session)}
+       [:> rac/ListBoxItem
+        {:id (:id session)
+         :textValue (:sessionId session)
+         :className "p-3 rounded cursor-pointer outline-none bg-background-layer-2 text-neutral-content hover:bg-gray-200 selected:bg-accent-background selected:text-white focus:ring-2 focus:ring-accent-background"}
+        [:div.text-sm (:sessionId session)]
+        [:div.text-xs.opacity-70 (:createdAt session)]])]))
 
 (defn ProjectList []
   (let [result (apollo.react/useQuery projects-query)
@@ -447,23 +451,26 @@
                                :projectId (.-projectId session)
                                :sessionId (.-sessionId session)
                                :createdAt (.-createdAt session)}))}))
-            selected-project (some #(when (= (:id %) @selected-project-id) %) projects)
-            selected-id @selected-project-id]
+            selected-project (some #(when (= (:id %) @selected-project-id) %) projects)]
         [FlexRow {:class "gap-4 h-full"}
          [FlexCol {:class "w-1/4"}
           [:h2.text-xl.font-semibold.mb-4 "Projects"]
-          [:ul.space-y-2.overflow-y-auto.flex-1
+          [:> rac/ListBox
+           {:aria-label "Projects"
+            :selectionMode "single"
+            :selectedKeys (if-let [id @selected-project-id] #js [id] #js [])
+            :disabledKeys (->> projects (filter #(empty? (:sessions %))) (map :id) clj->js)
+            :onSelectionChange (fn [keys]
+                                 (reset! selected-project-id (first (js->clj (js/Array.from keys))))
+                                 (reset! selected-session-id nil))
+            :className "space-y-2 overflow-y-auto flex-1 outline-none"}
            (for [project projects]
-             (let [has-sessions? (seq (:sessions project))]
-               [:li.p-3.rounded
-                {:key (:id project)
-                 :class (cond
-                          (not has-sessions?) "bg-disabled-background text-disabled-content"
-                          (= (:id project) selected-id) "bg-accent-background text-white cursor-pointer"
-                          :else "bg-background-layer-2 text-neutral-content hover:bg-gray-200 cursor-pointer")
-                 :on-click (when has-sessions? #(do (reset! selected-project-id (:id project))
-                                                    (reset! selected-session-id nil)))}
-                (:name project)]))]]
+             ^{:key (:id project)}
+             [:> rac/ListBoxItem
+              {:id (:id project)
+               :textValue (:name project)
+               :className "p-3 rounded cursor-pointer outline-none bg-background-layer-2 text-neutral-content hover:bg-gray-200 selected:bg-accent-background selected:text-white disabled:bg-disabled-background disabled:text-disabled-content disabled:cursor-default focus:ring-2 focus:ring-accent-background"}
+              (:name project)])]]
          [FlexCol {:class "w-1/4"}
           [:h2.text-xl.font-semibold.mb-4 "Sessions"]
           [:div.overflow-y-auto.flex-1
