@@ -3,6 +3,7 @@
    ["@apollo/client" :as apollo]
    ["@apollo/client/react" :as apollo.react]
    ["js-yaml" :as yaml]
+   ["lucide-react" :as lucide]
    ["react-aria-components" :as rac]
    [clojure.string :as str]
    [reagent.core :as r]
@@ -123,12 +124,14 @@
   (let [copied? (r/atom false)]
     (fn [{:keys [text label class]}]
       [:> rac/Button
-       {:className (str "px-2 py-1 rounded bg-background-layer-1 opacity-0 group-hover:opacity-70 hover:opacity-100 pressed:opacity-100 " class)
+       {:className (str "px-2 py-1 rounded bg-background-layer-1 opacity-0 group-hover:opacity-70 hover:opacity-100 pressed:opacity-100 flex items-center gap-1 " class)
         :onPress (fn []
                    (-> js/navigator .-clipboard (.writeText text))
                    (reset! copied? true)
                    (js/setTimeout #(reset! copied? false) 1000))}
-       (if @copied? "Copied!" (or label "Copy"))])))
+       (if @copied?
+         [:<> [:> lucide/Check {:size 14}] "Copied!"]
+         [:<> [:> lucide/Copy {:size 14}] (or label "Copy")])])))
 
 (defn ToolResultBlock [{:keys [block]}]
   [:div.m-2.p-2.rounded.bg-background-layer-1
@@ -171,7 +174,9 @@
         content-blocks (get-in message [:message :content])]
     [:li
      [:details.rounded.bg-background-layer-2.border-l-4.border-transparent
-      [:summary.p-2.cursor-pointer [:code (str "Assistant: " (:messageId message))]]
+      [:summary.p-2.cursor-pointer.flex.items-center.gap-2
+       [:> lucide/Bot {:size 16 :className "text-accent-visual"}]
+       [:code (str "Assistant: " (:messageId message))]]
       (for [[idx block] (map-indexed vector content-blocks)]
         ^{:key idx} [ContentBlock {:block block :tool-results tool-results}])
       [:details.m-2.p-2.rounded.bg-background-layer-1
@@ -205,7 +210,9 @@
     [:li
      [:details.rounded.bg-background-layer-2.border-l-4.border-accent-background
       {:class (when all-displayed? "opacity-50")}
-      [:summary.p-2.cursor-pointer [:code (str "User: " (:messageId message))]]
+      [:summary.p-2.cursor-pointer.flex.items-center.gap-2
+       [:> lucide/User {:size 16 :className "text-accent-visual"}]
+       [:code (str "User: " (:messageId message))]]
       (for [[idx block] (map-indexed vector content-blocks)]
         ^{:key idx} [UserContentBlock {:block block}])
       [:details.m-2.p-2.rounded.bg-background-layer-1
@@ -220,7 +227,9 @@
   (let [yaml-text (-> (:rawMessage message) js/JSON.parse yaml/dump)]
     [:li {:key (:id message)}
      [:details.rounded.bg-notice-background.text-white.border-l-4.border-transparent
-      [:summary.p-2.cursor-pointer [:code (str "Unknown: " (:messageId message))]]
+      [:summary.p-2.cursor-pointer.flex.items-center.gap-2
+       [:> lucide/HelpCircle {:size 16}]
+       [:code (str "Unknown: " (:messageId message))]]
       [:details.m-2.p-2.rounded.bg-background-layer-1.text-neutral-content
        [:summary.cursor-pointer "Raw"]
        [:div.relative.group
@@ -232,7 +241,9 @@
 (defn BrokenMessage [{:keys [message]}]
   [:li {:key (:id message)}
    [:details.rounded.bg-negative-background.text-white.border-l-4.border-transparent
-    [:summary.p-2.cursor-pointer [:code (str "Broken: " (:messageId message))]]
+    [:summary.p-2.cursor-pointer.flex.items-center.gap-2
+     [:> lucide/AlertTriangle {:size 16}]
+     [:code (str "Broken: " (:messageId message))]]
     [:details.m-2.p-2.rounded.bg-background-layer-1.text-neutral-content
      [:summary.cursor-pointer "Raw"]
      [:div.relative.group
@@ -247,7 +258,8 @@
         tracked-file-backups (-> (:trackedFileBackups snapshot) js/JSON.parse js/Object.keys js->clj)]
     [:li {:key (:id message)}
      [:details.rounded.bg-background-layer-2.border-l-4.border-transparent.opacity-50
-      [:summary.p-2.cursor-pointer
+      [:summary.p-2.cursor-pointer.flex.items-center.gap-2
+       [:> lucide/History {:size 16 :className "text-neutral-visual"}]
        [:code (str "FileHistorySnapshot: " (:messageId message)
                    (when (:isSnapshotUpdate message) " (update)"))]]
       [:div.m-2.p-2.rounded.bg-background-layer-1
@@ -267,7 +279,8 @@
   (let [yaml-text (-> (:rawMessage message) js/JSON.parse yaml/dump)]
     [:li {:key (:id message)}
      [:details.rounded.bg-background-layer-2.border-l-4.border-transparent.opacity-50
-      [:summary.p-2.cursor-pointer
+      [:summary.p-2.cursor-pointer.flex.items-center.gap-2
+       [:> lucide/ListOrdered {:size 16 :className "text-neutral-visual"}]
        [:code (str "QueueOperation: " (:operation message))]]
       [:div.m-2.p-2.rounded.bg-background-layer-1
        [:div.text-sm [:span.font-semibold "Content: "] (:content message)]
@@ -286,7 +299,8 @@
         compact-metadata (:compactMetadata message)]
     [:li {:key (:id message)}
      [:details.rounded.bg-background-layer-2.border-l-4.border-informative-background.opacity-50
-      [:summary.p-2.cursor-pointer
+      [:summary.p-2.cursor-pointer.flex.items-center.gap-2
+       [:> lucide/Settings {:size 16 :className "text-informative-visual"}]
        [:code (str "System: " (:subtype message))]]
       [:div.m-2.p-2.rounded.bg-background-layer-1
        [:div.text-sm [:span.font-semibold "Content: "] (:systemContent message)]
@@ -308,7 +322,8 @@
   (let [yaml-text (-> (:rawMessage message) js/JSON.parse yaml/dump)]
     [:li {:key (:id message)}
      [:details.rounded.bg-background-layer-2.border-l-4.border-positive-background.opacity-50
-      [:summary.p-2.cursor-pointer
+      [:summary.p-2.cursor-pointer.flex.items-center.gap-2
+       [:> lucide/FileText {:size 16 :className "text-positive-visual"}]
        [:code "Summary"]]
       [:div.m-2.p-2.rounded.bg-background-layer-1
        [:div.text-sm [:span.font-semibold "Summary: "] (:summary message)]
