@@ -4,3 +4,5 @@
 /target
 /.shadow-cljs
 node_modules
+/resources-storybook
+/storybook-static

@@ -4,7 +4,29 @@
                   :proxy-predicate dev/api-route?}}
  :nrepl {:init-ns user}
  :builds
- {:frontend
+ {:storybook
+  {:target :esm
+   :output-dir "resources-storybook/js"
+   :modules {:stories {:exports {NavItem conao3.claude-code-dashboard.storybook.stories/NavItem
+                                 ProjectItem conao3.claude-code-dashboard.storybook.stories/ProjectItem
+                                 SessionItem conao3.claude-code-dashboard.storybook.stories/SessionItem
+                                 CopyButton conao3.claude-code-dashboard.storybook.stories/CopyButton
+                                 ToolResultBlock conao3.claude-code-dashboard.storybook.stories/ToolResultBlock
+                                 ContentBlock conao3.claude-code-dashboard.storybook.stories/ContentBlock
+                                 MessageBubble conao3.claude-code-dashboard.storybook.stories/MessageBubble
+                                 AssistantMessage conao3.claude-code-dashboard.storybook.stories/AssistantMessage
+                                 UserMessage conao3.claude-code-dashboard.storybook.stories/UserMessage
+                                 SystemMessageItem conao3.claude-code-dashboard.storybook.stories/SystemMessageItem
+                                 SummaryMessageItem conao3.claude-code-dashboard.storybook.stories/SummaryMessageItem
+                                 FileHistorySnapshotMessage conao3.claude-code-dashboard.storybook.stories/FileHistorySnapshotMessage
+                                 QueueOperationMessage conao3.claude-code-dashboard.storybook.stories/QueueOperationMessage
+                                 UnknownMessage conao3.claude-code-dashboard.storybook.stories/UnknownMessage
+                                 BrokenMessage conao3.claude-code-dashboard.storybook.stories/BrokenMessage
+                                 Sidebar conao3.claude-code-dashboard.storybook.stories/Sidebar
+                                 SessionsPanel conao3.claude-code-dashboard.storybook.stories/SessionsPanel
+                                 MessagesPanel conao3.claude-code-dashboard.storybook.stories/MessagesPanel}}}}
+
+  :frontend
   {:target :browser
    :output-dir "resources-dev/public/dist/js"
    :asset-path "/dist/js"

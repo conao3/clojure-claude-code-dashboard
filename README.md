@@ -34,6 +34,10 @@ Then open http://localhost:8000/
 | `make release-backend` | Build release for backend |
 | `make update` | Update dependencies |
 | `make clean` | Clean build artifacts |
+| `make storybook` | Start Storybook dev server |
+| `make build-storybook` | Build Storybook for production |
+| `make watch-storybook` | Watch ClojureScript for Storybook |
+| `make compile-storybook` | Compile ClojureScript for Storybook |
 
 ## Ports
 
@@ -43,6 +47,7 @@ Then open http://localhost:8000/
 | 4000 | Backend API server (Express + Apollo Server) |
 | 9100 | Frontend test runner |
 | 9630 | shadow-cljs UI |
+| 6006 | Storybook dev server |
 
 ## Endpoints
 
@@ -52,6 +57,7 @@ Then open http://localhost:8000/
 - http://localhost:8000/api/graphql - GraphQL API endpoint (proxied)
 - http://localhost:9100/ - Frontend test runner
 - http://localhost:9630/ - shadow-cljs UI
+- http://localhost:6006/ - Storybook
 
 ## Proxy
 
