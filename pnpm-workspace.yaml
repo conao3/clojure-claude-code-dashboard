@@ -1,2 +1,7 @@
 packages:
   - "tools/*"
+
+onlyBuiltDependencies:
+  - "@anthropic-ai/claude-agent-sdk"
+
+nodeLinker: hoisted
