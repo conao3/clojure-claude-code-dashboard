@@ -18,6 +18,7 @@
     "react": "^19.2.0",
     "react-aria-components": "^1.13.0",
     "react-dom": "^19.2.0",
+    "react-stately": "^3.42.0",
     "snabbdom": "3.5.1",
     "tailwindcss": "^4.1.17",
     "tailwindcss-animate": "^1.0.7",

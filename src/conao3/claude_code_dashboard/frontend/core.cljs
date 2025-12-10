@@ -4,7 +4,9 @@
    ["@apollo/client/react" :as apollo.react]
    ["js-yaml" :as yaml]
    ["lucide-react" :as lucide]
+   ["react" :as react]
    ["react-aria-components" :as rac]
+   ["react-stately" :as stately]
    [clojure.string :as str]
    [reagent.core :as r]
    [reagent.dom.client :as reagent.dom.client]))
@@ -18,21 +20,47 @@
                                                   :watchQuery #js {:errorPolicy "all"}}}))
 
 (def projects-query
-  (apollo/gql "query Projects {
-    projects(first: 20) {
+  (apollo/gql "query Projects($first: Int, $after: String) {
+    projects(first: $first, after: $after) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
       edges {
         node {
           id
           name
           projectId
-          sessions(first: 20) {
+          sessions(first: 10) {
             edges {
               node {
                 id
-                projectId
-                sessionId
-                createdAt
               }
+            }
+          }
+        }
+      }
+    }
+  }"))
+
+(def project-sessions-query
+  (apollo/gql "query ProjectSessions($id: ID!, $first: Int, $after: String) {
+    node(id: $id) {
+      ... on Project {
+        id
+        projectId
+        name
+        sessions(first: $first, after: $after) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          edges {
+            node {
+              id
+              projectId
+              sessionId
+              createdAt
             }
           }
         }
@@ -60,12 +88,16 @@
     (.pushState js/window.history nil "" path)))
 
 (def session-messages-query
-  (apollo/gql "query SessionMessages($id: ID!) {
+  (apollo/gql "query SessionMessages($id: ID!, $first: Int, $after: String) {
     node(id: $id) {
       ... on Session {
         id
         sessionId
-        messages(first: 20) {
+        messages(first: $first, after: $after) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
           edges {
             node {
               __typename
@@ -147,24 +179,69 @@
         [:span.bg-accent-background.text-white.text-xs.px-1.5.py-0.5.rounded-full.min-w-5.text-center badge])])])
 
 (defn ProjectItem [{:keys [project active collapsed on-click]}]
-  (let [session-count (count (:sessions project))]
-    [:> rac/Button
-     {:className (str "flex items-center gap-2 w-full rounded transition-all outline-none "
-                      (if collapsed "p-2 justify-center" "px-3 py-2 justify-start")
-                      (if active " bg-accent-background/15 text-neutral-content" " text-neutral-subdued-content hover:text-neutral-content"))
-      :onPress on-click
-      :isDisabled (zero? session-count)}
-     [:> lucide/GitBranch {:size 14 :className "text-neutral-subdued-content flex-shrink-0"}]
-     (when-not collapsed
-       [:span.text-sm.truncate.flex-1.text-left (project-basename (:name project))])
-     (when (and (not collapsed) (pos? session-count))
-       [:span.text-xs.text-neutral-subdued-content session-count])]))
+  [:> rac/Button
+   {:className (str "flex items-center gap-2 w-full rounded transition-all outline-none "
+                    (if collapsed "p-2 justify-center" "px-3 py-2 justify-start")
+                    (if active " bg-accent-background/15 text-neutral-content" " text-neutral-subdued-content hover:text-neutral-content"))
+    :onPress on-click
+    :isDisabled (not (:hasSessions project))}
+   [:> lucide/GitBranch {:size 14 :className "text-neutral-subdued-content flex-shrink-0"}]
+   (when-not collapsed
+     [:span.text-sm.truncate.flex-1.text-left (project-basename (:name project))])])
 
-(defn Sidebar [{:keys [projects selected-project on-select-project]}]
+(defn- parse-project-node [^js node]
+  {:id (.-id node)
+   :name (.-name node)
+   :projectId (.-projectId node)
+   :hasSessions (pos? (count (-> node .-sessions .-edges)))})
+
+(defn ProjectsList [{:keys [on-select-project collapsed]}]
+  (let [scroll-container-ref (react/useRef nil)
+        current-project-id @selected-project-id
+        list (stately/useAsyncList
+              #js {:load (fn [^js opts]
+                           (let [cursor (.-cursor opts)]
+                             (-> (.query apollo-client #js {:query projects-query
+                                                            :variables #js {:first 20 :after cursor}})
+                                 (.then (fn [^js result]
+                                          (let [data (.-data result)
+                                                edges (-> data .-projects .-edges)
+                                                page-info (-> data .-projects .-pageInfo)
+                                                items (mapv #(parse-project-node (.-node %)) edges)]
+                                            #js {:items (clj->js items)
+                                                 :cursor (when (.-hasNextPage page-info)
+                                                           (.-endCursor page-info))}))))))})]
+    (cond
+      (and (.-isLoading list) (zero? (count (.-items list)))) [:div.p-2.text-neutral-subdued-content.text-sm "Loading..."]
+      (.-error list) [:div.p-2.text-negative-content.text-sm "Error"]
+      :else
+      [:div.flex-1.overflow-y-auto.min-h-0.p-2.flex.flex-col.gap-0.5
+       {:ref scroll-container-ref
+        :on-scroll (fn [e]
+                     (when-let [container (.-current scroll-container-ref)]
+                       (let [scroll-top (.-scrollTop container)
+                             scroll-height (.-scrollHeight container)
+                             client-height (.-clientHeight container)
+                             threshold 200]
+                         (when (and (not (.-isLoading list))
+                                    (> (+ scroll-top client-height threshold) scroll-height))
+                           (.loadMore list)))))}
+       (for [^js project (.-items list)]
+         (let [p {:id (.-id project) :name (.-name project) :projectId (.-projectId project) :hasSessions (.-hasSessions project)}]
+           ^{:key (:id p)}
+           [ProjectItem {:project p
+                         :active (= (:id p) current-project-id)
+                         :collapsed collapsed
+                         :on-click #(on-select-project p)}]))
+       (when (.-isLoading list)
+         [:div.flex.items-center.justify-center.py-2.text-neutral-subdued-content
+          [:> lucide/Loader2 {:size 14 :className "animate-spin"}]])])))
+
+(defn Sidebar [{:keys [on-select-project]}]
   (let [collapsed @sidebar-collapsed]
-    [:div {:class (str "flex flex-col bg-background-layer-1 border-r border-gray-200 transition-all duration-200 "
+    [:div {:class (str "flex flex-col h-full min-h-0 bg-background-layer-1 border-r border-gray-200 transition-all duration-200 "
                        (if collapsed "w-16" "w-60"))}
-     [:div.p-4.border-b.border-gray-200.flex.items-center
+     [:div.p-4.border-b.border-gray-200.flex.items-center.shrink-0
       {:class (if collapsed "justify-center" "justify-between")}
       [:div.flex.items-center.gap-2.5
        [:div.w-8.h-8.rounded-lg.flex.items-center.justify-center.flex-shrink-0
@@ -184,25 +261,19 @@
          :onPress #(reset! sidebar-collapsed false)}
         [:> lucide/PanelLeft {:size 18}]])
 
-     [:div.p-2.flex.flex-col.gap-1
+     [:div.p-2.flex.flex-col.gap-1.shrink-0
       [NavItem {:icon lucide/Home :label "Dashboard" :active false :collapsed collapsed :on-click #()}]
-      [NavItem {:icon lucide/Folder :label "Projects" :active true :collapsed collapsed :on-click #() :badge (str (count projects))}]
+      [NavItem {:icon lucide/Folder :label "Projects" :active true :collapsed collapsed :on-click #()}]
       [NavItem {:icon lucide/History :label "Recent" :active false :collapsed collapsed :on-click #()}]]
 
      (when-not collapsed
-       [:div.px-2.mt-2
+       [:div.px-2.mt-2.shrink-0
         [:div.text-xs.font-medium.text-neutral-subdued-content.uppercase.tracking-wide.px-3.py-2
          "All Projects"]])
 
-     [:div.flex-1.overflow-y-auto.p-2.flex.flex-col.gap-0.5
-      (for [project projects]
-        ^{:key (:id project)}
-        [ProjectItem {:project project
-                      :active (= (:id project) (:id selected-project))
-                      :collapsed collapsed
-                      :on-click #(on-select-project project)}])]
+     [:f> ProjectsList {:on-select-project on-select-project :collapsed collapsed}]
 
-     [:div.p-2.border-t.border-gray-200
+     [:div.p-2.border-t.border-gray-200.shrink-0
       [NavItem {:icon lucide/Settings :label "Settings" :active false :collapsed collapsed :on-click #()}]]]))
 
 (defn format-date [date-str]
@@ -224,7 +295,74 @@
    [:div.text-xs.text-neutral-subdued-content
     (format-date (:createdAt session))]])
 
-(defn SessionsPanel [{:keys [project sessions on-select-session selected-session]}]
+(defn- parse-session-node [^js node]
+  {:id (.-id node)
+   :projectId (.-projectId node)
+   :sessionId (.-sessionId node)
+   :createdAt (.-createdAt node)})
+
+(defn SessionsList [{:keys [project-id on-select-session]}]
+  (let [scroll-container-ref (react/useRef nil)
+        project-id-ref (react/useRef project-id)
+        current-session-id @selected-session-id
+        list (stately/useAsyncList
+              #js {:load (fn [^js opts]
+                           (let [pid (.-current project-id-ref)]
+                             (js/console.log "SessionsList load called, pid:" pid)
+                             (if (nil? pid)
+                               (js/Promise.resolve #js {:items #js []})
+                               (let [cursor (.-cursor opts)]
+                                 (-> (.query apollo-client #js {:query project-sessions-query
+                                                                 :variables #js {:id pid :first 20 :after cursor}})
+                                     (.then (fn [^js result]
+                                              (let [data (.-data result)
+                                                    edges (-> data .-node .-sessions .-edges)
+                                                    page-info (-> data .-node .-sessions .-pageInfo)
+                                                    items (mapv #(parse-session-node (.-node %)) edges)]
+                                                (js/console.log "SessionsList loaded items:" (count items))
+                                                #js {:items (clj->js items)
+                                                     :cursor (when (.-hasNextPage page-info)
+                                                               (.-endCursor page-info))}))))))))})]
+    (react/useEffect
+     (fn []
+       (js/console.log "SessionsList useEffect, project-id:" project-id)
+       (set! (.-current project-id-ref) project-id)
+       (when project-id (.reload list))
+       js/undefined)
+     #js [project-id])
+    (let [search-term (str/lower-case @session-search)
+          sessions (.-items list)
+          filtered-sessions (if (str/blank? search-term)
+                              sessions
+                              (filter #(str/includes? (str/lower-case (.-sessionId %)) search-term) sessions))]
+      (cond
+        (nil? project-id) [:p.p-4.text-neutral-subdued-content.text-sm "Select a project"]
+        (and (.-isLoading list) (zero? (count sessions))) [:div.p-4.text-neutral-subdued-content.text-sm "Loading sessions..."]
+        (.-error list) [:div.p-4.text-negative-content.text-sm (str "Error: " (.-error list))]
+        :else
+        [:div.flex-1.overflow-y-auto
+         {:ref scroll-container-ref
+          :on-scroll (fn [e]
+                       (when-let [container (.-current scroll-container-ref)]
+                         (let [scroll-top (.-scrollTop container)
+                               scroll-height (.-scrollHeight container)
+                               client-height (.-clientHeight container)
+                               threshold 200]
+                           (when (and (not (.-isLoading list))
+                                      (> (+ scroll-top client-height threshold) scroll-height))
+                             (.loadMore list)))))}
+         (for [^js session filtered-sessions]
+           (let [s {:id (.-id session) :projectId (.-projectId session) :sessionId (.-sessionId session) :createdAt (.-createdAt session)}]
+             ^{:key (:id s)}
+             [SessionItem {:session s
+                           :active (= (:id s) current-session-id)
+                           :on-click #(on-select-session s)}]))
+         (when (.-isLoading list)
+           [:div.flex.items-center.justify-center.py-4.text-neutral-subdued-content
+            [:> lucide/Loader2 {:size 16 :className "animate-spin mr-2"}]
+            "Loading more..."])]))))
+
+(defn SessionsPanel [{:keys [project on-select-session]}]
   [:div.w-72.bg-background-base.border-r.border-gray-200.flex.flex-col
    [:div.p-4.border-b.border-gray-200.flex.items-center.justify-between
     [:h2.text-base.font-semibold.text-neutral-content.truncate
@@ -238,23 +376,15 @@
      [:> lucide/Search {:size 14 :className "absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-subdued-content"}]
      [:input
       {:type "text"
+       :id "session-search"
+       :name "session-search"
        :placeholder "Search sessions..."
        :value @session-search
        :on-change #(reset! session-search (-> % .-target .-value))
        :class "w-full bg-background-layer-1 border border-gray-300 rounded-md py-2 pl-8 pr-3 text-sm text-neutral-content outline-none focus:border-accent-background"}]]]
 
-   [:div.flex-1.overflow-y-auto
-    (if (empty? sessions)
-      [:p.p-4.text-neutral-subdued-content.text-sm "Select a project"]
-      (let [search-term (str/lower-case @session-search)
-            filtered-sessions (if (str/blank? search-term)
-                                sessions
-                                (filter #(str/includes? (str/lower-case (:sessionId %)) search-term) sessions))]
-        (for [session filtered-sessions]
-          ^{:key (:id session)}
-          [SessionItem {:session session
-                        :active (= (:id session) (:id selected-session))
-                        :on-click #(on-select-session session)}])))]])
+   [:f> SessionsList {:project-id (:id project)
+                      :on-select-session on-select-session}]])
 
 (defn CopyButton []
   (let [copied? (r/atom false)]
@@ -507,162 +637,176 @@
          [:> lucide/AlertTriangle {:size 12}]
          [:span (str "Render error: " (.-message e))]]]])))
 
+(defn- parse-message-node [^js node]
+  (let [typename (.-__typename node)
+        snapshot (.-snapshot node)]
+    {:__typename typename
+     :id (.-id node)
+     :messageId (.-messageId node)
+     :rawMessage (.-rawMessage node)
+     :isSnapshotUpdate (.-isSnapshotUpdate node)
+     :snapshot (when snapshot
+                 {:messageId (.-messageId snapshot)
+                  :trackedFileBackups (.-trackedFileBackups snapshot)})
+     :operation (.-operation node)
+     :timestamp (.-timestamp node)
+     :content (.-content node)
+     :queueSessionId (.-queueSessionId node)
+     :subtype (.-subtype node)
+     :systemContent (.-systemContent node)
+     :isMeta (.-isMeta node)
+     :level (.-level node)
+     :compactMetadata (when-let [cm (.-compactMetadata node)]
+                        {:trigger (.-trigger cm)
+                         :preTokens (.-preTokens cm)})
+     :summary (.-summary node)
+     :leafUuid (.-leafUuid node)
+     :message (case typename
+                "AssistantMessage"
+                (when-let [msg (.-assistantMessage node)]
+                  {:content (mapv (fn [^js block]
+                                    {:type (.-type block)
+                                     :text (.-text block)
+                                     :thinking (.-thinking block)
+                                     :id (.-id block)
+                                     :name (.-name block)
+                                     :input (.-input block)
+                                     :tool_use_id (.-tool_use_id block)
+                                     :content (.-content block)})
+                                  (.-content msg))})
+                "UserMessage"
+                (when-let [msg (.-userMessage node)]
+                  {:content (mapv (fn [^js block]
+                                    {:type (.-type block)
+                                     :text (.-text block)
+                                     :tool_use_id (.-tool_use_id block)
+                                     :content (.-content block)})
+                                  (.-content msg))})
+                nil)}))
+
 (defn MessageList []
   (let [session-id @selected-session-id
-        result (apollo.react/useQuery session-messages-query #js {:variables #js {:id session-id}
-                                                                   :skip (nil? session-id)})
-        loading (.-loading result)
-        error (.-error result)
-        data (.-data result)]
-    (cond
-      (nil? session-id) [:div.flex-1.flex.items-center.justify-center.text-neutral-subdued-content "Select a session to view messages"]
-      loading [:div.flex-1.flex.items-center.justify-center.text-neutral-subdued-content "Loading messages..."]
-      error [:div.flex-1.flex.items-center.justify-center.text-negative-content (str "Error: " (.-message error))]
-      :else
-      (let [messages (vec (for [edge (-> data .-node .-messages .-edges)]
-                            (let [^js node (.-node edge)
-                                  typename (.-__typename node)
-                                  snapshot (.-snapshot node)]
-                              {:__typename typename
-                               :id (.-id node)
-                               :messageId (.-messageId node)
-                               :rawMessage (.-rawMessage node)
-                               :isSnapshotUpdate (.-isSnapshotUpdate node)
-                               :snapshot (when snapshot
-                                           {:messageId (.-messageId snapshot)
-                                            :trackedFileBackups (.-trackedFileBackups snapshot)})
-                               :operation (.-operation node)
-                               :timestamp (.-timestamp node)
-                               :content (.-content node)
-                               :queueSessionId (.-queueSessionId node)
-                               :subtype (.-subtype node)
-                               :systemContent (.-systemContent node)
-                               :isMeta (.-isMeta node)
-                               :level (.-level node)
-                               :compactMetadata (when-let [cm (.-compactMetadata node)]
-                                                  {:trigger (.-trigger cm)
-                                                   :preTokens (.-preTokens cm)})
-                               :summary (.-summary node)
-                               :leafUuid (.-leafUuid node)
-                               :message (case typename
-                                          "AssistantMessage"
-                                          (when-let [msg (.-assistantMessage node)]
-                                            {:content (mapv (fn [^js block]
-                                                              {:type (.-type block)
-                                                               :text (.-text block)
-                                                               :thinking (.-thinking block)
-                                                               :id (.-id block)
-                                                               :name (.-name block)
-                                                               :input (.-input block)
-                                                               :tool_use_id (.-tool_use_id block)
-                                                               :content (.-content block)})
-                                                            (.-content msg))})
-                                          "UserMessage"
-                                          (when-let [msg (.-userMessage node)]
-                                            (js/console.log "UserMessage msg:" msg)
-                                            (js/console.log "msg.content:" (.-content msg))
-                                            {:content (mapv (fn [^js block]
-                                                              {:type (.-type block)
-                                                               :text (.-text block)
-                                                               :tool_use_id (.-tool_use_id block)
-                                                               :content (.-content block)})
-                                                            (.-content msg))})
-                                          nil)})))
-            tool-results (->> messages
-                              (mapcat #(get-in % [:message :content]))
-                              (filter #(= (:type %) "tool_result"))
-                              (reduce (fn [m block] (assoc m (:tool_use_id block) block)) {}))
-            displayed-tool-use-ids (->> messages
-                                        (filter #(= (:__typename %) "AssistantMessage"))
-                                        (mapcat #(get-in % [:message :content]))
-                                        (filter #(= (:type %) "tool_use"))
-                                        (map :id)
-                                        (filter #(contains? tool-results %))
-                                        set)
-            message-count (count messages)
-            tool-call-count (->> messages
-                                 (filter #(= (:__typename %) "AssistantMessage"))
-                                 (mapcat #(get-in % [:message :content]))
-                                 (filter #(= (:type %) "tool_use"))
-                                 count)]
+        scroll-container-ref (react/useRef nil)
+        session-id-ref (react/useRef session-id)
+        has-next-page-ref (react/useRef false)
+        list (stately/useAsyncList
+              #js {:load (fn [^js opts]
+                           (let [sid (.-current session-id-ref)]
+                             (js/console.log "MessageList load called, sid:" sid)
+                             (if (nil? sid)
+                               (js/Promise.resolve #js {:items #js []})
+                               (let [cursor (.-cursor opts)]
+                                 (-> (.query apollo-client #js {:query session-messages-query
+                                                                 :variables #js {:id sid :first 20 :after cursor}})
+                                     (.then (fn [^js result]
+                                              (let [data (.-data result)
+                                                    edges (-> data .-node .-messages .-edges)
+                                                    page-info (-> data .-node .-messages .-pageInfo)
+                                                    items (mapv #(parse-message-node (.-node %)) edges)]
+                                                (js/console.log "MessageList loaded items:" (count items))
+                                                (set! (.-current has-next-page-ref) (.-hasNextPage page-info))
+                                                #js {:items (clj->js items)
+                                                     :cursor (when (.-hasNextPage page-info)
+                                                               (.-endCursor page-info))}))))))))})]
+    (react/useEffect
+     (fn []
+       (js/console.log "MessageList useEffect, session-id:" session-id)
+       (set! (.-current session-id-ref) session-id)
+       (when session-id (.reload list))
+       js/undefined)
+     #js [session-id])
+    (let [messages (vec (for [^js item (.-items list)]
+                          (js->clj item :keywordize-keys true)))
+          has-next-page (.-current has-next-page-ref)
+          tool-results (->> messages
+                            (mapcat #(get-in % [:message :content]))
+                            (filter #(= (:type %) "tool_result"))
+                            (reduce (fn [m block] (assoc m (:tool_use_id block) block)) {}))
+          displayed-tool-use-ids (->> messages
+                                      (filter #(= (:__typename %) "AssistantMessage"))
+                                      (mapcat #(get-in % [:message :content]))
+                                      (filter #(= (:type %) "tool_use"))
+                                      (map :id)
+                                      (filter #(contains? tool-results %))
+                                      set)
+          message-count (count messages)
+          tool-call-count (->> messages
+                               (filter #(= (:__typename %) "AssistantMessage"))
+                               (mapcat #(get-in % [:message :content]))
+                               (filter #(= (:type %) "tool_use"))
+                               count)]
+      (cond
+        (nil? session-id) [:div.flex-1.flex.items-center.justify-center.text-neutral-subdued-content "Select a session to view messages"]
+        (and (.-isLoading list) (zero? (count messages))) [:div.flex-1.flex.items-center.justify-center.text-neutral-subdued-content "Loading messages..."]
+        (.-error list) [:div.flex-1.flex.items-center.justify-center.text-negative-content (str "Error: " (.-error list))]
+        :else
         [:div.flex-1.flex.flex-col.min-h-0
          [:div.flex.items-center.gap-4.text-sm.text-neutral-subdued-content.mb-4.shrink-0
-          [:span (str message-count " messages")]
+          [:span (str message-count " messages" (when has-next-page "+"))]
           [:span "•"]
           [:span (str tool-call-count " tool calls")]]
          [:div.flex-1.overflow-y-auto.min-h-0.pr-2
+          {:ref scroll-container-ref
+           :on-scroll (fn [e]
+                        (when-let [container (.-current scroll-container-ref)]
+                          (let [scroll-top (.-scrollTop container)
+                                scroll-height (.-scrollHeight container)
+                                client-height (.-clientHeight container)
+                                threshold 200]
+                            (when (and (not (.-isLoading list))
+                                       (> (+ scroll-top client-height threshold) scroll-height))
+                              (.loadMore list)))))}
           (if (empty? messages)
             [:div.text-neutral-subdued-content "No messages"]
-            (for [[idx message] (map-indexed vector messages)]
-              ^{:key idx}
-              [safe-render-message {:message message
-                                    :tool-results tool-results
-                                    :displayed-tool-use-ids displayed-tool-use-ids}]))]]))))
+            [:<>
+             (for [[idx message] (map-indexed vector messages)]
+               ^{:key idx}
+               [safe-render-message {:message message
+                                     :tool-results tool-results
+                                     :displayed-tool-use-ids displayed-tool-use-ids}])
+             (when (.-isLoading list)
+               [:div.flex.items-center.justify-center.py-4.text-neutral-subdued-content
+              [:> lucide/Loader2 {:size 20 :className "animate-spin mr-2"}]
+              "Loading more..."])])]]))))
 
-(defn MessagesPanel [{:keys [session]}]
+(defn MessagesPanel []
   [:div.flex-1.flex.flex-col.bg-background-base.min-h-0.overflow-hidden
    [:div.p-4.border-b.border-gray-200.shrink-0
-    [:h2.text-lg.font-semibold.text-neutral-content.truncate
-     (or (:sessionId session) "Messages")]
-    (when session
-      [:div.text-sm.text-neutral-subdued-content.mt-1
-       (format-date (:createdAt session))])]
+    [:h2.text-lg.font-semibold.text-neutral-content.truncate "Messages"]]
    [:div.flex-1.flex.flex-col.min-h-0.p-5
     [:f> MessageList]]])
 
-(defn- find-by-project-id [projects project-id]
-  (some #(when (= (:projectId %) project-id) %) projects))
-
-(defn- find-by-session-id [sessions session-id]
-  (some #(when (= (:sessionId %) session-id) %) sessions))
-
 (defonce url-initialized (atom false))
 
+(defn- init-url! []
+  (when-not @url-initialized
+    (when-let [{:keys [project-id session-id]} (parse-url-path)]
+      (reset! selected-project-id (js/btoa (str "Project:/" project-id)))
+      (when session-id
+        (reset! selected-session-id (js/btoa (str "Session:" project-id "/" session-id)))))
+    (reset! url-initialized true)))
+
 (defn MainContent []
-  (let [result (apollo.react/useQuery projects-query)
-        loading (.-loading result)
-        error (.-error result)
-        data (.-data result)]
-    (cond
-      loading [:div.flex-1.flex.items-center.justify-center.text-neutral-subdued-content "Loading..."]
-      error [:div.flex-1.flex.items-center.justify-center.text-negative-content (str "Error: " (.-message error))]
-      :else
-      (let [projects (for [project-edge (-> data .-projects .-edges)]
-                       (let [^js project (.-node project-edge)]
-                         {:id (.-id project)
-                          :name (.-name project)
-                          :projectId (.-projectId project)
-                          :sessions
-                          (for [session-edge (-> project .-sessions .-edges)]
-                            (let [^js session (.-node session-edge)]
-                              {:id (.-id session)
-                               :projectId (.-projectId session)
-                               :sessionId (.-sessionId session)
-                               :createdAt (.-createdAt session)}))}))
-            _ (when-not @url-initialized
-                (when-let [{:keys [project-id session-id]} (parse-url-path)]
-                  (when-let [project (find-by-project-id projects project-id)]
-                    (reset! selected-project-id (:id project))
-                    (when-let [session (find-by-session-id (:sessions project) session-id)]
-                      (reset! selected-session-id (:id session)))))
-                (reset! url-initialized true))
-            selected-project (some #(when (= (:id %) @selected-project-id) %) projects)
-            selected-session (when selected-project
-                               (some #(when (= (:id %) @selected-session-id) %) (:sessions selected-project)))]
-        [:div.flex.h-full
-         [Sidebar {:projects projects
-                   :selected-project selected-project
-                   :on-select-project (fn [project]
+  (init-url!)
+  (let [current-project-id @selected-project-id
+        current-project-id-decoded (when current-project-id
+                                     (try
+                                       (let [decoded (js/atob current-project-id)
+                                             [_ raw-id] (.split decoded ":")]
+                                         (subs raw-id 1))
+                                       (catch :default _ nil)))]
+    [:div.flex.flex-1.min-h-0
+     [:f> Sidebar {:on-select-project (fn [project]
                                         (reset! selected-project-id (:id project))
                                         (reset! selected-session-id nil)
                                         (update-url! (:projectId project) nil))}]
-         [SessionsPanel {:project selected-project
-                         :sessions (or (:sessions selected-project) [])
-                         :selected-session selected-session
-                         :on-select-session (fn [session]
-                                              (reset! selected-session-id (:id session))
-                                              (update-url! (:projectId selected-project) (:sessionId session)))}]
-         [MessagesPanel {:session selected-session}]]))))
+     [SessionsPanel {:project (when current-project-id
+                                {:id current-project-id
+                                 :name current-project-id-decoded})
+                     :on-select-session (fn [session]
+                                          (reset! selected-session-id (:id session))
+                                          (update-url! current-project-id-decoded (:sessionId session)))}]
+     [MessagesPanel]]))
 
 (defn App []
   [:> apollo.react/ApolloProvider {:client apollo-client}
