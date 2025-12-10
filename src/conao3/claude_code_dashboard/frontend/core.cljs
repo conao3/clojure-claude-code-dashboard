@@ -6,7 +6,9 @@
    ["lucide-react" :as lucide]
    ["react" :as react]
    ["react-aria-components" :as rac]
+   ["react-markdown" :as ReactMarkdown]
    ["react-stately" :as stately]
+   ["remark-gfm" :as remarkGfm]
    [clojure.string :as str]
    [reagent.core :as r]
    [reagent.dom.client :as reagent.dom.client]))
@@ -399,6 +401,32 @@
          [:<> [:> lucide/Check {:size 12}] "Copied!"]
          [:<> [:> lucide/Copy {:size 12}] (or label "Copy")])])))
 
+(def markdown-components
+  #js {:h1 (fn [props] (r/as-element [:h1.text-xl.font-bold.mt-4.mb-2.text-neutral-content (.-children props)]))
+       :h2 (fn [props] (r/as-element [:h2.text-lg.font-bold.mt-3.mb-2.text-neutral-content (.-children props)]))
+       :h3 (fn [props] (r/as-element [:h3.text-base.font-bold.mt-2.mb-1.text-neutral-content (.-children props)]))
+       :p (fn [props] (r/as-element [:p.mb-2.last:mb-0.text-neutral-content (.-children props)]))
+       :ul (fn [props] (r/as-element [:ul.list-disc.list-inside.mb-2.text-neutral-content (.-children props)]))
+       :ol (fn [props] (r/as-element [:ol.list-decimal.list-inside.mb-2.text-neutral-content (.-children props)]))
+       :li (fn [props] (r/as-element [:li.mb-1 (.-children props)]))
+       :code (fn [props]
+               (if (.-inline props)
+                 (r/as-element [:code.bg-background-layer-1.px-1.py-0.5.rounded.text-sm.font-mono (.-children props)])
+                 (r/as-element [:code.font-mono (.-children props)])))
+       :pre (fn [props] (r/as-element [:pre.bg-background-layer-1.p-3.rounded-lg.overflow-x-auto.mb-2.text-sm (.-children props)]))
+       :blockquote (fn [props] (r/as-element [:blockquote.border-l-4.border-gray-300.pl-4.italic.text-neutral-subdued-content.mb-2 (.-children props)]))
+       :a (fn [props] (r/as-element [:a.text-accent-content.underline {:href (.-href props) :target "_blank"} (.-children props)]))
+       :table (fn [props] (r/as-element [:table.w-full.border-collapse.mb-2 (.-children props)]))
+       :th (fn [props] (r/as-element [:th.border.border-gray-300.px-2.py-1.bg-background-layer-1.text-left.font-medium (.-children props)]))
+       :td (fn [props] (r/as-element [:td.border.border-gray-300.px-2.py-1 (.-children props)]))})
+
+(defn Markdown [{:keys [children class]}]
+  [:> ReactMarkdown/default
+   {:remarkPlugins #js [remarkGfm/default]
+    :components markdown-components
+    :className class}
+   children])
+
 (defn ToolResultBlock [{:keys [block]}]
   [:div.mt-2.p-3.rounded-lg.bg-background-layer-1.border.border-gray-200
    [:div.text-xs.font-medium.text-neutral-subdued-content.mb-1 "Tool Result"]
@@ -409,7 +437,8 @@
 (defn ContentBlock [{:keys [block tool-results]}]
   (case (:type block)
     "text"
-    [:p.text-sm.leading-relaxed.text-neutral-content (:text block)]
+    [:div.text-sm.leading-relaxed
+     [Markdown {:children (:text block)}]]
 
     "thinking"
     [:div {:class "mt-3 p-3 rounded-lg bg-yellow-900/10 border border-yellow-700/20"}
@@ -508,7 +537,7 @@
        (for [[idx block] (map-indexed vector content-blocks)]
          ^{:key idx}
          (case (:type block)
-           "text" [:p.text-sm.leading-relaxed.text-neutral-content (:text block)]
+           "text" [:div.text-sm.leading-relaxed [Markdown {:children (:text block)}]]
            "tool_result" [ToolResultBlock {:block block}]
            [:div.text-xs.text-notice-content (str "Unknown: " (:type block))]))
        [:details.mt-3.pt-3.border-t.border-gray-200
