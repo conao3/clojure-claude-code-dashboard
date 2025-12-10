@@ -113,17 +113,11 @@
                                    (and first-n (> (count filtered-items) (count items)))))
         has-previous-page (boolean (or (some? after-idx)
                                        (and last-n (> (count filtered-items) (count items)))))]
-    #js {:edges (clj->js (map (fn [item] {:cursor (:id item) :node item}) items))
-         :pageInfo #js {:hasNextPage has-next-page
-                        :hasPreviousPage has-previous-page
-                        :startCursor (some-> (first items) :id)
-                        :endCursor (some-> (last items) :id)}}))
-
-(s/defn ^:private sessions-resolver :- s/Any
-  [parent :- s/Any
-   args :- s/Any]
-  (-> (list-sessions (aget parent "projectId"))
-      (paginate args)))
+    {:edges (map (fn [item] {:cursor (:id item) :node item}) items)
+     :pageInfo {:hasNextPage has-next-page
+                :hasPreviousPage has-previous-page
+                :startCursor (some-> (first items) :id)
+                :endCursor (some-> (last items) :id)}}))
 
 (s/defn ^:private content->string :- s/Str
   [content :- s/Any]
@@ -340,12 +334,6 @@
          (map-indexed (fn [idx line] (parse-message-line project-id session-id idx line)))
          vec)))
 
-(s/defn ^:private messages-resolver :- s/Any
-  [parent :- s/Any
-   args :- s/Any]
-  (-> (list-messages (aget parent "projectId") (aget parent "sessionId"))
-      (paginate args)))
-
 (s/defn ^:private node-resolver :- (s/maybe s/Any)
   [args :- s/Any]
   (let [{:keys [type raw-id]} (decode-id (.-id args))]
@@ -353,19 +341,19 @@
       "Project" (let [claude-json (read-claude-json)
                       project-path raw-id]
                   (when (get-in claude-json [:projects (keyword project-path)])
-                    #js {:__typename "Project"
-                         :id (.-id args)
-                         :projectId (path->slug project-path)
-                         :name project-path}))
+                    {:__typename "Project"
+                     :id (.-id args)
+                     :projectId (path->slug project-path)
+                     :name project-path}))
       "Session" (let [[project-id session-id] (.split raw-id "/")
                       file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))]
                   (when (.existsSync fs file-path)
                     (let [stat (.statSync fs file-path)]
-                      #js {:__typename "Session"
-                           :id (.-id args)
-                           :projectId project-id
-                           :sessionId session-id
-                           :createdAt (.toISOString (.-birthtime stat))})))
+                      {:__typename "Session"
+                       :id (.-id args)
+                       :projectId project-id
+                       :sessionId session-id
+                       :createdAt (.toISOString (.-birthtime stat))})))
       "Message" (let [[project-id session-id message-id] (.split raw-id "/")
                       file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))
                       content (try (.readFileSync fs file-path "utf-8") (catch :default _ ""))
@@ -377,29 +365,36 @@
                                                    i))))
                                first)]
                   (when idx
-                    (clj->js (parse-message-line project-id session-id idx (nth lines idx)))))
+                    (parse-message-line project-id session-id idx (nth lines idx))))
       nil)))
 
 (def resolvers
-  (clj->js
-   {"Query" {"hello" (fn [] "Hello from Apollo Server!")
-             "projects" (fn [_ args] (paginate (list-projects) args))
-             "node" (fn [_ args] (node-resolver args))}
-    "Project" {"sessions" sessions-resolver}
-    "Session" {"messages" messages-resolver}
-    "Message" {"__resolveType" (fn [obj] (aget obj "__typename"))}}))
+  {"Query" {"hello" (fn [] "Hello from Apollo Server!")
+            "projects" (fn [_ args] (clj->js (paginate (list-projects) args)))
+            "node" (fn [_ args] (clj->js (node-resolver args)))}
+   "Project" {"sessions"
+              (fn [parent args]
+                (-> (list-sessions (aget parent "projectId"))
+                    (paginate args)
+                    clj->js))}
+   "Session" {"messages"
+              (fn messages-resolver [parent args]
+                (-> (list-messages (aget parent "projectId") (aget parent "sessionId"))
+                    (paginate args)
+                    clj->js))}
+   "Message" {"__resolveType" (fn [obj] (aget obj "__typename"))}})
 
 (s/defn start-server :- (s/eq nil)
   []
   (let [type-defs (shadow.resource/inline "schema.graphql")
-        api-server (apollo/ApolloServer. #js {:typeDefs type-defs
-                                              :resolvers resolvers
-                                              :plugins #js [(apollo.plugin.disabled/ApolloServerPluginLandingPageDisabled)]})
-        admin-server (apollo/ApolloServer. #js {:typeDefs type-defs
-                                                :resolvers resolvers
-                                                :plugins #js [(apollo.landing/ApolloServerPluginLandingPageLocalDefault)]})
+        api-server (apollo/ApolloServer. (clj->js {:typeDefs type-defs
+                                                   :resolvers resolvers
+                                                   :plugins [(apollo.plugin.disabled/ApolloServerPluginLandingPageDisabled)]}))
+        admin-server (apollo/ApolloServer. (clj->js {:typeDefs type-defs
+                                                     :resolvers resolvers
+                                                     :plugins [(apollo.landing/ApolloServerPluginLandingPageLocalDefault)]}))
         app (express)]
-    (-> (js/Promise.all #js [(.start api-server) (when goog.DEBUG (.start admin-server))])
+    (-> (js/Promise.all (clj->js [(.start api-server) (when goog.DEBUG (.start admin-server))]))
         (.then (fn []
                  (.use app "/api/graphql" (cors) (express/json) (apollo.express/expressMiddleware api-server))
                  (when goog.DEBUG
@@ -415,7 +410,7 @@
 (s/defn stop-server :- (s/eq nil)
   []
   (when-let [{:keys [server api-server admin-server]} @server-state]
-    (-> (js/Promise.all #js [(.stop api-server) (when admin-server (.stop admin-server))])
+    (-> (js/Promise.all (clj->js [(.stop api-server) (when admin-server (.stop admin-server))]))
         (.then (fn []
                  (.close server)
                  (reset! server-state nil)
