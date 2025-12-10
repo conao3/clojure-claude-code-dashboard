@@ -10,30 +10,42 @@
    ["node:fs" :as fs]
    ["node:os" :as os]
    ["node:path" :as path]
+   [conao3.claude-code-dashboard.backend.schema :as s.backend.schema]
+   [schema.core :as s]
    [shadow.resource :as shadow.resource]))
 
 (defonce server-state (atom nil))
 
-(defn- encode-id [type raw-id]
+(when goog.DEBUG
+  (s/set-fn-validation! true))
+
+(s/defn ^:private encode-id :- s.backend.schema/ID
+  [type :- s/Str
+   raw-id :- s.backend.schema/RawId]
   (js/btoa (str type ":" raw-id)))
 
-(defn- decode-id [id]
+(s/defn ^:private decode-id :- s.backend.schema/DecodedId
+  [id :- s.backend.schema/ID]
   (let [[type raw-id] (.split (js/atob id) ":")]
     {:type type :raw-id raw-id}))
 
-(defn- read-claude-json []
+(s/defn ^:private read-claude-json :- s.backend.schema/ClaudeJson
+  []
   (let [claude-json-path (.join path (.homedir os) ".claude.json")]
     (-> (.readFileSync fs claude-json-path "utf-8")
         (js/JSON.parse)
         (js->clj :keywordize-keys true))))
 
-(defn- path->slug [p]
+(s/defn ^:private path->slug :- s/Str
+  [p :- s/Str]
   (.replace p (js/RegExp. "/" "g") "-"))
 
-(defn- projects-dir []
+(s/defn ^:private projects-dir :- s/Str
+  []
   (.join path (.homedir os) ".claude" "projects"))
 
-(defn- list-sessions [project-id]
+(s/defn ^:private list-sessions :- [s.backend.schema/Session]
+  [project-id :- s.backend.schema/ProjectId]
   (let [project-dir (.join path (projects-dir) project-id)
         files (try (js->clj (.readdirSync fs project-dir)) (catch :default _ []))]
     (->> files
@@ -48,24 +60,31 @@
                    :sessionId session-id
                    :createdAt created-at})))
          (sort-by :createdAt)
-         reverse)))
+         reverse
+         vec)))
 
-(defn- list-projects []
+(s/defn ^:private list-projects :- [s.backend.schema/Project]
+  []
   (let [claude-json (read-claude-json)]
     (->> (:projects claude-json)
          (map (fn [[k _v]]
                 (let [project-path (subs (str k) 1)]
                   {:id (encode-id "Project" project-path)
                    :projectId (path->slug project-path)
-                   :name project-path}))))))
+                   :name project-path})))
+         vec)))
 
-(defn- find-cursor-idx [items cursor]
+(s/defn ^:private find-cursor-idx :- (s/maybe s/Int)
+  [items :- [s/Any]
+   cursor :- (s/maybe s.backend.schema/Cursor)]
   (when cursor
     (->> items
          (keep-indexed (fn [idx item] (when (= (:id item) cursor) idx)))
          first)))
 
-(defn- paginate [all-items ^js args]
+(s/defn ^:private paginate :- s/Any
+  [all-items :- [s/Any]
+   args :- s/Any]
   (let [first-n (.-first args)
         after-cursor (.-after args)
         last-n (.-last args)
@@ -99,22 +118,27 @@
                         :startCursor (some-> (first items) :id)
                         :endCursor (some-> (last items) :id)}}))
 
-(defn- sessions-resolver [parent args]
+(s/defn ^:private sessions-resolver :- s/Any
+  [parent :- s/Any
+   args :- s/Any]
   (-> (list-sessions (aget parent "projectId"))
       (paginate args)))
 
-(defn- message-type->typename [type]
+(s/defn ^:private message-type->typename :- s/Str
+  [type :- s/Str]
   (case type
     "assistant" "AssistantMessage"
     "user" "UserMessage"
     "UnknownMessage"))
 
-(defn- content->string [content]
+(s/defn ^:private content->string :- s/Str
+  [content :- s/Any]
   (if (string? content)
     content
     (js/JSON.stringify (clj->js content))))
 
-(defn- parse-user-content-block [block]
+(s/defn ^:private parse-user-content-block :- s.backend.schema/UserContentBlock
+  [block :- s/Any]
   (if (string? block)
     {:type "text" :text block}
     {:type (:type block)
@@ -122,12 +146,18 @@
      :tool_use_id (:tool_use_id block)
      :content (when-let [c (:content block)] (content->string c))}))
 
-(defn- parse-user-content [content]
+(s/defn ^:private parse-user-content :- [s.backend.schema/UserContentBlock]
+  [content :- s/Any]
   (if (string? content)
     [{:type "text" :text content}]
     (mapv parse-user-content-block content)))
 
-(defn- parse-user-message [data project-id session-id message-id line]
+(s/defn ^:private parse-user-message :- s.backend.schema/UserMessage
+  [data :- s/Any
+   project-id :- s.backend.schema/ProjectId
+   session-id :- s.backend.schema/SessionId
+   message-id :- s.backend.schema/MessageId
+   line :- s/Str]
   {:__typename "UserMessage"
    :id (encode-id "Message" (str project-id "/" session-id "/" message-id))
    :projectId project-id
@@ -148,7 +178,8 @@
                         :disabled (boolean (:disabled tm))
                         :triggers (or (:triggers tm) [])})})
 
-(defn- parse-assistant-content-block [block]
+(s/defn ^:private parse-assistant-content-block :- s.backend.schema/AssistantContentBlock
+  [block :- s/Any]
   {:type (:type block)
    :text (:text block)
    :thinking (:thinking block)
@@ -159,7 +190,12 @@
    :tool_use_id (:tool_use_id block)
    :content (when-let [content (:content block)] (content->string content))})
 
-(defn- parse-assistant-message [data project-id session-id message-id line]
+(s/defn ^:private parse-assistant-message :- s.backend.schema/AssistantMessage
+  [data :- s/Any
+   project-id :- s.backend.schema/ProjectId
+   session-id :- s.backend.schema/SessionId
+   message-id :- s.backend.schema/MessageId
+   line :- s/Str]
   (let [msg (:message data)
         usage (:usage msg)
         cache-creation (:cache_creation usage)]
@@ -181,7 +217,7 @@
                :messageId (:id msg)
                :type (:type msg)
                :role (:role msg)
-               :content (map parse-assistant-content-block (:content msg))
+               :content (mapv parse-assistant-content-block (:content msg))
                :stop_reason (:stop_reason msg)
                :stop_sequence (:stop_sequence msg)
                :usage {:input_tokens (:input_tokens usage)
@@ -193,7 +229,12 @@
                        :output_tokens (:output_tokens usage)
                        :service_tier (:service_tier usage)}}}))
 
-(defn- parse-file-history-snapshot-message [data project-id session-id message-id line]
+(s/defn ^:private parse-file-history-snapshot-message :- s.backend.schema/FileHistorySnapshotMessage
+  [data :- s/Any
+   project-id :- s.backend.schema/ProjectId
+   session-id :- s.backend.schema/SessionId
+   message-id :- s.backend.schema/MessageId
+   line :- s/Str]
   (let [snapshot (:snapshot data)]
     {:__typename "FileHistorySnapshotMessage"
      :id (encode-id "Message" (str project-id "/" session-id "/" message-id))
@@ -206,7 +247,12 @@
                 :timestamp (:timestamp snapshot)}
      :isSnapshotUpdate (boolean (:isSnapshotUpdate data))}))
 
-(defn- parse-queue-operation-message [data project-id session-id message-id line]
+(s/defn ^:private parse-queue-operation-message :- s.backend.schema/QueueOperationMessage
+  [data :- s/Any
+   project-id :- s.backend.schema/ProjectId
+   session-id :- s.backend.schema/SessionId
+   message-id :- s.backend.schema/MessageId
+   line :- s/Str]
   {:__typename "QueueOperationMessage"
    :id (encode-id "Message" (str project-id "/" session-id "/" message-id))
    :projectId project-id
@@ -218,7 +264,12 @@
    :content (:content data)
    :queueSessionId (:sessionId data)})
 
-(defn- parse-system-message [data project-id session-id message-id line]
+(s/defn ^:private parse-system-message :- s.backend.schema/SystemMessage
+  [data :- s/Any
+   project-id :- s.backend.schema/ProjectId
+   session-id :- s.backend.schema/SessionId
+   message-id :- s.backend.schema/MessageId
+   line :- s/Str]
   {:__typename "SystemMessage"
    :id (encode-id "Message" (str project-id "/" session-id "/" message-id))
    :projectId project-id
@@ -241,7 +292,12 @@
                       {:trigger (:trigger cm)
                        :preTokens (:preTokens cm)})})
 
-(defn- parse-summary-message [data project-id session-id message-id line]
+(s/defn ^:private parse-summary-message :- s.backend.schema/SummaryMessage
+  [data :- s/Any
+   project-id :- s.backend.schema/ProjectId
+   session-id :- s.backend.schema/SessionId
+   message-id :- s.backend.schema/MessageId
+   line :- s/Str]
   {:__typename "SummaryMessage"
    :id (encode-id "Message" (str project-id "/" session-id "/" message-id))
    :projectId project-id
@@ -251,7 +307,11 @@
    :summary (:summary data)
    :leafUuid (:leafUuid data)})
 
-(defn- parse-message-line [project-id session-id idx line]
+(s/defn ^:private parse-message-line :- s.backend.schema/Message
+  [project-id :- s.backend.schema/ProjectId
+   session-id :- s.backend.schema/SessionId
+   idx :- s/Int
+   line :- s/Str]
   (try
     (let [data (js->clj (js/JSON.parse line) :keywordize-keys true)
           message-id (or (:uuid data) (:messageId data) (str idx))]
@@ -276,59 +336,67 @@
        :messageId (str idx)
        :rawMessage line})))
 
-(defn- list-messages [project-id session-id]
+(s/defn ^:private list-messages :- [s.backend.schema/Message]
+  [project-id :- s.backend.schema/ProjectId
+   session-id :- s.backend.schema/SessionId]
   (let [file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))
         content (try (.readFileSync fs file-path "utf-8") (catch :default _ ""))
         lines (->> (.split content "\n") (filter #(not= % "")))]
     (->> lines
-         (map-indexed (fn [idx line] (parse-message-line project-id session-id idx line))))))
+         (map-indexed (fn [idx line] (parse-message-line project-id session-id idx line)))
+         vec)))
 
-(defn- messages-resolver [parent args]
+(s/defn ^:private messages-resolver :- s/Any
+  [parent :- s/Any
+   args :- s/Any]
   (-> (list-messages (aget parent "projectId") (aget parent "sessionId"))
       (paginate args)))
+
+(s/defn ^:private node-resolver :- (s/maybe s/Any)
+  [args :- s/Any]
+  (let [{:keys [type raw-id]} (decode-id (.-id args))]
+    (case type
+      "Project" (let [claude-json (read-claude-json)
+                      project-path raw-id]
+                  (when (get-in claude-json [:projects (keyword project-path)])
+                    #js {:__typename "Project"
+                         :id (.-id args)
+                         :projectId (path->slug project-path)
+                         :name project-path}))
+      "Session" (let [[project-id session-id] (.split raw-id "/")
+                      file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))]
+                  (when (.existsSync fs file-path)
+                    (let [stat (.statSync fs file-path)]
+                      #js {:__typename "Session"
+                           :id (.-id args)
+                           :projectId project-id
+                           :sessionId session-id
+                           :createdAt (.toISOString (.-birthtime stat))})))
+      "Message" (let [[project-id session-id message-id] (.split raw-id "/")
+                      file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))
+                      content (try (.readFileSync fs file-path "utf-8") (catch :default _ ""))
+                      lines (->> (.split content "\n") (filter #(not= % "")))
+                      idx (->> lines
+                               (keep-indexed (fn [i l]
+                                               (let [data (js->clj (js/JSON.parse l) :keywordize-keys true)]
+                                                 (when (= message-id (or (:uuid data) (:messageId data)))
+                                                   i))))
+                               first)]
+                  (when idx
+                    (clj->js (parse-message-line project-id session-id idx (nth lines idx)))))
+      nil)))
 
 (def resolvers
   (clj->js
    {"Query" {"hello" (fn [] "Hello from Apollo Server!")
-             "projects" (fn [_ args]
-                          (paginate (list-projects) args))
-             "node" (fn [_ args]
-                      (let [{:keys [type raw-id]} (decode-id (.-id args))]
-                        (case type
-                          "Project" (let [claude-json (read-claude-json)
-                                          project-path raw-id]
-                                      (when (get-in claude-json [:projects (keyword project-path)])
-                                        #js {:__typename "Project"
-                                             :id (.-id args)
-                                             :projectId (path->slug project-path)
-                                             :name project-path}))
-                          "Session" (let [[project-id session-id] (.split raw-id "/")
-                                          file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))]
-                                      (when (.existsSync fs file-path)
-                                        (let [stat (.statSync fs file-path)]
-                                          #js {:__typename "Session"
-                                               :id (.-id args)
-                                               :projectId project-id
-                                               :sessionId session-id
-                                               :createdAt (.toISOString (.-birthtime stat))})))
-                          "Message" (let [[project-id session-id message-id] (.split raw-id "/")
-                                          file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))
-                                          content (try (.readFileSync fs file-path "utf-8") (catch :default _ ""))
-                                          lines (->> (.split content "\n") (filter #(not= % "")))
-                                          idx (->> lines
-                                                   (keep-indexed (fn [i l]
-                                                                   (let [data (js->clj (js/JSON.parse l) :keywordize-keys true)]
-                                                                     (when (= message-id (or (:uuid data) (:messageId data)))
-                                                                       i))))
-                                                   first)]
-                                      (when idx
-                                        (clj->js (parse-message-line project-id session-id idx (nth lines idx)))))
-                          nil)))}
+             "projects" (fn [_ args] (paginate (list-projects) args))
+             "node" (fn [_ args] (node-resolver args))}
     "Project" {"sessions" sessions-resolver}
     "Session" {"messages" messages-resolver}
     "Message" {"__resolveType" (fn [obj] (aget obj "__typename"))}}))
 
-(defn start-server []
+(s/defn start-server :- (s/eq nil)
+  []
   (let [type-defs (shadow.resource/inline "schema.graphql")
         api-server (apollo/ApolloServer. #js {:typeDefs type-defs
                                               :resolvers resolvers
@@ -346,20 +414,30 @@
                    (reset! server-state {:server server :api-server api-server :admin-server admin-server})
                    (println "Server ready at http://localhost:4000/api/graphql")
                    (when goog.DEBUG
-                     (println "Apollo Sandbox at http://localhost:4000/admin/apollo"))))))))
+                     (println "Apollo Sandbox at http://localhost:4000/admin/apollo"))
+                   nil)))))
+  nil)
 
-(defn stop-server []
+(s/defn stop-server :- (s/eq nil)
+  []
   (when-let [{:keys [server api-server admin-server]} @server-state]
     (-> (js/Promise.all #js [(.stop api-server) (when admin-server (.stop admin-server))])
         (.then (fn []
                  (.close server)
                  (reset! server-state nil)
-                 (println "Server stopped"))))))
+                 (println "Server stopped")
+                 nil))))
+  nil)
 
-(defn ^:dev/after-load reload []
+(s/defn reload :- (s/eq nil)
+  {:dev/after-load true}
+  []
   (println "Reloading...")
   (-> (stop-server)
-      (.then start-server)))
+      (.then start-server))
+  nil)
 
-(defn main [& _args]
-  (start-server))
+(s/defn main :- (s/eq nil)
+  [& _args :- [s/Any]]
+  (start-server)
+  nil)

@@ -9,7 +9,8 @@
   :cljs {:extra-deps {org.clojure/clojurescript {:mvn/version "1.12.116"}
                       thheller/shadow-cljs {:mvn/version "3.3.2"}
                       reagent/reagent {:mvn/version "2.0.1"}
-                      no.cjohansen/portfolio {:mvn/version "2024.09.25"}}}
+                      no.cjohansen/portfolio {:mvn/version "2024.09.25"}
+                      prismatic/schema {:mvn/version "1.4.1"}}}
   :repl {:extra-deps {nrepl/nrepl {:mvn/version "1.5.1"}
                       cider/cider-nrepl {:mvn/version "0.58.0"}}
          :jvm-opts ["-Djdk.attach.allowAttachSelf"]
