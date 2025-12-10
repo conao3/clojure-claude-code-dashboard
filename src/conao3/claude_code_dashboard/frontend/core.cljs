@@ -205,10 +205,11 @@
 
 (s/defn ^:private parse-project-node :- s.schema/Project
   [node :- s/Any]
-  {:id (.-id node)
-   :name (.-name node)
-   :projectId (.-projectId node)
-   :hasSessions (pos? (count (-> node .-sessions .-edges)))})
+  (let [^js node node]
+    {:id (.-id node)
+     :name (.-name node)
+     :projectId (.-projectId node)
+     :hasSessions (pos? (count (-> node .-sessions .-edges)))}))
 
 (s/defn ProjectsList :- s.schema/Hiccup
   [{:keys [on-select-project collapsed]} :- s.schema/ProjectsListProps]
@@ -316,10 +317,11 @@
 
 (s/defn ^:private parse-session-node :- s.schema/Session
   [node :- s/Any]
-  {:id (.-id node)
-   :projectId (.-projectId node)
-   :sessionId (.-sessionId node)
-   :createdAt (.-createdAt node)})
+  (let [^js node node]
+    {:id (.-id node)
+     :projectId (.-projectId node)
+     :sessionId (.-sessionId node)
+     :createdAt (.-createdAt node)}))
 
 (s/defn SessionsList :- s.schema/Hiccup
   [{:keys [project-id on-select-session]} :- s.schema/SessionsListProps]
@@ -704,8 +706,9 @@
 
 (s/defn ^:private parse-message-node :- s.schema/FrontendMessage
   [node :- s/Any]
-  (let [typename (.-__typename node)
-        snapshot (.-snapshot node)]
+  (let [^js node node
+        typename (.-__typename node)
+        ^js snapshot (.-snapshot node)]
     {:__typename typename
      :id (.-id node)
      :messageId (.-messageId node)
@@ -722,14 +725,14 @@
      :systemContent (.-systemContent node)
      :isMeta (.-isMeta node)
      :level (.-level node)
-     :compactMetadata (when-let [cm (.-compactMetadata node)]
+     :compactMetadata (when-let [^js cm (.-compactMetadata node)]
                         {:trigger (.-trigger cm)
                          :preTokens (.-preTokens cm)})
      :summary (.-summary node)
      :leafUuid (.-leafUuid node)
      :message (case typename
                 "AssistantMessage"
-                (when-let [msg (.-assistantMessage node)]
+                (when-let [^js msg (.-assistantMessage node)]
                   {:content (mapv (fn [^js block]
                                     {:type (.-type block)
                                      :text (.-text block)
@@ -741,7 +744,7 @@
                                      :content (.-content block)})
                                   (.-content msg))})
                 "UserMessage"
-                (when-let [msg (.-userMessage node)]
+                (when-let [^js msg (.-userMessage node)]
                   {:content (mapv (fn [^js block]
                                     {:type (.-type block)
                                      :text (.-text block)
