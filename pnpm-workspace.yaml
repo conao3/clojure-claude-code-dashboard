@@ -1,7 +1,8 @@
 packages:
-  - "tools/*"
-
-onlyBuiltDependencies:
-  - "@anthropic-ai/claude-agent-sdk"
+  - tools/*
 
 nodeLinker: hoisted
+
+onlyBuiltDependencies:
+  - '@anthropic-ai/claude-agent-sdk'
+  - '@apollo/protobufjs'
