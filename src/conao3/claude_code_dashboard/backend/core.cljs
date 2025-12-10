@@ -248,16 +248,45 @@
     (->> lines
          (map-indexed (fn [idx line] (parse-message-line project-id session-id idx line))))))
 
-(defn- messages-resolver [parent args]
+(defn- find-cursor-idx [messages cursor]
+  (when cursor
+    (->> messages
+         (keep-indexed (fn [idx m] (when (= (:id m) cursor) idx)))
+         first)))
+
+(defn- messages-resolver [parent ^js args]
   (let [project-id (aget parent "projectId")
         session-id (aget parent "sessionId")
         first-n (.-first args)
-        all-messages (list-messages project-id session-id)
-        messages (if first-n (take first-n all-messages) all-messages)
-        has-next-page (and first-n (> (count all-messages) first-n))]
+        after-cursor (.-after args)
+        last-n (.-last args)
+        before-cursor (.-before args)
+        all-messages (vec (list-messages project-id session-id))
+        after-idx (find-cursor-idx all-messages after-cursor)
+        before-idx (find-cursor-idx all-messages before-cursor)
+        filtered-messages (cond
+                            (and after-idx before-idx)
+                            (subvec all-messages (inc after-idx) before-idx)
+
+                            after-idx
+                            (subvec all-messages (inc after-idx))
+
+                            before-idx
+                            (subvec all-messages 0 before-idx)
+
+                            :else
+                            all-messages)
+        messages (cond
+                   first-n (vec (take first-n filtered-messages))
+                   last-n (vec (take-last last-n filtered-messages))
+                   :else filtered-messages)
+        has-next-page (boolean (or (some? before-idx)
+                                   (and first-n (> (count filtered-messages) (count messages)))))
+        has-previous-page (boolean (or (some? after-idx)
+                                       (and last-n (> (count filtered-messages) (count messages)))))]
     #js {:edges (clj->js (map (fn [m] {:cursor (:id m) :node m}) messages))
          :pageInfo #js {:hasNextPage has-next-page
-                        :hasPreviousPage false
+                        :hasPreviousPage has-previous-page
                         :startCursor (some-> (first messages) :id)
                         :endCursor (some-> (last messages) :id)}}))
 

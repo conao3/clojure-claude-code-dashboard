@@ -203,7 +203,6 @@ type Session implements Node {
   projectId: String!
   sessionId: String!
   createdAt: String!
-  "Currently all arguments are ignored"
   messages(first: Int, after: String, last: Int, before: String): MessageConnection!
 }
 
@@ -213,7 +212,6 @@ type Project implements Node {
   id: ID!
   projectId: String!
   name: String!
-  "Currently all arguments are ignored"
   sessions(first: Int, after: String, last: Int, before: String): SessionConnection!
 }
 
@@ -223,6 +221,5 @@ type Project implements Node {
 type Query {
   hello: String
   node(id: ID!): Node
-  "Currently all arguments are ignored"
   projects(first: Int, after: String, last: Int, before: String): ProjectConnection!
 }
