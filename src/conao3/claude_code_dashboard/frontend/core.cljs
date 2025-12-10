@@ -19,13 +19,13 @@
 
 (def projects-query
   (apollo/gql "query Projects {
-    projects {
+    projects(first: 20) {
       edges {
         node {
           id
           name
           projectId
-          sessions {
+          sessions(first: 20) {
             edges {
               node {
                 id
@@ -51,7 +51,7 @@
       ... on Session {
         id
         sessionId
-        messages {
+        messages(first: 20) {
           edges {
             node {
               __typename
