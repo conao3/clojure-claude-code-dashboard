@@ -10,7 +10,7 @@
    ["node:fs" :as fs]
    ["node:os" :as os]
    ["node:path" :as path]
-   [conao3.claude-code-dashboard.backend.schema :as s.backend.schema]
+   [conao3.claude-code-dashboard.schema :as s.schema]
    [schema.core :as s]
    [shadow.resource :as shadow.resource]))
 
@@ -19,17 +19,17 @@
 (when goog.DEBUG
   (s/set-fn-validation! true))
 
-(s/defn ^:private encode-id :- s.backend.schema/ID
+(s/defn ^:private encode-id :- s.schema/ID
   [type :- s/Str
-   raw-id :- s.backend.schema/RawId]
+   raw-id :- s.schema/RawId]
   (js/btoa (str type ":" raw-id)))
 
-(s/defn ^:private decode-id :- s.backend.schema/DecodedId
-  [id :- s.backend.schema/ID]
+(s/defn ^:private decode-id :- s.schema/DecodedId
+  [id :- s.schema/ID]
   (let [[type raw-id] (.split (js/atob id) ":")]
     {:type type :raw-id raw-id}))
 
-(s/defn ^:private read-claude-json :- s.backend.schema/ClaudeJson
+(s/defn ^:private read-claude-json :- s.schema/ClaudeJson
   []
   (let [claude-json-path (.join path (.homedir os) ".claude.json")]
     (-> (.readFileSync fs claude-json-path "utf-8")
@@ -44,8 +44,8 @@
   []
   (.join path (.homedir os) ".claude" "projects"))
 
-(s/defn ^:private list-sessions :- [s.backend.schema/Session]
-  [project-id :- s.backend.schema/ProjectId]
+(s/defn ^:private list-sessions :- [s.schema/Session]
+  [project-id :- s.schema/ProjectId]
   (let [project-dir (.join path (projects-dir) project-id)
         files (try (js->clj (.readdirSync fs project-dir)) (catch :default _ []))]
     (->> files
@@ -63,7 +63,7 @@
          reverse
          vec)))
 
-(s/defn ^:private list-projects :- [s.backend.schema/Project]
+(s/defn ^:private list-projects :- [s.schema/Project]
   []
   (let [claude-json (read-claude-json)]
     (->> (:projects claude-json)
@@ -76,7 +76,7 @@
 
 (s/defn ^:private find-cursor-idx :- (s/maybe s/Int)
   [items :- [s/Any]
-   cursor :- (s/maybe s.backend.schema/Cursor)]
+   cursor :- (s/maybe s.schema/Cursor)]
   (when cursor
     (->> items
          (keep-indexed (fn [idx item] (when (= (:id item) cursor) idx)))
@@ -137,7 +137,7 @@
     content
     (js/JSON.stringify (clj->js content))))
 
-(s/defn ^:private parse-user-content-block :- s.backend.schema/UserContentBlock
+(s/defn ^:private parse-user-content-block :- s.schema/UserContentBlock
   [block :- s/Any]
   (if (string? block)
     {:type "text" :text block}
@@ -146,17 +146,17 @@
      :tool_use_id (:tool_use_id block)
      :content (when-let [c (:content block)] (content->string c))}))
 
-(s/defn ^:private parse-user-content :- [s.backend.schema/UserContentBlock]
+(s/defn ^:private parse-user-content :- [s.schema/UserContentBlock]
   [content :- s/Any]
   (if (string? content)
     [{:type "text" :text content}]
     (mapv parse-user-content-block content)))
 
-(s/defn ^:private parse-user-message :- s.backend.schema/UserMessage
+(s/defn ^:private parse-user-message :- s.schema/UserMessage
   [data :- s/Any
-   project-id :- s.backend.schema/ProjectId
-   session-id :- s.backend.schema/SessionId
-   message-id :- s.backend.schema/MessageId
+   project-id :- s.schema/ProjectId
+   session-id :- s.schema/SessionId
+   message-id :- s.schema/MessageId
    line :- s/Str]
   {:__typename "UserMessage"
    :id (encode-id "Message" (str project-id "/" session-id "/" message-id))
@@ -178,7 +178,7 @@
                         :disabled (boolean (:disabled tm))
                         :triggers (or (:triggers tm) [])})})
 
-(s/defn ^:private parse-assistant-content-block :- s.backend.schema/AssistantContentBlock
+(s/defn ^:private parse-assistant-content-block :- s.schema/AssistantContentBlock
   [block :- s/Any]
   {:type (:type block)
    :text (:text block)
@@ -190,11 +190,11 @@
    :tool_use_id (:tool_use_id block)
    :content (when-let [content (:content block)] (content->string content))})
 
-(s/defn ^:private parse-assistant-message :- s.backend.schema/AssistantMessage
+(s/defn ^:private parse-assistant-message :- s.schema/AssistantMessage
   [data :- s/Any
-   project-id :- s.backend.schema/ProjectId
-   session-id :- s.backend.schema/SessionId
-   message-id :- s.backend.schema/MessageId
+   project-id :- s.schema/ProjectId
+   session-id :- s.schema/SessionId
+   message-id :- s.schema/MessageId
    line :- s/Str]
   (let [msg (:message data)
         usage (:usage msg)
@@ -229,11 +229,11 @@
                        :output_tokens (:output_tokens usage)
                        :service_tier (:service_tier usage)}}}))
 
-(s/defn ^:private parse-file-history-snapshot-message :- s.backend.schema/FileHistorySnapshotMessage
+(s/defn ^:private parse-file-history-snapshot-message :- s.schema/FileHistorySnapshotMessage
   [data :- s/Any
-   project-id :- s.backend.schema/ProjectId
-   session-id :- s.backend.schema/SessionId
-   message-id :- s.backend.schema/MessageId
+   project-id :- s.schema/ProjectId
+   session-id :- s.schema/SessionId
+   message-id :- s.schema/MessageId
    line :- s/Str]
   (let [snapshot (:snapshot data)]
     {:__typename "FileHistorySnapshotMessage"
@@ -247,11 +247,11 @@
                 :timestamp (:timestamp snapshot)}
      :isSnapshotUpdate (boolean (:isSnapshotUpdate data))}))
 
-(s/defn ^:private parse-queue-operation-message :- s.backend.schema/QueueOperationMessage
+(s/defn ^:private parse-queue-operation-message :- s.schema/QueueOperationMessage
   [data :- s/Any
-   project-id :- s.backend.schema/ProjectId
-   session-id :- s.backend.schema/SessionId
-   message-id :- s.backend.schema/MessageId
+   project-id :- s.schema/ProjectId
+   session-id :- s.schema/SessionId
+   message-id :- s.schema/MessageId
    line :- s/Str]
   {:__typename "QueueOperationMessage"
    :id (encode-id "Message" (str project-id "/" session-id "/" message-id))
@@ -264,11 +264,11 @@
    :content (:content data)
    :queueSessionId (:sessionId data)})
 
-(s/defn ^:private parse-system-message :- s.backend.schema/SystemMessage
+(s/defn ^:private parse-system-message :- s.schema/SystemMessage
   [data :- s/Any
-   project-id :- s.backend.schema/ProjectId
-   session-id :- s.backend.schema/SessionId
-   message-id :- s.backend.schema/MessageId
+   project-id :- s.schema/ProjectId
+   session-id :- s.schema/SessionId
+   message-id :- s.schema/MessageId
    line :- s/Str]
   {:__typename "SystemMessage"
    :id (encode-id "Message" (str project-id "/" session-id "/" message-id))
@@ -292,11 +292,11 @@
                       {:trigger (:trigger cm)
                        :preTokens (:preTokens cm)})})
 
-(s/defn ^:private parse-summary-message :- s.backend.schema/SummaryMessage
+(s/defn ^:private parse-summary-message :- s.schema/SummaryMessage
   [data :- s/Any
-   project-id :- s.backend.schema/ProjectId
-   session-id :- s.backend.schema/SessionId
-   message-id :- s.backend.schema/MessageId
+   project-id :- s.schema/ProjectId
+   session-id :- s.schema/SessionId
+   message-id :- s.schema/MessageId
    line :- s/Str]
   {:__typename "SummaryMessage"
    :id (encode-id "Message" (str project-id "/" session-id "/" message-id))
@@ -307,9 +307,9 @@
    :summary (:summary data)
    :leafUuid (:leafUuid data)})
 
-(s/defn ^:private parse-message-line :- s.backend.schema/Message
-  [project-id :- s.backend.schema/ProjectId
-   session-id :- s.backend.schema/SessionId
+(s/defn ^:private parse-message-line :- s.schema/Message
+  [project-id :- s.schema/ProjectId
+   session-id :- s.schema/SessionId
    idx :- s/Int
    line :- s/Str]
   (try
@@ -336,9 +336,9 @@
        :messageId (str idx)
        :rawMessage line})))
 
-(s/defn ^:private list-messages :- [s.backend.schema/Message]
-  [project-id :- s.backend.schema/ProjectId
-   session-id :- s.backend.schema/SessionId]
+(s/defn ^:private list-messages :- [s.schema/Message]
+  [project-id :- s.schema/ProjectId
+   session-id :- s.schema/SessionId]
   (let [file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))
         content (try (.readFileSync fs file-path "utf-8") (catch :default _ ""))
         lines (->> (.split content "\n") (filter #(not= % "")))]

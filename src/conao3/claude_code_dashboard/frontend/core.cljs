@@ -10,7 +10,7 @@
    ["react-stately" :as stately]
    ["remark-gfm" :as remarkGfm]
    [clojure.string :as str]
-   [conao3.claude-code-dashboard.frontend.schema :as s.frontend.schema]
+   [conao3.claude-code-dashboard.schema :as s.schema]
    [reagent.core :as r]
    [reagent.dom.client :as reagent.dom.client]
    [schema.core :as s]))
@@ -80,7 +80,7 @@
 (defonce selected-session-id (r/atom nil))
 (defonce session-search (r/atom ""))
 
-(s/defn ^:private parse-url-path :- (s/maybe s.frontend.schema/UrlPath)
+(s/defn ^:private parse-url-path :- (s/maybe s.schema/UrlPath)
   []
   (let [path (.-pathname js/window.location)
         match (re-matches #"/projects/([^/]+)(?:/sessions/([^/]+))?" path)]
@@ -177,8 +177,8 @@
   [name :- s/Str]
   (last (str/split name #"/")))
 
-(s/defn NavItem :- s.frontend.schema/Hiccup
-  [{:keys [icon label active collapsed on-click badge]} :- s.frontend.schema/NavItemProps]
+(s/defn NavItem :- s.schema/Hiccup
+  [{:keys [icon label active collapsed on-click badge]} :- s.schema/NavItemProps]
   [:> rac/Button
    {:className (str "flex items-center gap-3 w-full rounded-md transition-all outline-none "
                     (if collapsed "p-3 justify-center" "px-3 py-2.5 justify-start")
@@ -191,8 +191,8 @@
       (when badge
         [:span.bg-accent-background.text-white.text-xs.px-1.5.py-0.5.rounded-full.min-w-5.text-center badge])])])
 
-(s/defn ProjectItem :- s.frontend.schema/Hiccup
-  [{:keys [project active collapsed on-click]} :- s.frontend.schema/ProjectItemProps]
+(s/defn ProjectItem :- s.schema/Hiccup
+  [{:keys [project active collapsed on-click]} :- s.schema/ProjectItemProps]
   [:> rac/Button
    {:className (str "flex items-center gap-2 w-full rounded transition-all outline-none "
                     (if collapsed "p-2 justify-center" "px-3 py-2 justify-start")
@@ -203,15 +203,15 @@
    (when-not collapsed
      [:span.text-sm.truncate.flex-1.text-left (project-basename (:name project))])])
 
-(s/defn ^:private parse-project-node :- s.frontend.schema/Project
+(s/defn ^:private parse-project-node :- s.schema/Project
   [node :- s/Any]
   {:id (.-id node)
    :name (.-name node)
    :projectId (.-projectId node)
    :hasSessions (pos? (count (-> node .-sessions .-edges)))})
 
-(s/defn ProjectsList :- s.frontend.schema/Hiccup
-  [{:keys [on-select-project collapsed]} :- s.frontend.schema/ProjectsListProps]
+(s/defn ProjectsList :- s.schema/Hiccup
+  [{:keys [on-select-project collapsed]} :- s.schema/ProjectsListProps]
   (let [scroll-container-ref (react/useRef nil)
         current-project-id @selected-project-id
         list (stately/useAsyncList
@@ -253,8 +253,8 @@
          [:div.flex.items-center.justify-center.py-2.text-neutral-subdued-content
           [:> lucide/Loader2 {:size 14 :className "animate-spin"}]])])))
 
-(s/defn Sidebar :- s.frontend.schema/Hiccup
-  [{:keys [on-select-project]} :- s.frontend.schema/SidebarProps]
+(s/defn Sidebar :- s.schema/Hiccup
+  [{:keys [on-select-project]} :- s.schema/SidebarProps]
   (let [collapsed @sidebar-collapsed]
     [:div {:class (str "flex flex-col h-full min-h-0 bg-background-layer-1 border-r border-gray-200 transition-all duration-200 "
                        (if collapsed "w-16" "w-60"))}
@@ -299,8 +299,8 @@
     (let [date (js/Date. date-str)]
       (str (.toLocaleDateString date "ja-JP") " " (.toLocaleTimeString date "ja-JP" #js {:hour "2-digit" :minute "2-digit"})))))
 
-(s/defn SessionItem :- s.frontend.schema/Hiccup
-  [{:keys [session active on-click]} :- s.frontend.schema/SessionItemProps]
+(s/defn SessionItem :- s.schema/Hiccup
+  [{:keys [session active on-click]} :- s.schema/SessionItemProps]
   [:> rac/Button
    {:className (str "w-full text-left p-3 border-b border-gray-200 outline-none transition-all "
                     (if active
@@ -314,15 +314,15 @@
    [:div.text-xs.text-neutral-subdued-content
     (format-date (:createdAt session))]])
 
-(s/defn ^:private parse-session-node :- s.frontend.schema/Session
+(s/defn ^:private parse-session-node :- s.schema/Session
   [node :- s/Any]
   {:id (.-id node)
    :projectId (.-projectId node)
    :sessionId (.-sessionId node)
    :createdAt (.-createdAt node)})
 
-(s/defn SessionsList :- s.frontend.schema/Hiccup
-  [{:keys [project-id on-select-session]} :- s.frontend.schema/SessionsListProps]
+(s/defn SessionsList :- s.schema/Hiccup
+  [{:keys [project-id on-select-session]} :- s.schema/SessionsListProps]
   (let [scroll-container-ref (react/useRef nil)
         project-id-ref (react/useRef project-id)
         current-session-id @selected-session-id
@@ -383,8 +383,8 @@
             [:> lucide/Loader2 {:size 16 :className "animate-spin mr-2"}]
             "Loading more..."])]))))
 
-(s/defn SessionsPanel :- s.frontend.schema/Hiccup
-  [{:keys [project on-select-session]} :- s.frontend.schema/SessionsPanelProps]
+(s/defn SessionsPanel :- s.schema/Hiccup
+  [{:keys [project on-select-session]} :- s.schema/SessionsPanelProps]
   [:div.w-72.bg-background-base.border-r.border-gray-200.flex.flex-col
    [:div.p-4.border-b.border-gray-200.flex.items-center.justify-between
     [:h2.text-base.font-semibold.text-neutral-content.truncate
@@ -408,10 +408,10 @@
    [:f> SessionsList {:project-id (:id project)
                       :on-select-session on-select-session}]])
 
-(s/defn CopyButton :- s.frontend.schema/Hiccup
+(s/defn CopyButton :- s.schema/Hiccup
   []
   (let [copied? (r/atom false)]
-    (s/fn [{:keys [text label class]} :- s.frontend.schema/CopyButtonProps]
+    (s/fn [{:keys [text label class]} :- s.schema/CopyButtonProps]
       [:> rac/Button
        {:className (str "px-2 py-1 rounded bg-background-layer-1 opacity-0 group-hover:opacity-70 hover:opacity-100 pressed:opacity-100 flex items-center gap-1 text-xs " class)
         :onPress (fn []
@@ -441,24 +441,24 @@
        :th (fn [props] (r/as-element [:th.border.border-gray-300.px-2.py-1.bg-background-layer-1.text-left.font-medium (.-children props)]))
        :td (fn [props] (r/as-element [:td.border.border-gray-300.px-2.py-1 (.-children props)]))})
 
-(s/defn Markdown :- s.frontend.schema/Hiccup
-  [{:keys [children class]} :- s.frontend.schema/MarkdownProps]
+(s/defn Markdown :- s.schema/Hiccup
+  [{:keys [children class]} :- s.schema/MarkdownProps]
   [:> ReactMarkdown/default
    {:remarkPlugins #js [remarkGfm/default]
     :components markdown-components
     :className class}
    children])
 
-(s/defn ToolResultBlock :- s.frontend.schema/Hiccup
-  [{:keys [block]} :- s.frontend.schema/ToolResultBlockProps]
+(s/defn ToolResultBlock :- s.schema/Hiccup
+  [{:keys [block]} :- s.schema/ToolResultBlockProps]
   [:div.mt-2.p-3.rounded-lg.bg-background-layer-1.border.border-gray-200
    [:div.text-xs.font-medium.text-neutral-subdued-content.mb-1 "Tool Result"]
    [:div.text-xs.text-neutral-subdued-content.mb-2 (str "ID: " (:tool_use_id block))]
    (when (:content block)
      [:pre.text-xs.whitespace-pre-wrap.break-all.text-neutral-content (:content block)])])
 
-(s/defn ContentBlock :- s.frontend.schema/Hiccup
-  [{:keys [block tool-results]} :- s.frontend.schema/ContentBlockProps]
+(s/defn ContentBlock :- s.schema/Hiccup
+  [{:keys [block tool-results]} :- s.schema/ContentBlockProps]
   (case (:type block)
     "text"
     [:div.text-sm.leading-relaxed
@@ -493,8 +493,8 @@
     [:div.mt-3.p-3.rounded-lg.bg-notice-background.text-white
      [:div.text-xs.font-medium (str "Unknown: " (:type block))]]))
 
-(s/defn MessageBubble :- s.frontend.schema/Hiccup
-  [{:keys [role icon icon-class time tool-count thinking?]} :- s.frontend.schema/MessageBubbleProps
+(s/defn MessageBubble :- s.schema/Hiccup
+  [{:keys [role icon icon-class time tool-count thinking?]} :- s.schema/MessageBubbleProps
    & children :- [s/Any]]
   [:div {:class (str "mb-4 " (when (= role :user) "pl-12"))}
    [:div {:class (str "rounded-xl p-4 border "
@@ -524,8 +524,8 @@
     (catch :default _
       raw-message)))
 
-(s/defn AssistantMessage :- s.frontend.schema/Hiccup
-  [{:keys [message tool-results]} :- s.frontend.schema/AssistantMessageProps]
+(s/defn AssistantMessage :- s.schema/Hiccup
+  [{:keys [message tool-results]} :- s.schema/AssistantMessageProps]
   (let [yaml-text (safe-yaml-dump (:rawMessage message))
         content-blocks (get-in message [:message :content])
         tool-count (->> content-blocks (filter #(= (:type %) "tool_use")) count)
@@ -546,8 +546,8 @@
          [CopyButton {:text (:rawMessage message) :label "Raw"}]]
         [:pre.text-xs.whitespace-pre-wrap.break-all.bg-background-base.p-2.rounded.max-h-48.overflow-auto yaml-text]]]]]))
 
-(s/defn UserMessage :- s.frontend.schema/Hiccup
-  [{:keys [message displayed-tool-use-ids]} :- s.frontend.schema/UserMessageProps]
+(s/defn UserMessage :- s.schema/Hiccup
+  [{:keys [message displayed-tool-use-ids]} :- s.schema/UserMessageProps]
   (js/console.log "UserMessage component message:" (clj->js message))
   (let [yaml-text (safe-yaml-dump (:rawMessage message))
         content-blocks (get-in message [:message :content])
@@ -577,8 +577,8 @@
           [CopyButton {:text (:rawMessage message) :label "Raw"}]]
          [:pre.text-xs.whitespace-pre-wrap.break-all.bg-background-base.p-2.rounded.max-h-48.overflow-auto yaml-text]]]]]]))
 
-(s/defn SystemMessageItem :- s.frontend.schema/Hiccup
-  [{:keys [message]} :- s.frontend.schema/SystemMessageItemProps]
+(s/defn SystemMessageItem :- s.schema/Hiccup
+  [{:keys [message]} :- s.schema/SystemMessageItemProps]
   (let [yaml-text (safe-yaml-dump (:rawMessage message))]
     [:div.mb-3.opacity-60
      [:div {:class "rounded-lg p-3 bg-informative-background-subdued border border-informative-background"}
@@ -600,8 +600,8 @@
          [CopyButton {:text yaml-text :label "Copy"}]]
         [:pre.text-xs.whitespace-pre-wrap.break-all.bg-background-base.p-2.rounded.max-h-32.overflow-auto yaml-text]]]]]))
 
-(s/defn SummaryMessageItem :- s.frontend.schema/Hiccup
-  [{:keys [message]} :- s.frontend.schema/SummaryMessageItemProps]
+(s/defn SummaryMessageItem :- s.schema/Hiccup
+  [{:keys [message]} :- s.schema/SummaryMessageItemProps]
   (let [yaml-text (safe-yaml-dump (:rawMessage message))]
     [:div.mb-3.opacity-60
      [:div {:class "rounded-lg p-3 bg-positive-background-subdued border border-positive-background"}
@@ -616,8 +616,8 @@
          [CopyButton {:text yaml-text :label "Copy"}]]
         [:pre.text-xs.whitespace-pre-wrap.break-all.bg-background-base.p-2.rounded.max-h-32.overflow-auto yaml-text]]]]]))
 
-(s/defn FileHistorySnapshotMessage :- s.frontend.schema/Hiccup
-  [{:keys [message]} :- s.frontend.schema/FileHistorySnapshotMessageProps]
+(s/defn FileHistorySnapshotMessage :- s.schema/Hiccup
+  [{:keys [message]} :- s.schema/FileHistorySnapshotMessageProps]
   (let [yaml-text (safe-yaml-dump (:rawMessage message))
         snapshot (:snapshot message)
         tracked-file-backups (-> (:trackedFileBackups snapshot) js/JSON.parse js/Object.keys js->clj)]
@@ -639,8 +639,8 @@
          [CopyButton {:text yaml-text :label "Copy"}]]
         [:pre.text-xs.whitespace-pre-wrap.break-all.bg-background-base.p-2.rounded.max-h-32.overflow-auto yaml-text]]]]]))
 
-(s/defn QueueOperationMessage :- s.frontend.schema/Hiccup
-  [{:keys [message]} :- s.frontend.schema/QueueOperationMessageProps]
+(s/defn QueueOperationMessage :- s.schema/Hiccup
+  [{:keys [message]} :- s.schema/QueueOperationMessageProps]
   (let [yaml-text (safe-yaml-dump (:rawMessage message))]
     [:div.mb-3.opacity-50
      [:div.rounded-lg.p-3.bg-background-layer-1.border.border-gray-200
@@ -658,8 +658,8 @@
          [CopyButton {:text yaml-text :label "Copy"}]]
         [:pre.text-xs.whitespace-pre-wrap.break-all.bg-background-base.p-2.rounded.max-h-32.overflow-auto yaml-text]]]]]))
 
-(s/defn UnknownMessage :- s.frontend.schema/Hiccup
-  [{:keys [message]} :- s.frontend.schema/UnknownMessageProps]
+(s/defn UnknownMessage :- s.schema/Hiccup
+  [{:keys [message]} :- s.schema/UnknownMessageProps]
   (let [yaml-text (safe-yaml-dump (:rawMessage message))]
     [:div.mb-3
      [:div.rounded-lg.p-3.bg-notice-background.text-white
@@ -670,8 +670,8 @@
        [:summary.text-xs.cursor-pointer "Raw"]
        [:pre {:class "text-xs whitespace-pre-wrap break-all bg-black/20 p-2 rounded mt-1 max-h-32 overflow-auto"} yaml-text]]]]))
 
-(s/defn BrokenMessage :- s.frontend.schema/Hiccup
-  [{:keys [message]} :- s.frontend.schema/BrokenMessageProps]
+(s/defn BrokenMessage :- s.schema/Hiccup
+  [{:keys [message]} :- s.schema/BrokenMessageProps]
   [:div.mb-3
    [:div.rounded-lg.p-3.bg-negative-background.text-white
     [:div.flex.items-center.gap-2.text-xs
@@ -682,8 +682,8 @@
      [:pre {:class "text-xs whitespace-pre-wrap break-all bg-black/20 p-2 rounded mt-1 max-h-32 overflow-auto"}
       (:rawMessage message)]]]])
 
-(s/defn safe-render-message :- (s/maybe s.frontend.schema/Hiccup)
-  [{:keys [message tool-results displayed-tool-use-ids]} :- s.frontend.schema/SafeRenderMessageProps]
+(s/defn safe-render-message :- (s/maybe s.schema/Hiccup)
+  [{:keys [message tool-results displayed-tool-use-ids]} :- s.schema/SafeRenderMessageProps]
   (try
     (case (:__typename message)
       "AssistantMessage" [AssistantMessage {:message message :tool-results tool-results}]
@@ -702,7 +702,7 @@
          [:> lucide/AlertTriangle {:size 12}]
          [:span (str "Render error: " (.-message e))]]]])))
 
-(s/defn ^:private parse-message-node :- s.frontend.schema/Message
+(s/defn ^:private parse-message-node :- s.schema/FrontendMessage
   [node :- s/Any]
   (let [typename (.-__typename node)
         snapshot (.-snapshot node)]
@@ -750,7 +750,7 @@
                                   (.-content msg))})
                 nil)}))
 
-(s/defn MessageList :- s.frontend.schema/Hiccup
+(s/defn MessageList :- s.schema/Hiccup
   []
   (let [session-id @selected-session-id
         scroll-container-ref (react/useRef nil)
@@ -836,7 +836,7 @@
               [:> lucide/Loader2 {:size 20 :className "animate-spin mr-2"}]
               "Loading more..."])])]]))))
 
-(s/defn MessagesPanel :- s.frontend.schema/Hiccup
+(s/defn MessagesPanel :- s.schema/Hiccup
   []
   [:div.flex-1.flex.flex-col.bg-background-base.min-h-0.overflow-hidden
    [:div.p-4.border-b.border-gray-200.shrink-0
@@ -856,7 +856,7 @@
     (reset! url-initialized true))
   nil)
 
-(s/defn MainContent :- s.frontend.schema/Hiccup
+(s/defn MainContent :- s.schema/Hiccup
   []
   (init-url!)
   (let [current-project-id @selected-project-id
@@ -879,7 +879,7 @@
                                           (update-url! current-project-id-decoded (:sessionId session)))}]
      [MessagesPanel]]))
 
-(s/defn App :- s.frontend.schema/Hiccup
+(s/defn App :- s.schema/Hiccup
   []
   [:> apollo.react/ApolloProvider {:client apollo-client}
    [:div.h-screen.flex.flex-col.bg-background-base.text-neutral-content.text-sm
