@@ -20,13 +20,15 @@
    (s/optional-key :session-id) (s/maybe s/Str)})
 
 (def Project
-  {:id ID
+  {:__typename s/Str
+   :id ID
    :projectId ProjectId
    :name s/Str
    (s/optional-key :hasSessions) s/Bool})
 
 (def Session
-  {:id ID
+  {:__typename s/Str
+   :id ID
    :projectId ProjectId
    :sessionId SessionId
    :createdAt Timestamp})

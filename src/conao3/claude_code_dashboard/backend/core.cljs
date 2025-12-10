@@ -55,7 +55,8 @@
                       file-path (.join path project-dir filename)
                       stat (.statSync fs file-path)
                       created-at (.toISOString (.-birthtime stat))]
-                  {:id (encode-id "Session" (str project-id "/" session-id))
+                  {:__typename "Session"
+                  :id (encode-id "Session" (str project-id "/" session-id))
                    :projectId project-id
                    :sessionId session-id
                    :createdAt created-at})))
@@ -68,9 +69,11 @@
   (let [claude-json (read-claude-json)]
     (->> (:projects claude-json)
          (map (fn [[k _v]]
-                (let [project-path (subs (str k) 1)]
-                  {:id (encode-id "Project" project-path)
-                   :projectId (path->slug project-path)
+                (let [project-path (subs (str k) 1)
+                      project-id (path->slug project-path)]
+                  {:__typename "Project"
+                  :id (encode-id "Project" project-id)
+                   :projectId project-id
                    :name project-path})))
          vec)))
 
@@ -338,13 +341,9 @@
   [args :- s/Any]
   (let [{:keys [type raw-id]} (decode-id (.-id args))]
     (case type
-      "Project" (let [claude-json (read-claude-json)
-                      project-path raw-id]
-                  (when (get-in claude-json [:projects (keyword project-path)])
-                    {:__typename "Project"
-                     :id (.-id args)
-                     :projectId (path->slug project-path)
-                     :name project-path}))
+      "Project" (->> (list-projects)
+                     (filter #(= (:projectId %) raw-id))
+                     first)
       "Session" (let [[project-id session-id] (.split raw-id "/")
                       file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))]
                   (when (.existsSync fs file-path)
@@ -372,6 +371,7 @@
   {"Query" {"hello" (fn [] "Hello from Apollo Server!")
             "projects" (fn [_ args] (clj->js (paginate (list-projects) args)))
             "node" (fn [_ args] (clj->js (node-resolver args)))}
+   "Node" {"__resolveType" (fn [obj] (aget obj "__typename"))}
    "Project" {"sessions"
               (fn [parent args]
                 (-> (list-sessions (aget parent "projectId"))

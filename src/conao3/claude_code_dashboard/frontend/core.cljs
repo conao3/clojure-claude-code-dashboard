@@ -206,7 +206,8 @@
 (s/defn ^:private parse-project-node :- s.schema/Project
   [node :- s/Any]
   (let [^js node node]
-    {:id (.-id node)
+    {:__typename "Project"
+     :id (.-id node)
      :name (.-name node)
      :projectId (.-projectId node)
      :hasSessions (pos? (count (-> node .-sessions .-edges)))}))
@@ -244,13 +245,13 @@
      #js [(count (.-items list)) (.-isLoading list)])
     (cond
       (and (.-isLoading list) (zero? (count (.-items list)))) [:div.p-2.text-neutral-subdued-content.text-sm "Loading..."]
-      (.-error list) [:div.p-2.text-negative-content.text-sm "Error"]
+      (.-error list) [:div.p-2.text-negative-content.text-sm (str "Error: " (.-error list))]
       :else
       [:div.flex-1.overflow-y-auto.min-h-0.p-2.flex.flex-col.gap-0.5
        {:ref scroll-container-ref
         :on-scroll (fn [_e] (check-scroll-and-load))}
        (for [^js project (.-items list)]
-         (let [p {:id (.-id project) :name (.-name project) :projectId (.-projectId project) :hasSessions (.-hasSessions project)}]
+         (let [p {:__typename "Project" :id (.-id project) :name (.-name project) :projectId (.-projectId project) :hasSessions (.-hasSessions project)}]
            ^{:key (:id p)}
            [ProjectItem {:project p
                          :active (= (:id p) current-project-id)
@@ -324,7 +325,8 @@
 (s/defn ^:private parse-session-node :- s.schema/Session
   [node :- s/Any]
   (let [^js node node]
-    {:id (.-id node)
+    {:__typename "Session"
+     :id (.-id node)
      :projectId (.-projectId node)
      :sessionId (.-sessionId node)
      :createdAt (.-createdAt node)}))
@@ -387,7 +389,7 @@
          {:ref scroll-container-ref
           :on-scroll (fn [_e] (check-scroll-and-load))}
          (for [^js session filtered-sessions]
-           (let [s {:id (.-id session) :projectId (.-projectId session) :sessionId (.-sessionId session) :createdAt (.-createdAt session)}]
+           (let [s {:__typename "Session" :id (.-id session) :projectId (.-projectId session) :sessionId (.-sessionId session) :createdAt (.-createdAt session)}]
              ^{:key (:id s)}
              [SessionItem {:session s
                            :active (= (:id s) current-session-id)
@@ -871,7 +873,7 @@
   []
   (when-not @url-initialized
     (when-let [{:keys [project-id session-id]} (parse-url-path)]
-      (reset! selected-project-id (js/btoa (str "Project:/" project-id)))
+      (reset! selected-project-id (js/btoa (str "Project:" project-id)))
       (when session-id
         (reset! selected-session-id (js/btoa (str "Session:" project-id "/" session-id)))))
     (reset! url-initialized true))
@@ -880,13 +882,7 @@
 (s/defn MainContent :- s.schema/Hiccup
   []
   (init-url!)
-  (let [current-project-id @selected-project-id
-        current-project-id-decoded (when current-project-id
-                                     (try
-                                       (let [decoded (js/atob current-project-id)
-                                             [_ raw-id] (.split decoded ":")]
-                                         (subs raw-id 1))
-                                       (catch :default _ nil)))]
+  (let [current-project-id @selected-project-id]
     [:div.flex.flex-1.min-h-0
      [:f> Sidebar {:on-select-project (fn [project]
                                         (reset! selected-project-id (:id project))
@@ -894,10 +890,10 @@
                                         (update-url! (:projectId project) nil))}]
      [SessionsPanel {:project (when current-project-id
                                 {:id current-project-id
-                                 :name current-project-id-decoded})
+                                 :name (-> (js/atob current-project-id) (.split ":") second)})
                      :on-select-session (fn [session]
                                           (reset! selected-session-id (:id session))
-                                          (update-url! current-project-id-decoded (:sessionId session)))}]
+                                          (update-url! (:projectId session) (:sessionId session)))}]
      [MessagesPanel]]))
 
 (s/defn App :- s.schema/Hiccup
