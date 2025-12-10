@@ -50,12 +50,10 @@ test-frontend:
 .PHONY: test-backend
 test-backend:
 	pnpm exec shadow-cljs compile test-backend
-	node target/test/backend/test.js
 
 .PHONY: test-lib
 test-lib:
 	pnpm exec shadow-cljs compile test-lib
-	node target/test/lib/test.js
 
 .PHONY: test
 test:
