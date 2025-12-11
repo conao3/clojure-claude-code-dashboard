@@ -32,11 +32,11 @@ watch-css:
 
 .PHONY: release-frontend
 release-frontend:
-	pnpm exec shadow-cljs release frontend
+	pnpm exec shadow-cljs release frontend --force-spawn
 
 .PHONY: release-backend
 release-backend:
-	pnpm exec shadow-cljs release backend
+	pnpm exec shadow-cljs release backend --force-spawn
 
 .PHONY: release
 release:
