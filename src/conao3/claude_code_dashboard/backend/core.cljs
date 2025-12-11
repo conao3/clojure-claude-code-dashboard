@@ -141,7 +141,7 @@
                      (.use app (express/static public-dir))
                      ;; Serve index.html for all non-API routes (SPA support)
                      ;; Express 5 requires named wildcard parameter
-                     (.get app "{*path}" (fn [_req res]
+                     (.get app "{*path}" (fn [_req ^js res]
                                            (.sendFile res (.join path public-dir "index.html"))))))
                  (let [server (.listen app port)]
                    (reset! server-state {:server server :api-server api-server :admin-server admin-server})
