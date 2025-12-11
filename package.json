@@ -6,11 +6,11 @@
   "packageManager": "pnpm@10.24.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/conao3/clojure-claude-code-dashboard.git"
+    "url": "git+https://github.com/conao3/clojure-ccboard.git"
   },
-  "homepage": "https://github.com/conao3/clojure-claude-code-dashboard#readme",
+  "homepage": "https://github.com/conao3/clojure-ccboard#readme",
   "bugs": {
-    "url": "https://github.com/conao3/clojure-claude-code-dashboard/issues"
+    "url": "https://github.com/conao3/clojure-ccboard/issues"
   },
   "keywords": [
     "claude",
