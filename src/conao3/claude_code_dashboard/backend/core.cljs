@@ -115,6 +115,10 @@
                     clj->js))}
    "Message" {"__resolveType" (fn [obj] (aget obj "__typename"))}})
 
+(defn ^:private get-public-dir []
+  ;; In release mode, static files are at ../public relative to this script
+  (.join path js/__dirname ".." "public"))
+
 (s/defn start-server :- (s/eq nil)
   []
   (let [type-defs (shadow.resource/inline "schema.graphql")
@@ -124,17 +128,28 @@
         admin-server (apollo/ApolloServer. (clj->js {:typeDefs type-defs
                                                      :resolvers resolvers
                                                      :plugins [(apollo.landing/ApolloServerPluginLandingPageLocalDefault)]}))
-        app (express)]
+        app (express)
+        port (if goog.DEBUG 4000 3000)]
     (-> (js/Promise.all #js [(.start api-server) (when goog.DEBUG (.start admin-server))])
         (.then (fn []
                  (.use app "/api/graphql" (cors) (express/json) (apollo.express/expressMiddleware api-server))
                  (when goog.DEBUG
                    (.use app "/admin/apollo" (cors) (express/json) (apollo.express/expressMiddleware admin-server)))
-                 (let [server (.listen app 4000)]
+                 ;; In release mode, serve static files
+                 (when-not goog.DEBUG
+                   (let [public-dir (get-public-dir)]
+                     (.use app (express/static public-dir))
+                     ;; Serve index.html for all non-API routes (SPA support)
+                     ;; Express 5 requires named wildcard parameter
+                     (.get app "{*path}" (fn [_req ^js res]
+                                           (.sendFile res (.join path public-dir "index.html"))))))
+                 (let [server (.listen app port)]
                    (reset! server-state {:server server :api-server api-server :admin-server admin-server})
-                   (println "Server ready at http://localhost:4000/api/graphql")
-                   (when goog.DEBUG
-                     (println "Apollo Sandbox at http://localhost:4000/admin/apollo"))
+                   (if goog.DEBUG
+                     (do
+                       (println "Server ready at http://localhost:4000/api/graphql")
+                       (println "Apollo Sandbox at http://localhost:4000/admin/apollo"))
+                     (println (str "Claude Code Dashboard running at http://localhost:" port)))
                    nil)))))
   nil)
 

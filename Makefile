@@ -32,16 +32,26 @@ watch-css:
 
 .PHONY: release-frontend
 release-frontend:
-	pnpm exec shadow-cljs release frontend
+	pnpm exec shadow-cljs release frontend --force-spawn
 
 .PHONY: release-backend
 release-backend:
-	pnpm exec shadow-cljs release backend
+	pnpm exec shadow-cljs release backend --force-spawn
 
 .PHONY: release
 release:
 	${MAKE} release-frontend
 	${MAKE} release-backend
+
+.PHONY: dist-css
+dist-css:
+	${MAKE} generate-spectrum-colors
+	pnpm exec postcss resources/public/css/main.css -o resources/public/dist/css/main.css
+
+.PHONY: dist
+dist:
+	${MAKE} dist-css
+	${MAKE} release
 
 .PHONY: test-frontend
 test-frontend:

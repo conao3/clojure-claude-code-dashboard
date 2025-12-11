@@ -1,10 +1,41 @@
 {
-  "name": "clojure-claude-code-dashboard",
-  "version": "1.0.0",
+  "name": "claude-code-dashboard",
+  "version": "0.1.0",
+  "description": "A dashboard for viewing Claude Code sessions and messages",
   "license": "Apache-2.0",
   "packageManager": "pnpm@10.24.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/conao3/clojure-claude-code-dashboard.git"
+  },
+  "homepage": "https://github.com/conao3/clojure-claude-code-dashboard#readme",
+  "bugs": {
+    "url": "https://github.com/conao3/clojure-claude-code-dashboard/issues"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "dashboard",
+    "ai",
+    "anthropic"
+  ],
+  "author": "conao3",
+  "bin": {
+    "claude-code-dashboard": "./bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "resources/backend/",
+    "resources/public/index.html",
+    "resources/public/dist/",
+    "resources/public/css/spectrum-colors.css",
+    "resources/schema.graphql"
+  ],
   "engines": {
-    "node": "^24.11.1"
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "prepublishOnly": "make dist"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.1.62",
