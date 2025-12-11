@@ -1,19 +1,28 @@
 name: Publish to npm
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version bump type
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 
 jobs:
   publish:
-    name: Publish to npm
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
       - uses: actions/checkout@v4
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - uses: nixbuild/nix-quick-install-action@v30
 
@@ -24,15 +33,8 @@ jobs:
           purge: true
           purge-prefixes: nix-${{ runner.os }}-
           purge-created: 0
-
-      - name: Install dependencies
-        run: nix develop --command pnpm install --frozen-lockfile
-
-      - name: Build
-        run: nix develop --command make dist
-
-      - name: Setup npm authentication
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
-      - name: Publish to npm
-        run: nix develop --command pnpm publish --no-git-checks
+      - run: nix develop --command pnpm install --frozen-lockfile
+      - run: nix develop --command make dist
+      - run: npm version ${{ inputs.version }}
+      - run: git push --follow-tags
+      - run: nix develop --command pnpm publish --no-git-checks --provenance
