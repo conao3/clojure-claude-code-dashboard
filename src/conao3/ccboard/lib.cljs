@@ -1,7 +1,7 @@
-(ns conao3.claude-code-dashboard.lib
+(ns conao3.ccboard.lib
   (:require
-   [conao3.claude-code-dashboard.schema :as c.schema]
-   [conao3.claude-code-dashboard.util :as c.util]
+   [conao3.ccboard.schema :as c.schema]
+   [conao3.ccboard.util :as c.util]
    [schema.core :as s]))
 
 (when goog.DEBUG

@@ -1,4 +1,4 @@
-(ns conao3.claude-code-dashboard.util
+(ns conao3.ccboard.util
   (:require
    [clojure.string :as str]))
 

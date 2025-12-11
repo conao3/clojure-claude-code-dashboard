@@ -1,4 +1,4 @@
-(ns conao3.claude-code-dashboard.portfolio.navigation
+(ns conao3.ccboard.portfolio.navigation
   (:require
    [portfolio.reagent-18 :refer-macros [defscene]]
    ["lucide-react" :as lucide]
@@ -95,7 +95,7 @@
   :title "ProjectItem - Default"
   [:div.bg-background-layer-1.p-4.w-60
    [ProjectItem {:project {:id "1"
-                           :name "claude-code-dashboard"
+                           :name "ccboard"
                            :sessions [{:id "s1"} {:id "s2"} {:id "s3"}]}
                  :active false
                  :collapsed false
@@ -105,7 +105,7 @@
   :title "ProjectItem - Active"
   [:div.bg-background-layer-1.p-4.w-60
    [ProjectItem {:project {:id "1"
-                           :name "claude-code-dashboard"
+                           :name "ccboard"
                            :sessions [{:id "s1"} {:id "s2"}]}
                  :active true
                  :collapsed false

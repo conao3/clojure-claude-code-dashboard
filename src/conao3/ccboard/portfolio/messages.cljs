@@ -1,4 +1,4 @@
-(ns conao3.claude-code-dashboard.portfolio.messages
+(ns conao3.ccboard.portfolio.messages
   (:require
    [portfolio.reagent-18 :refer-macros [defscene]]
    ["lucide-react" :as lucide]

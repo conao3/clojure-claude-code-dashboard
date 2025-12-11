@@ -1,4 +1,4 @@
-(ns conao3.claude-code-dashboard.backend.core
+(ns conao3.ccboard.backend.core
   (:require
    ["@apollo/server" :as apollo]
    ["@apollo/server/plugin/disabled" :as apollo.plugin.disabled]
@@ -10,8 +10,8 @@
    ["node:os" :as os]
    ["node:path" :as path]
    [clojure.string :as str]
-   [conao3.claude-code-dashboard.lib :as c.lib]
-   [conao3.claude-code-dashboard.util :as c.util]
+   [conao3.ccboard.lib :as c.lib]
+   [conao3.ccboard.util :as c.util]
    [schema.core :as s]
    [shadow.resource :as shadow.resource]))
 
@@ -149,7 +149,7 @@
                      (do
                        (println "Server ready at http://localhost:4000/api/graphql")
                        (println "Apollo Sandbox at http://localhost:4000/admin/apollo"))
-                     (println (str "Claude Code Dashboard running at http://localhost:" port)))
+                     (println (str "ccboard running at http://localhost:" port)))
                    nil)))))
   nil)
 

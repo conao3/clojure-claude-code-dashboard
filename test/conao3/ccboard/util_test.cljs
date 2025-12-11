@@ -1,7 +1,7 @@
-(ns conao3.claude-code-dashboard.util-test
+(ns conao3.ccboard.util-test
   (:require
    [cljs.test :refer [deftest is testing]]
-   [conao3.claude-code-dashboard.util :as c.util]))
+   [conao3.ccboard.util :as c.util]))
 
 (deftest encode-id-test
   (testing "encodes type and raw-id into base64"

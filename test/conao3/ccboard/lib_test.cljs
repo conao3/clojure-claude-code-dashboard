@@ -1,7 +1,7 @@
-(ns conao3.claude-code-dashboard.lib-test
+(ns conao3.ccboard.lib-test
   (:require
    [cljs.test :refer [deftest is testing]]
-   [conao3.claude-code-dashboard.lib :as c.lib]))
+   [conao3.ccboard.lib :as c.lib]))
 
 (defn stringify [x]
   (js/JSON.stringify (clj->js x)))

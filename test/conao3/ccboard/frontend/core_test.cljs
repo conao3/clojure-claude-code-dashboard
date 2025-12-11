@@ -1,4 +1,4 @@
-(ns conao3.claude-code-dashboard.backend.core-test
+(ns conao3.ccboard.frontend.core-test
   (:require
    [cljs.test :refer [deftest is]]))
 

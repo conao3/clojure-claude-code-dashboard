@@ -9,7 +9,7 @@
   {:target :browser
    :output-dir "resources-portfolio/public/js"
    :asset-path "/js"
-   :modules {:main {:init-fn conao3.claude-code-dashboard.portfolio.core/start}}}
+   :modules {:main {:init-fn conao3.ccboard.portfolio.core/start}}}
 
   :frontend
   {:target :browser
@@ -18,31 +18,31 @@
    :release {:output-dir "resources/public/dist/js"}
    :modules
    {:main
-    {:preloads [conao3.claude-code-dashboard.frontend.preload]
-     :init-fn conao3.claude-code-dashboard.frontend.core/start}}}
+    {:preloads [conao3.ccboard.frontend.preload]
+     :init-fn conao3.ccboard.frontend.core/start}}}
 
   :backend
   {:target :node-script
    :output-to "resources-dev/backend/main.js"
    :release {:output-to "resources/backend/main.js"}
-   :main conao3.claude-code-dashboard.backend.core/main
+   :main conao3.ccboard.backend.core/main
    :build-hooks [(dev/validate-graphql-schema)]}
 
   :test-frontend
   {:target :browser-test
    :test-dir "target/test/frontend"
-   :ns-regexp "conao3.claude-code-dashboard.frontend.*-test$"
+   :ns-regexp "conao3.ccboard.frontend.*-test$"
    :devtools {:http-port 9100
               :http-root "target/test/frontend"}}
 
   :test-backend
   {:target :node-test
    :output-to "target/test/backend/test.js"
-   :ns-regexp "conao3.claude-code-dashboard.backend.*-test$"
+   :ns-regexp "conao3.ccboard.backend.*-test$"
    :autorun true}
 
   :test-lib
   {:target :node-test
    :output-to "target/test/lib/test.js"
-   :ns-regexp "conao3.claude-code-dashboard.(util|lib)-test$"
+   :ns-regexp "conao3.ccboard.(util|lib)-test$"
    :autorun true}}}

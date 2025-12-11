@@ -1,6 +1,6 @@
-# clojure-claude-code-dashboard
+# ccboard
 
-Claude Code Dashboard - ClojureScript frontend with Apollo GraphQL backend.
+ccboard (Claude Code Dashboard) - ClojureScript frontend with Apollo GraphQL backend.
 
 ## Development
 

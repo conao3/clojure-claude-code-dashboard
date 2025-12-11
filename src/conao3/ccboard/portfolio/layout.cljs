@@ -1,9 +1,9 @@
-(ns conao3.claude-code-dashboard.portfolio.layout
+(ns conao3.ccboard.portfolio.layout
   (:require
    [portfolio.reagent-18 :refer-macros [defscene]]
    ["lucide-react" :as lucide]
    ["react-aria-components" :as rac]
-   [conao3.claude-code-dashboard.portfolio.navigation :as nav]))
+   [conao3.ccboard.portfolio.navigation :as nav]))
 
 (defn Sidebar [{:keys [projects selected-project on-select-project collapsed]}]
   [:div {:class (str "flex flex-col bg-background-layer-1 border-r border-gray-200 transition-all duration-200 "
@@ -89,7 +89,7 @@
       "No session selected")]])
 
 (def sample-projects
-  [{:id "1" :name "claude-code-dashboard" :sessions [{:id "s1"} {:id "s2"} {:id "s3"}]}
+  [{:id "1" :name "ccboard" :sessions [{:id "s1"} {:id "s2"} {:id "s3"}]}
    {:id "2" :name "my-awesome-project" :sessions [{:id "s4"} {:id "s5"}]}
    {:id "3" :name "empty-project" :sessions []}
    {:id "4" :name "another-project" :sessions [{:id "s6"}]}])
@@ -135,7 +135,7 @@
 (defscene sessions-panel-default
   :title "SessionsPanel - Default"
   [:div.h-150.flex
-   [SessionsPanel {:project {:id "1" :name "claude-code-dashboard"}
+   [SessionsPanel {:project {:id "1" :name "ccboard"}
                    :sessions sample-sessions
                    :selected-session nil
                    :on-select-session #(js/console.log "Selected:" %)}]])
@@ -143,7 +143,7 @@
 (defscene sessions-panel-with-selection
   :title "SessionsPanel - With Selection"
   [:div.h-150.flex
-   [SessionsPanel {:project {:id "1" :name "claude-code-dashboard"}
+   [SessionsPanel {:project {:id "1" :name "ccboard"}
                    :sessions sample-sessions
                    :selected-session (second sample-sessions)
                    :on-select-session #(js/console.log "Selected:" %)}]])

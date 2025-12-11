@@ -1,4 +1,4 @@
-(ns conao3.claude-code-dashboard.schema
+(ns conao3.ccboard.schema
   (:require
    [schema.core :as s]))
 

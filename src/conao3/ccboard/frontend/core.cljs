@@ -1,4 +1,4 @@
-(ns conao3.claude-code-dashboard.frontend.core
+(ns conao3.ccboard.frontend.core
   (:require
    ["@apollo/client" :as apollo]
    ["@apollo/client/react" :as apollo.react]
@@ -10,9 +10,9 @@
    ["react-stately" :as stately]
    ["remark-gfm" :as remarkGfm]
    [clojure.string :as str]
-   [conao3.claude-code-dashboard.lib :as c.lib]
-   [conao3.claude-code-dashboard.schema :as c.schema]
-   [conao3.claude-code-dashboard.util :as c.util]
+   [conao3.ccboard.lib :as c.lib]
+   [conao3.ccboard.schema :as c.schema]
+   [conao3.ccboard.util :as c.util]
    [reagent.core :as r]
    [reagent.dom.client :as reagent.dom.client]
    [schema.core :as s]))
