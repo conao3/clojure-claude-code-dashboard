@@ -508,9 +508,12 @@
      [:div.text-xs.font-medium (str "Unknown: " (:type block))]]))
 
 (s/defn UserMessageBubble :- c.schema/Hiccup
-  [{:keys [content]} :- {:content c.schema/Hiccup}]
-  [:div.rounded-2xl.p-4.bg-accent-200
-   content])
+  [{:keys [content raw-details]} :- {:content c.schema/Hiccup
+                                     (s/optional-key :raw-details) (s/maybe c.schema/Hiccup)}]
+  [:div.relative.group
+   [:div.rounded-2xl.p-4.bg-accent-200
+    content]
+   raw-details])
 
 (s/defn AssistantMessageBubble :- c.schema/Hiccup
   [{:keys [content raw-details]} :- {:content c.schema/Hiccup
@@ -526,31 +529,34 @@
     (catch :default _
       raw-message)))
 
+(s/defn RawDetails :- c.schema/Hiccup
+  [{:keys [raw-message]} :- {:raw-message (s/maybe s/Str)}]
+  (let [yaml-text (safe-yaml-dump raw-message)]
+    [:details {:class "absolute top-1/2 -translate-y-1/2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"}
+     [:summary.text-gray-500.hover:text-gray-700.cursor-pointer.p-1.list-none
+      [:> lucide/Code {:size 16}]]
+     [:div.absolute.right-0.top-6.z-10.bg-gray-100.border.border-gray-300.rounded-lg.shadow-lg.p-3.w-96
+      [:div.flex.justify-between.items-center.mb-2
+       [:span.text-xs.font-medium.text-gray-800 "Raw"]
+       [:div.flex.gap-1
+        [CopyButton {:text yaml-text :label "Copy" :class "bg-gray-300 text-gray-900"}]
+        [CopyButton {:text raw-message :label "JSON" :class "bg-gray-300 text-gray-900"}]]]
+      [:pre.text-xs.whitespace-pre-wrap.break-all.bg-gray-25.p-2.rounded.max-h-64.overflow-auto.text-gray-900 yaml-text]]]))
+
 (s/defn AssistantMessage :- c.schema/Hiccup
   [{:keys [message tool-results]} :- c.schema/AssistantMessageProps]
-  (let [yaml-text (safe-yaml-dump (:rawMessage message))
-        content-blocks (get-in message [:message :content])]
+  (let [content-blocks (get-in message [:message :content])]
     [AssistantMessageBubble
      {:content (into [:div.flex.flex-col.gap-2]
                      (map-indexed
                       (fn [idx block]
                         ^{:key idx} [ContentBlock {:block block :tool-results tool-results}])
                       content-blocks))
-      :raw-details [:details.absolute.top-0.right-2.opacity-0.group-hover:opacity-100.transition-opacity
-                    [:summary.text-gray-500.hover:text-gray-700.cursor-pointer.p-1.list-none
-                     [:> lucide/Code {:size 16}]]
-                    [:div.absolute.right-0.top-6.z-10.bg-gray-100.border.border-gray-300.rounded-lg.shadow-lg.p-3.w-96
-                     [:div.flex.justify-between.items-center.mb-2
-                      [:span.text-xs.font-medium.text-gray-800 "Raw"]
-                      [:div.flex.gap-1
-                       [CopyButton {:text yaml-text :label "Copy" :class "bg-gray-300 text-gray-900"}]
-                       [CopyButton {:text (:rawMessage message) :label "JSON" :class "bg-gray-300 text-gray-900"}]]]
-                     [:pre.text-xs.whitespace-pre-wrap.break-all.bg-gray-25.p-2.rounded.max-h-64.overflow-auto.text-gray-900 yaml-text]]]}]))
+      :raw-details [RawDetails {:raw-message (:rawMessage message)}]}]))
 
 (s/defn UserMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/UserMessageProps]
-  (let [yaml-text (safe-yaml-dump (:rawMessage message))
-        content-blocks (get-in message [:message :content])
+  (let [content-blocks (get-in message [:message :content])
         text-blocks (filter #(= (:type %) "text") content-blocks)
         has-text? (seq text-blocks)]
     (when has-text?
@@ -562,115 +568,79 @@
                           (when (= (:type block) "text")
                             [:div.text-sm.leading-relaxed.text-gray-900
                              [Markdown {:children (:text block)}]]))
-                        content-blocks))}])))
+                        content-blocks))
+        :raw-details [RawDetails {:raw-message (:rawMessage message)}]}])))
 
 (s/defn SystemMessageItem :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/SystemMessageItemProps]
-  (let [yaml-text (safe-yaml-dump (:rawMessage message))]
-    [:div.opacity-60
-     [:div {:class "rounded-lg p-3 bg-informative-200 border border-informative-400"}
-      [:div.flex.items-center.gap-2.text-xs.text-informative-1200
-       [:> lucide/Settings {:size 12}]
-       [:span.font-medium (str "System: " (:subtype message))]
-       [:span.text-gray-600 (:timestamp message)]]
-      [:details.mt-2
-       [:summary.text-xs.text-gray-600.cursor-pointer "Raw"]
-       [:div.mt-2.text-xs.text-gray-700
-        [:div [:span.font-medium "Content: "] (:systemContent message)]
-        [:div [:span.font-medium "Level: "] (:level message)]
-        (when-let [cm (:compactMetadata message)]
-          [:<>
-           [:div [:span.font-medium "Trigger: "] (:trigger cm)]
-           [:div [:span.font-medium "Pre-tokens: "] (:preTokens cm)]])]
-       [:div.relative.group.mt-2
-        [:div.absolute.top-1.right-1
-         [CopyButton {:text yaml-text :label "Copy"}]]
-        [:pre.text-xs.whitespace-pre-wrap.break-all.bg-gray-100.p-2.rounded.max-h-32.overflow-auto yaml-text]]]]]))
+  [:div.relative.group
+   [:div {:class "opacity-60 rounded-lg p-3 bg-informative-200 border border-informative-400"}
+    [:div.flex.items-center.gap-2.text-xs.text-informative-1200
+     [:> lucide/Settings {:size 12}]
+     [:span.font-medium (str "System: " (:subtype message))]
+     [:span.text-gray-600 (:timestamp message)]]]
+   [RawDetails {:raw-message (:rawMessage message)}]])
 
 (s/defn SummaryMessageItem :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/SummaryMessageItemProps]
-  (let [yaml-text (safe-yaml-dump (:rawMessage message))]
-    [:div.opacity-60
-     [:div {:class "rounded-lg p-3 bg-positive-200 border border-positive-400"}
-      [:div.flex.items-center.gap-2.text-xs.text-positive-1200
-       [:> lucide/FileText {:size 12}]
-       [:span.font-medium "Summary"]]
-      [:p.mt-1.text-sm.text-gray-800 (:summary message)]
-      [:details.mt-2
-       [:summary.text-xs.text-gray-600.cursor-pointer "Raw"]
-       [:div.relative.group.mt-2
-        [:div.absolute.top-1.right-1
-         [CopyButton {:text yaml-text :label "Copy"}]]
-        [:pre.text-xs.whitespace-pre-wrap.break-all.bg-gray-100.p-2.rounded.max-h-32.overflow-auto yaml-text]]]]]))
+  [:div.relative.group
+   [:div {:class "opacity-60 rounded-lg p-3 bg-positive-200 border border-positive-400"}
+    [:div.flex.items-center.gap-2.text-xs.text-positive-1200
+     [:> lucide/FileText {:size 12}]
+     [:span.font-medium "Summary"]]
+    [:p.mt-1.text-sm.text-gray-800 (:summary message)]]
+   [RawDetails {:raw-message (:rawMessage message)}]])
 
 (s/defn FileHistorySnapshotMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/FileHistorySnapshotMessageProps]
-  (let [yaml-text (safe-yaml-dump (:rawMessage message))
-        snapshot (:snapshot message)
+  (let [snapshot (:snapshot message)
         tracked-file-backups (-> (:trackedFileBackups snapshot) js/JSON.parse js/Object.keys js->clj)
-        file-count (count tracked-file-backups)]
-    [:div.flex.flex-col.gap-1.opacity-50
-     [:div.flex.items-baseline.gap-2.text-sm
-      [:div.w-2.h-2.rounded-full.bg-gray-500.flex-shrink-0.self-center]
-      [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/History {:size 14 :className "text-gray-600"}]]
-      [:div.font-medium.text-gray-900.flex-shrink-0 "FileHistorySnapshot"]
-      (when (:isSnapshotUpdate message)
-        [:div.text-xs.bg-gray-600.text-white.px-1.rounded.flex-shrink-0 "update"])
-      [:div.text-gray-600.text-xs.truncate (str file-count " tracked files")]]
-     [:div.pl-6.text-xs.text-gray-600
-      [:details
-       [:summary.cursor-pointer.flex.items-center.gap-1
-        "└ Show details"]
-       [:ul.mt-1.ml-4.list-disc
-        (for [path tracked-file-backups]
-          ^{:key path} [:li.truncate path])]
-       [:div.relative.group.mt-2
-        [:div.absolute.top-1.right-1
-         [CopyButton {:text yaml-text :label "Copy"}]]
-        [:pre.p-2.bg-gray-100.rounded.whitespace-pre-wrap.break-all.font-mono.max-h-32.overflow-auto yaml-text]]]]]))
+        file-count (count tracked-file-backups)
+        files-text (str/join "\n" tracked-file-backups)]
+    [:div.relative.group
+     [:div.flex.flex-col.gap-1.opacity-50
+      [:div.flex.items-baseline.gap-2.text-sm
+       [:div.w-2.h-2.rounded-full.bg-gray-500.flex-shrink-0.self-center]
+       [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/History {:size 14 :className "text-gray-600"}]]
+       [:div.font-medium.text-gray-900.flex-shrink-0 "FileHistorySnapshot"]
+       (when (:isSnapshotUpdate message)
+         [:div.text-xs.bg-gray-600.text-white.px-1.rounded.flex-shrink-0 "update"])
+       [:div.text-gray-600.text-xs.truncate (str file-count " tracked files")]]
+      (when (pos? file-count)
+        [:div.pl-6.text-xs.text-gray-600
+         [:details
+          [:summary.cursor-pointer.flex.items-center.gap-1
+           "└ Show files"]
+          [:pre.p-2.bg-gray-100.rounded.whitespace-pre-wrap.break-all.font-mono.max-h-64.overflow-auto
+           files-text]]])]
+     [RawDetails {:raw-message (:rawMessage message)}]]))
 
 (s/defn QueueOperationMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/QueueOperationMessageProps]
-  (let [yaml-text (safe-yaml-dump (:rawMessage message))]
-    [:div.opacity-50
-     [:div.rounded-lg.p-3.bg-gray-100.border.border-gray-300
-      [:div.flex.items-center.gap-2.text-xs.text-gray-600
-       [:> lucide/ListOrdered {:size 12}]
-       [:span (str "Queue: " (:operation message))]]
-      [:details.mt-2
-       [:summary.text-xs.text-gray-600.cursor-pointer "Raw"]
-       [:div.mt-1.text-xs.text-gray-700
-        (when (:content message) [:div [:span.font-medium "Content: "] (:content message)])
-        [:div [:span.font-medium "Session: "] (:queueSessionId message)]
-        [:div [:span.font-medium "Time: "] (:timestamp message)]]
-       [:div.relative.group.mt-2
-        [:div.absolute.top-1.right-1
-         [CopyButton {:text yaml-text :label "Copy"}]]
-        [:pre.text-xs.whitespace-pre-wrap.break-all.bg-gray-50.p-2.rounded.max-h-32.overflow-auto yaml-text]]]]]))
+  [:div.relative.group
+   [:div.opacity-50.rounded-lg.p-3.bg-gray-100.border.border-gray-300
+    [:div.flex.items-center.gap-2.text-xs.text-gray-600
+     [:> lucide/ListOrdered {:size 12}]
+     [:span (str "Queue: " (:operation message))]]]
+   [RawDetails {:raw-message (:rawMessage message)}]])
 
 (s/defn UnknownMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/UnknownMessageProps]
-  (let [yaml-text (safe-yaml-dump (:rawMessage message))]
-    [:div
-     [:div.rounded-lg.p-3.bg-notice-600.text-notice-1400
-      [:div.flex.items-center.gap-2.text-xs
-       [:> lucide/HelpCircle {:size 12}]
-       [:span (str "Unknown: " (:messageId message))]]
-      [:details.mt-2
-       [:summary.text-xs.cursor-pointer "Raw"]
-       [:pre {:class "text-xs whitespace-pre-wrap break-all bg-black/20 p-2 rounded mt-1 max-h-32 overflow-auto"} yaml-text]]]]))
+  [:div.relative.group
+   [:div.rounded-lg.p-3.bg-notice-600.text-notice-1400
+    [:div.flex.items-center.gap-2.text-xs
+     [:> lucide/HelpCircle {:size 12}]
+     [:span (str "Unknown: " (:messageId message))]]]
+   [RawDetails {:raw-message (:rawMessage message)}]])
 
 (s/defn BrokenMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/BrokenMessageProps]
-  [:div
+  [:div.relative.group
    [:div.rounded-lg.p-3.bg-negative-700.text-negative-1400
     [:div.flex.items-center.gap-2.text-xs
      [:> lucide/AlertTriangle {:size 12}]
-     [:span (str "Broken: " (:messageId message))]]
-    [:details.mt-2
-     [:summary.text-xs.cursor-pointer "Raw"]
-     [:pre {:class "text-xs whitespace-pre-wrap break-all bg-black/20 p-2 rounded mt-1 max-h-32 overflow-auto"}
-      (:rawMessage message)]]]])
+     [:span (str "Broken: " (:messageId message))]]]
+   [RawDetails {:raw-message (:rawMessage message)}]])
 
 (s/defn safe-render-message :- (s/maybe c.schema/Hiccup)
   [{:keys [message tool-results]} :- c.schema/SafeRenderMessageProps]
