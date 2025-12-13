@@ -538,13 +538,13 @@
       :raw-details [:details.absolute.top-0.right-2.opacity-0.group-hover:opacity-100.transition-opacity
                     [:summary.text-gray-500.hover:text-gray-700.cursor-pointer.p-1.list-none
                      [:> lucide/Code {:size 16}]]
-                    [:div.absolute.right-0.top-6.z-10.bg-white.border.border-gray-200.rounded-lg.shadow-lg.p-3.w-96
+                    [:div.absolute.right-0.top-6.z-10.bg-gray-100.border.border-gray-300.rounded-lg.shadow-lg.p-3.w-96
                      [:div.flex.justify-between.items-center.mb-2
-                      [:span.text-xs.font-medium.text-gray-600 "Raw"]
+                      [:span.text-xs.font-medium.text-gray-800 "Raw"]
                       [:div.flex.gap-1
-                       [CopyButton {:text yaml-text :label "Copy"}]
-                       [CopyButton {:text (:rawMessage message) :label "JSON"}]]]
-                     [:pre.text-xs.whitespace-pre-wrap.break-all.bg-gray-100.p-2.rounded.max-h-64.overflow-auto.text-gray-700 yaml-text]]]}]))
+                       [CopyButton {:text yaml-text :label "Copy" :class "bg-gray-300 text-gray-900"}]
+                       [CopyButton {:text (:rawMessage message) :label "JSON" :class "bg-gray-300 text-gray-900"}]]]
+                     [:pre.text-xs.whitespace-pre-wrap.break-all.bg-gray-25.p-2.rounded.max-h-64.overflow-auto.text-gray-900 yaml-text]]]}]))
 
 (s/defn UserMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/UserMessageProps]
