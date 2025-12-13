@@ -238,18 +238,9 @@
 
 (def DisplayedToolUseIds #{s/Str})
 
-(def NavItemProps
-  {:icon s/Any
-   :label s/Str
-   :active s/Bool
-   :collapsed s/Bool
-   :on-click s/Any
-   (s/optional-key :badge) (s/maybe s/Any)})
-
 (def ProjectItemProps
   {:project Project
    :active s/Bool
-   :collapsed s/Bool
    :on-click s/Any})
 
 (def SessionItemProps
@@ -258,18 +249,15 @@
    :on-click s/Any})
 
 (def ProjectsListProps
-  {:on-select-project s/Any
-   :collapsed s/Bool})
+  {:on-select-project s/Any})
 
 (def SidebarProps
-  {:on-select-project s/Any})
+  {:on-select-project s/Any
+   :on-select-session s/Any
+   :project (s/maybe {:id ID :name (s/maybe s/Str)})})
 
 (def SessionsListProps
   {:project-id (s/maybe ID)
-   :on-select-session s/Any})
-
-(def SessionsPanelProps
-  {:project (s/maybe {:id ID :name (s/maybe s/Str)})
    :on-select-session s/Any})
 
 (def CopyButtonProps
@@ -290,9 +278,6 @@
 
 (def MessageBubbleProps
   {:role (s/enum :user :assistant)
-   (s/optional-key :icon) (s/maybe s/Any)
-   (s/optional-key :icon-class) (s/maybe s/Str)
-   (s/optional-key :time) (s/maybe s/Str)
    (s/optional-key :tool-count) (s/maybe s/Int)
    (s/optional-key :thinking?) (s/maybe s/Bool)})
 
