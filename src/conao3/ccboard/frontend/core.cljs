@@ -737,7 +737,6 @@
         list (stately/useAsyncList
               #js {:load (fn [^js opts]
                            (let [sid (.-current session-id-ref)]
-                             (js/console.log "MessageList load called, sid:" sid)
                              (if (nil? sid)
                                (js/Promise.resolve (clj->js {:items []}))
                                (let [cursor (.-cursor opts)]
@@ -748,7 +747,6 @@
                                                     edges (-> data .-node .-messages .-edges)
                                                     page-info (-> data .-node .-messages .-pageInfo)
                                                     items (mapv #(parse-message-node (.-node %)) edges)]
-                                                (js/console.log "MessageList loaded items:" (count items))
                                                 (set! (.-current has-next-page-ref) (.-hasNextPage page-info))
                                                 (clj->js {:items items
                                                           :cursor (when (.-hasNextPage page-info)
@@ -764,7 +762,6 @@
                                       (.loadMore list)))))]
     (react/useEffect
      (fn []
-       (js/console.log "MessageList useEffect, session-id:" session-id)
        (set! (.-current session-id-ref) session-id)
        (when session-id (.reload list))
        js/undefined)
