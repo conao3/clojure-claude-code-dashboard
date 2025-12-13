@@ -79,6 +79,10 @@ run-backend:
 validate-graphql:
 	pnpm exec node tools/validate-graphql/validate.mjs
 
+.PHONY: generate-possible-types
+generate-possible-types:
+	pnpm exec node tools/generate-possible-types/index.mjs
+
 ### CI targets
 
 .PHONY: ci-backend

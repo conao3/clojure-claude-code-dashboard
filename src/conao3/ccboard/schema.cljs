@@ -209,7 +209,6 @@
   {:__typename s/Str
    (s/optional-key :id) (s/maybe ID)
    (s/optional-key :messageId) (s/maybe MessageId)
-   (s/optional-key :rawMessage) (s/maybe s/Str)
    (s/optional-key :isSnapshotUpdate) (s/maybe s/Bool)
    (s/optional-key :snapshot) (s/maybe Snapshot)
    (s/optional-key :operation) (s/maybe s/Str)

@@ -15,7 +15,8 @@
    [conao3.ccboard.util :as c.util]
    [reagent.core :as r]
    [reagent.dom.client :as reagent.dom.client]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [shadow.resource :as rc]))
 
 (enable-console-print!)
 
@@ -24,7 +25,7 @@
 
 (def apollo-client
   (apollo/ApolloClient. #js {:link (apollo/HttpLink. #js {:uri "/api/graphql"})
-                             :cache (apollo/InMemoryCache.)
+                             :cache (apollo/InMemoryCache. #js {:possibleTypes (js/JSON.parse (rc/inline "public/possibleTypes.json"))})
                              :defaultOptions {:query {:errorPolicy "all"}
                                               :watchQuery {:errorPolicy "all"}}}))
 
@@ -114,9 +115,8 @@
           edges {
             node {
               __typename
+              id
               messageId
-              rawMessage
-              ... on Node { id }
               ... on AssistantMessage {
                 assistantMessage: message {
                   content {
@@ -175,6 +175,12 @@
     }
   }"))
 
+(def message-raw-query
+  (apollo/gql "query MessageRaw($id: ID!) {
+    node(id: $id) {
+      ... on Message { rawMessage }
+    }
+  }"))
 
 (s/defn ProjectItem :- c.schema/Hiccup
   [{:keys [project active on-click]} :- c.schema/ProjectItemProps]
@@ -529,31 +535,49 @@
     (catch :default _
       raw-message)))
 
-(s/defn RawDetails :- c.schema/Hiccup
-  [{:keys [raw-message]} :- {:raw-message (s/maybe s/Str)}]
-  (let [yaml-text (safe-yaml-dump raw-message)]
-    [:> rac/DialogTrigger
-     [:> rac/Button {:class "absolute top-1/2 -translate-y-1/2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-gray-700 cursor-pointer p-1"}
-      [:> lucide/Code {:size 16}]]
-     [:> rac/ModalOverlay {:isDismissable true
-                           :className (fn [^js props]
-                                        (str "fixed inset-0 z-50 bg-black/50 flex items-center justify-center "
-                                             (when (.-isEntering props) "animate-in fade-in duration-200 ease-out ")
-                                             (when (.-isExiting props) "animate-out fade-out duration-150 ease-in")))}
-      [:> rac/Modal {:className (fn [^js props]
-                                  (str "bg-gray-100 border border-gray-300 rounded-lg shadow-lg p-4 w-[32rem] max-h-[80vh] overflow-hidden flex flex-col "
-                                       (when (.-isEntering props) "animate-in zoom-in-95 fade-in duration-200 ease-out ")
-                                       (when (.-isExiting props) "animate-out zoom-out-95 fade-out duration-150 ease-in")))}
-       [:> rac/Dialog {:class "outline-none flex flex-col flex-1 min-h-0"}
-        [:div.flex.justify-between.items-center.mb-3.shrink-0
-         [:> rac/Heading {:slot "title" :class "text-sm font-medium text-gray-800"} "Raw"]
-         [:> rac/Button {:slot "close" :class "p-1 rounded hover:bg-gray-300 transition-colors cursor-pointer"}
-          [:> lucide/X {:size 16 :className "text-gray-600"}]]]
+(defn ^:private RawDetailsContent
+  [{:keys [message-id]}]
+  (let [result (apollo.react/useQuery message-raw-query #js {:variables #js {:id message-id}})
+        loading (.-loading result)
+        node (some-> result .-data .-node)
+        raw-message (some-> ^js node .-rawMessage)]
+    (cond
+      loading
+      [:div.flex.items-center.justify-center.flex-1.min-h-0
+       [:> lucide/Loader2 {:size 24 :className "animate-spin text-gray-500"}]]
+
+      (nil? raw-message)
+      [:div.flex.items-center.justify-center.flex-1.min-h-0.text-gray-500
+       "No data available"]
+
+      :else
+      (let [yaml-text (safe-yaml-dump raw-message)]
         [:div.relative.group.flex-1.min-h-0
          [:div.absolute.top-2.right-2.flex.gap-1.opacity-0.group-hover:opacity-100.transition-opacity.z-10
           [CopyButton {:text yaml-text :label "YAML" :class "bg-gray-300 text-gray-900"}]
           [CopyButton {:text raw-message :label "JSON" :class "bg-gray-300 text-gray-900"}]]
-         [:pre.text-xs.whitespace-pre-wrap.break-all.bg-gray-25.p-3.rounded.overflow-auto.text-gray-900.h-full.max-h-96 yaml-text]]]]]]))
+         [:pre.text-xs.whitespace-pre-wrap.break-all.bg-gray-25.p-3.rounded.overflow-auto.text-gray-900.h-full.max-h-96 yaml-text]]))))
+
+(s/defn RawDetails :- c.schema/Hiccup
+  [{:keys [message-id]} :- {:message-id (s/maybe s/Str)}]
+  [:> rac/DialogTrigger
+   [:> rac/Button {:class "absolute top-1/2 -translate-y-1/2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-gray-700 cursor-pointer p-1"}
+    [:> lucide/Code {:size 16}]]
+   [:> rac/ModalOverlay {:isDismissable true
+                         :className (fn [^js props]
+                                      (str "fixed inset-0 z-50 bg-black/50 flex items-center justify-center "
+                                           (when (.-isEntering props) "animate-in fade-in duration-200 ease-out ")
+                                           (when (.-isExiting props) "animate-out fade-out duration-150 ease-in")))}
+    [:> rac/Modal {:className (fn [^js props]
+                                (str "bg-gray-100 border border-gray-300 rounded-lg shadow-lg p-4 w-[32rem] max-h-[80vh] overflow-hidden flex flex-col "
+                                     (when (.-isEntering props) "animate-in zoom-in-95 fade-in duration-200 ease-out ")
+                                     (when (.-isExiting props) "animate-out zoom-out-95 fade-out duration-150 ease-in")))}
+     [:> rac/Dialog {:class "outline-none flex flex-col flex-1 min-h-0"}
+      [:div.flex.justify-between.items-center.mb-3.shrink-0
+       [:> rac/Heading {:slot "title" :class "text-sm font-medium text-gray-800"} "Raw"]
+       [:> rac/Button {:slot "close" :class "p-1 rounded hover:bg-gray-300 transition-colors cursor-pointer"}
+        [:> lucide/X {:size 16 :className "text-gray-600"}]]]
+      [:f> RawDetailsContent {:message-id message-id}]]]]])
 
 (s/defn AssistantMessage :- c.schema/Hiccup
   [{:keys [message tool-results]} :- c.schema/AssistantMessageProps]
@@ -564,7 +588,7 @@
                       (fn [idx block]
                         ^{:key idx} [ContentBlock {:block block :tool-results tool-results}])
                       content-blocks))
-      :raw-details [RawDetails {:raw-message (:rawMessage message)}]}]))
+      :raw-details [RawDetails {:message-id (:id message)}]}]))
 
 (s/defn UserMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/UserMessageProps]
@@ -581,7 +605,7 @@
                             [:div.text-sm.leading-relaxed.text-gray-900
                              [Markdown {:children (:text block)}]]))
                         content-blocks))
-        :raw-details [RawDetails {:raw-message (:rawMessage message)}]}])))
+        :raw-details [RawDetails {:message-id (:id message)}]}])))
 
 (s/defn SystemMessageItem :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/SystemMessageItemProps]
@@ -591,7 +615,7 @@
      [:> lucide/Settings {:size 12}]
      [:span.font-medium (str "System: " (:subtype message))]
      [:span.text-gray-600 (:timestamp message)]]]
-   [RawDetails {:raw-message (:rawMessage message)}]])
+   [RawDetails {:message-id (:id message)}]])
 
 (s/defn SummaryMessageItem :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/SummaryMessageItemProps]
@@ -601,7 +625,7 @@
      [:> lucide/FileText {:size 12}]
      [:span.font-medium "Summary"]]
     [:p.mt-1.text-sm.text-gray-800 (:summary message)]]
-   [RawDetails {:raw-message (:rawMessage message)}]])
+   [RawDetails {:message-id (:id message)}]])
 
 (s/defn FileHistorySnapshotMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/FileHistorySnapshotMessageProps]
@@ -625,7 +649,7 @@
            "└ Show files"]
           [:pre.p-2.bg-gray-100.rounded.whitespace-pre-wrap.break-all.font-mono.max-h-64.overflow-auto
            files-text]]])]
-     [RawDetails {:raw-message (:rawMessage message)}]]))
+     [RawDetails {:message-id (:id message)}]]))
 
 (s/defn QueueOperationMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/QueueOperationMessageProps]
@@ -634,7 +658,7 @@
     [:div.flex.items-center.gap-2.text-xs.text-gray-600
      [:> lucide/ListOrdered {:size 12}]
      [:span (str "Queue: " (:operation message))]]]
-   [RawDetails {:raw-message (:rawMessage message)}]])
+   [RawDetails {:message-id (:id message)}]])
 
 (s/defn UnknownMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/UnknownMessageProps]
@@ -643,7 +667,7 @@
     [:div.flex.items-center.gap-2.text-xs
      [:> lucide/HelpCircle {:size 12}]
      [:span (str "Unknown: " (:messageId message))]]]
-   [RawDetails {:raw-message (:rawMessage message)}]])
+   [RawDetails {:message-id (:id message)}]])
 
 (s/defn BrokenMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/BrokenMessageProps]
@@ -652,7 +676,7 @@
     [:div.flex.items-center.gap-2.text-xs
      [:> lucide/AlertTriangle {:size 12}]
      [:span (str "Broken: " (:messageId message))]]]
-   [RawDetails {:raw-message (:rawMessage message)}]])
+   [RawDetails {:message-id (:id message)}]])
 
 (s/defn safe-render-message :- (s/maybe c.schema/Hiccup)
   [{:keys [message tool-results]} :- c.schema/SafeRenderMessageProps]
@@ -682,7 +706,6 @@
     {:__typename typename
      :id (.-id node)
      :messageId (.-messageId node)
-     :rawMessage (.-rawMessage node)
      :isSnapshotUpdate (.-isSnapshotUpdate node)
      :snapshot (when snapshot
                  {:messageId (.-messageId snapshot)

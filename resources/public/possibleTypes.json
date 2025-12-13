@@ -1,0 +1,24 @@
+{
+  "Node": [
+    "AssistantMessage",
+    "UserMessage",
+    "FileHistorySnapshotMessage",
+    "UnknownMessage",
+    "BrokenMessage",
+    "QueueOperationMessage",
+    "SystemMessage",
+    "SummaryMessage",
+    "Session",
+    "Project"
+  ],
+  "Message": [
+    "AssistantMessage",
+    "UserMessage",
+    "FileHistorySnapshotMessage",
+    "UnknownMessage",
+    "BrokenMessage",
+    "QueueOperationMessage",
+    "SystemMessage",
+    "SummaryMessage"
+  ]
+}
