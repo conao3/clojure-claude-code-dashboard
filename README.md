@@ -49,8 +49,8 @@ Then open http://localhost:8000/
 
 - http://localhost:8000/ - Frontend application
 - http://localhost:8000/admin/graphiql.html - GraphiQL IDE (dev only)
-- http://localhost:8000/admin/apollo - Apollo Sandbox (dev only)
 - http://localhost:8000/api/graphql - GraphQL API endpoint (proxied)
+- http://localhost:4000/admin/apollo - Apollo Sandbox (dev only)
 - http://localhost:9100/ - Frontend test runner
 - http://localhost:9630/ - shadow-cljs UI
 - http://localhost:9500/ - Portfolio
