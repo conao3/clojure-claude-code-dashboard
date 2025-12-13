@@ -604,23 +604,35 @@
 
 (s/defn SystemMessageItem :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/SystemMessageItemProps]
-  [:div.relative.group
-   [:div {:class "opacity-60 rounded-lg p-3 bg-informative-200 border border-informative-400"}
-    [:div.flex.items-center.gap-2.text-xs.text-informative-1200
-     [:> lucide/Settings {:size 12}]
-     [:span.font-medium (str "System: " (:subtype message))]
-     [:span.text-gray-600 (:timestamp message)]]]
-   [RawDetails {:message-id (:id message)}]])
+  (let [subtype (:subtype message)
+        timestamp (:timestamp message)]
+    [:div.relative.group
+     [:div.flex.flex-col.gap-1.opacity-60
+      [:div.flex.items-baseline.gap-2.text-sm
+       [:div.w-2.h-2.rounded-full.bg-informative-900.flex-shrink-0.self-center]
+       [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/Settings {:size 14 :className "text-gray-600"}]]
+       [:div.font-medium.text-gray-900.flex-shrink-0 "System"]
+       (when subtype
+         [:div.text-gray-600.text-xs.flex-shrink-0 subtype])
+       (when timestamp
+         [:div.text-gray-500.text-xs.truncate timestamp])]]
+     [RawDetails {:message-id (:id message)}]]))
 
 (s/defn SummaryMessageItem :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/SummaryMessageItemProps]
-  [:div.relative.group
-   [:div {:class "opacity-60 rounded-lg p-3 bg-positive-200 border border-positive-400"}
-    [:div.flex.items-center.gap-2.text-xs.text-positive-1200
-     [:> lucide/FileText {:size 12}]
-     [:span.font-medium "Summary"]]
-    [:p.mt-1.text-sm.text-gray-800 (:summary message)]]
-   [RawDetails {:message-id (:id message)}]])
+  (let [summary-text (:summary message)
+        truncated-summary (if (> (count summary-text) 80)
+                            (str (subs summary-text 0 80) "...")
+                            summary-text)]
+    [:div.relative.group
+     [:div.flex.flex-col.gap-1.opacity-60
+      [:div.flex.items-baseline.gap-2.text-sm
+       [:div.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0.self-center]
+       [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/FileText {:size 14 :className "text-gray-600"}]]
+       [:div.font-medium.text-gray-900.flex-shrink-0 "Summary"]
+       (when (seq summary-text)
+         [:div.text-gray-600.text-xs.truncate {:title summary-text} truncated-summary])]]
+     [RawDetails {:message-id (:id message)}]]))
 
 (s/defn FileHistorySnapshotMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/FileHistorySnapshotMessageProps]
@@ -629,9 +641,9 @@
         file-count (count tracked-file-backups)
         files-text (str/join "\n" tracked-file-backups)]
     [:div.relative.group
-     [:div.flex.flex-col.gap-1.opacity-50
+     [:div.flex.flex-col.gap-1.opacity-60
       [:div.flex.items-baseline.gap-2.text-sm
-       [:div.w-2.h-2.rounded-full.bg-gray-500.flex-shrink-0.self-center]
+       [:div.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0.self-center]
        [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/History {:size 14 :className "text-gray-600"}]]
        [:div.font-medium.text-gray-900.flex-shrink-0 "FileHistorySnapshot"]
        (when (:isSnapshotUpdate message)
@@ -648,29 +660,40 @@
 
 (s/defn QueueOperationMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/QueueOperationMessageProps]
-  [:div.relative.group
-   [:div.opacity-50.rounded-lg.p-3.bg-gray-100.border.border-gray-300
-    [:div.flex.items-center.gap-2.text-xs.text-gray-600
-     [:> lucide/ListOrdered {:size 12}]
-     [:span (str "Queue: " (:operation message))]]]
-   [RawDetails {:message-id (:id message)}]])
+  (let [operation (:operation message)
+        timestamp (:timestamp message)]
+    [:div.relative.group
+     [:div.flex.flex-col.gap-1.opacity-60
+      [:div.flex.items-baseline.gap-2.text-sm
+       [:div.w-2.h-2.rounded-full.bg-gray-500.flex-shrink-0.self-center]
+       [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/ListOrdered {:size 14 :className "text-gray-600"}]]
+       [:div.font-medium.text-gray-900.flex-shrink-0 "Queue"]
+       (when operation
+         [:div.text-gray-600.text-xs.flex-shrink-0 operation])
+       (when timestamp
+         [:div.text-gray-500.text-xs.truncate timestamp])]]
+     [RawDetails {:message-id (:id message)}]]))
 
 (s/defn UnknownMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/UnknownMessageProps]
   [:div.relative.group
-   [:div.rounded-lg.p-3.bg-notice-600.text-notice-1400
-    [:div.flex.items-center.gap-2.text-xs
-     [:> lucide/HelpCircle {:size 12}]
-     [:span (str "Unknown: " (:messageId message))]]]
+   [:div.flex.flex-col.gap-1.opacity-60
+    [:div.flex.items-baseline.gap-2.text-sm
+     [:div.w-2.h-2.rounded-full.bg-notice-700.flex-shrink-0.self-center]
+     [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/HelpCircle {:size 14 :className "text-gray-600"}]]
+     [:div.font-medium.text-gray-900.flex-shrink-0 "Unknown"]
+     [:div.text-gray-600.text-xs.truncate (:messageId message)]]]
    [RawDetails {:message-id (:id message)}]])
 
 (s/defn BrokenMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/BrokenMessageProps]
   [:div.relative.group
-   [:div.rounded-lg.p-3.bg-negative-700.text-negative-1400
-    [:div.flex.items-center.gap-2.text-xs
-     [:> lucide/AlertTriangle {:size 12}]
-     [:span (str "Broken: " (:messageId message))]]]
+   [:div.flex.flex-col.gap-1
+    [:div.flex.items-baseline.gap-2.text-sm
+     [:div.w-2.h-2.rounded-full.bg-negative-900.flex-shrink-0.self-center]
+     [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/AlertTriangle {:size 14 :className "text-negative-1100"}]]
+     [:div.font-medium.text-negative-1100.flex-shrink-0 "Broken"]
+     [:div.text-gray-600.text-xs.truncate (:messageId message)]]]
    [RawDetails {:message-id (:id message)}]])
 
 (s/defn safe-render-message :- (s/maybe c.schema/Hiccup)
