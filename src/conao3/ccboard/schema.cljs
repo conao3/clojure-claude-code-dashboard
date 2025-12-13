@@ -279,7 +279,9 @@
 (def MessageBubbleProps
   {:role (s/enum :user :assistant)
    (s/optional-key :tool-count) (s/maybe s/Int)
-   (s/optional-key :thinking?) (s/maybe s/Bool)})
+   (s/optional-key :thinking?) (s/maybe s/Bool)
+   (s/optional-key :content) (s/maybe Hiccup)
+   (s/optional-key :raw-details) (s/maybe Hiccup)})
 
 (def AssistantMessageProps
   {:message FrontendMessage

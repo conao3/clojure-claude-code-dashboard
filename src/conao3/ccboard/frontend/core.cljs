@@ -471,8 +471,7 @@
      [:div.text-xs.font-medium (str "Unknown: " (:type block))]]))
 
 (s/defn MessageBubble :- c.schema/Hiccup
-  [{:keys [role tool-count thinking?]} :- c.schema/MessageBubbleProps
-   & children :- [s/Any]]
+  [{:keys [role tool-count thinking? content raw-details]} :- c.schema/MessageBubbleProps]
   [:div.mb-4
    [:div {:class (str "rounded-2xl p-4 "
                       (if (= role :user)
@@ -489,12 +488,13 @@
      (when (or tool-count thinking?)
        [:div.ml-auto.flex.gap-3
         (when thinking?
-          [:span.text-xs.text-notice-1100.flex.items-center.gap-1
-           [:> lucide/Brain {:size 12}] "Thinking"])
+          ^{:key "thinking"} [:span.text-xs.text-notice-1100.flex.items-center.gap-1
+                              [:> lucide/Brain {:size 12}] "Thinking"])
         (when tool-count
-          [:span.text-xs.text-gray-700.flex.items-center.gap-1
-           [:> lucide/Wrench {:size 12}] (str tool-count " tools")])])]
-    (into [:<>] children)]])
+          ^{:key "tools"} [:span.text-xs.text-gray-700.flex.items-center.gap-1
+                           [:> lucide/Wrench {:size 12}] (str tool-count " tools")])])]
+    content
+    raw-details]])
 
 (s/defn safe-yaml-dump :- s/Str
   [raw-message :- (s/maybe s/Str)]
@@ -511,17 +511,19 @@
         has-thinking? (some #(= (:type %) "thinking") content-blocks)]
     [MessageBubble {:role :assistant
                     :tool-count (when (pos? tool-count) tool-count)
-                    :thinking? has-thinking?}
-     [:<>
-      (for [[idx block] (map-indexed vector content-blocks)]
-        ^{:key idx} [ContentBlock {:block block :tool-results tool-results}])
-      [:details.mt-3.pt-3.border-t.border-gray-300
-       [:summary.text-xs.text-gray-600.cursor-pointer "Raw"]
-       [:div.relative.group.mt-2
-        [:div.absolute.top-1.right-1.flex.gap-1
-         [CopyButton {:text yaml-text :label "Copy"}]
-         [CopyButton {:text (:rawMessage message) :label "Raw"}]]
-        [:pre.text-xs.whitespace-pre-wrap.break-all.bg-gray-100.p-2.rounded.max-h-48.overflow-auto.text-gray-700 yaml-text]]]]]))
+                    :thinking? has-thinking?
+                    :content (into [:div]
+                                   (map-indexed
+                                    (fn [idx block]
+                                      ^{:key idx} [ContentBlock {:block block :tool-results tool-results}])
+                                    content-blocks))
+                    :raw-details [:details.mt-3.pt-3.border-t.border-gray-300
+                                  [:summary.text-xs.text-gray-600.cursor-pointer "Raw"]
+                                  [:div.relative.group.mt-2
+                                   [:div.absolute.top-1.right-1.flex.gap-1
+                                    [CopyButton {:text yaml-text :label "Copy"}]
+                                    [CopyButton {:text (:rawMessage message) :label "Raw"}]]
+                                   [:pre.text-xs.whitespace-pre-wrap.break-all.bg-gray-100.p-2.rounded.max-h-48.overflow-auto.text-gray-700 yaml-text]]]}]))
 
 (s/defn UserMessage :- c.schema/Hiccup
   [{:keys [message displayed-tool-use-ids]} :- c.schema/UserMessageProps]
@@ -534,21 +536,23 @@
         all-displayed? (and (seq tool-result-ids)
                             (every? #(contains? displayed-tool-use-ids %) tool-result-ids))]
     [:div {:class (when all-displayed? "opacity-50")}
-     [MessageBubble {:role :user}
-      [:<>
-       (for [[idx block] (map-indexed vector content-blocks)]
-         ^{:key idx}
-         (case (:type block)
-           "text" [:div.text-sm.leading-relaxed.text-gray-900 [Markdown {:children (:text block)}]]
-           "tool_result" [ToolResultBlock {:block block}]
-           [:div.text-xs.text-notice-1100 (str "Unknown: " (:type block))]))
-       [:details.mt-3.pt-3.border-t.border-accent-400
-        [:summary.text-xs.text-accent-1100.cursor-pointer "Raw"]
-        [:div.relative.group.mt-2
-         [:div.absolute.top-1.right-1.flex.gap-1
-          [CopyButton {:text yaml-text :label "Copy"}]
-          [CopyButton {:text (:rawMessage message) :label "Raw"}]]
-         [:pre.text-xs.whitespace-pre-wrap.break-all.bg-accent-100.p-2.rounded.max-h-48.overflow-auto.text-gray-700 yaml-text]]]]]]))
+     [MessageBubble {:role :user
+                     :content (into [:div]
+                                    (map-indexed
+                                     (fn [idx block]
+                                       ^{:key idx}
+                                       (case (:type block)
+                                         "text" [:div.text-sm.leading-relaxed.text-gray-900 [Markdown {:children (:text block)}]]
+                                         "tool_result" [ToolResultBlock {:block block}]
+                                         [:div.text-xs.text-notice-1100 (str "Unknown: " (:type block))]))
+                                     content-blocks))
+                     :raw-details [:details.mt-3.pt-3.border-t.border-accent-400
+                                   [:summary.text-xs.text-accent-1100.cursor-pointer "Raw"]
+                                   [:div.relative.group.mt-2
+                                    [:div.absolute.top-1.right-1.flex.gap-1
+                                     [CopyButton {:text yaml-text :label "Copy"}]
+                                     [CopyButton {:text (:rawMessage message) :label "Raw"}]]
+                                    [:pre.text-xs.whitespace-pre-wrap.break-all.bg-accent-100.p-2.rounded.max-h-48.overflow-auto.text-gray-700 yaml-text]]]}]]))
 
 (s/defn SystemMessageItem :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/SystemMessageItemProps]
