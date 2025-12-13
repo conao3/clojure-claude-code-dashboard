@@ -279,17 +279,14 @@
 (def MessageBubbleProps
   {:role (s/enum :user :assistant)
    (s/optional-key :tool-count) (s/maybe s/Int)
-   (s/optional-key :thinking?) (s/maybe s/Bool)
-   (s/optional-key :content) (s/maybe Hiccup)
-   (s/optional-key :raw-details) (s/maybe Hiccup)})
+   (s/optional-key :thinking?) (s/maybe s/Bool)})
 
 (def AssistantMessageProps
   {:message FrontendMessage
    (s/optional-key :tool-results) (s/maybe ToolResults)})
 
 (def UserMessageProps
-  {:message FrontendMessage
-   (s/optional-key :displayed-tool-use-ids) (s/maybe DisplayedToolUseIds)})
+  {:message FrontendMessage})
 
 (def SystemMessageItemProps
   {:message FrontendMessage})
@@ -311,5 +308,4 @@
 
 (def SafeRenderMessageProps
   {:message FrontendMessage
-   (s/optional-key :tool-results) (s/maybe ToolResults)
-   (s/optional-key :displayed-tool-use-ids) (s/maybe DisplayedToolUseIds)})
+   (s/optional-key :tool-results) (s/maybe ToolResults)})
