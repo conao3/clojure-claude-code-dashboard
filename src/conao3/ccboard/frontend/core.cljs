@@ -547,10 +547,13 @@
        [:> rac/Dialog {:class "outline-none flex flex-col flex-1 min-h-0"}
         [:div.flex.justify-between.items-center.mb-3.shrink-0
          [:> rac/Heading {:slot "title" :class "text-sm font-medium text-gray-800"} "Raw"]
-         [:div.flex.gap-2.shrink-0
+         [:> rac/Button {:slot "close" :class "p-1 rounded hover:bg-gray-300 transition-colors cursor-pointer"}
+          [:> lucide/X {:size 16 :className "text-gray-600"}]]]
+        [:div.relative.group.flex-1.min-h-0
+         [:div.absolute.top-2.right-2.flex.gap-1.opacity-0.group-hover:opacity-100.transition-opacity.z-10
           [CopyButton {:text yaml-text :label "YAML" :class "bg-gray-300 text-gray-900"}]
-          [CopyButton {:text raw-message :label "JSON" :class "bg-gray-300 text-gray-900"}]]]
-        [:pre.text-xs.whitespace-pre-wrap.break-all.bg-gray-25.p-3.rounded.overflow-auto.text-gray-900.flex-1.min-h-0.max-h-96 yaml-text]]]]]))
+          [CopyButton {:text raw-message :label "JSON" :class "bg-gray-300 text-gray-900"}]]
+         [:pre.text-xs.whitespace-pre-wrap.break-all.bg-gray-25.p-3.rounded.overflow-auto.text-gray-900.h-full.max-h-96 yaml-text]]]]]]))
 
 (s/defn AssistantMessage :- c.schema/Hiccup
   [{:keys [message tool-results]} :- c.schema/AssistantMessageProps]
