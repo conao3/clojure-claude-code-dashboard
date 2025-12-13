@@ -58,6 +58,21 @@
    :disabled s/Bool
    :triggers [s/Str]})
 
+(def StructuredPatchHunk
+  {:oldStart s/Int
+   :oldLines s/Int
+   :newStart s/Int
+   :newLines s/Int
+   :lines [s/Str]})
+
+(def ToolUseResult
+  {(s/optional-key :type) (s/maybe s/Str)
+   (s/optional-key :filePath) (s/maybe s/Str)
+   (s/optional-key :oldString) (s/maybe s/Str)
+   (s/optional-key :newString) (s/maybe s/Str)
+   (s/optional-key :content) (s/maybe s/Str)
+   (s/optional-key :structuredPatch) (s/maybe [StructuredPatchHunk])})
+
 (def ContentBlock
   {:type (s/maybe s/Str)
    (s/optional-key :text) (s/maybe s/Str)
@@ -67,13 +82,15 @@
    (s/optional-key :name) (s/maybe s/Str)
    (s/optional-key :input) (s/maybe s/Str)
    (s/optional-key :tool_use_id) (s/maybe s/Str)
-   (s/optional-key :content) (s/maybe s/Str)})
+   (s/optional-key :content) (s/maybe s/Str)
+   (s/optional-key :toolUseResult) (s/maybe ToolUseResult)})
 
 (def UserContentBlock
   {:type s/Str
    (s/optional-key :text) (s/maybe s/Str)
    (s/optional-key :tool_use_id) (s/maybe s/Str)
-   (s/optional-key :content) (s/maybe s/Str)})
+   (s/optional-key :content) (s/maybe s/Str)
+   (s/optional-key :toolUseResult) (s/maybe ToolUseResult)})
 
 (def UserMessageContent
   {:role (s/maybe s/Str)

@@ -64,11 +64,29 @@ type AssistantMessage implements Node & Message {
   version: String!
 }
 
+type StructuredPatchHunk {
+  oldStart: Int!
+  oldLines: Int!
+  newStart: Int!
+  newLines: Int!
+  lines: [String!]!
+}
+
+type ToolUseResult {
+  type: String
+  filePath: String
+  oldString: String
+  newString: String
+  content: String
+  structuredPatch: [StructuredPatchHunk!]
+}
+
 type UserMessageContent {
   type: String!
   text: String
   tool_use_id: String
   content: String
+  toolUseResult: ToolUseResult
 }
 
 type UserMessageMessage {

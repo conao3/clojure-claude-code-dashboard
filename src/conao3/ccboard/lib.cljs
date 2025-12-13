@@ -8,22 +8,45 @@
 (when goog.DEBUG
   (s/set-fn-validation! true))
 
+(s/defn ^:private parse-structured-patch-hunk :- c.schema/StructuredPatchHunk
+  [hunk :- s/Any]
+  {:oldStart (:oldStart hunk)
+   :oldLines (:oldLines hunk)
+   :newStart (:newStart hunk)
+   :newLines (:newLines hunk)
+   :lines (vec (:lines hunk))})
+
+(s/defn ^:private parse-tool-use-result :- (s/maybe c.schema/ToolUseResult)
+  [tool-use-result :- s/Any]
+  (when tool-use-result
+    {:type (:type tool-use-result)
+     :filePath (:filePath tool-use-result)
+     :oldString (:oldString tool-use-result)
+     :newString (:newString tool-use-result)
+     :content (:content tool-use-result)
+     :structuredPatch (when-let [sp (:structuredPatch tool-use-result)]
+                        (mapv parse-structured-patch-hunk sp))}))
+
 (s/defn ^:private parse-user-content-block :- c.schema/UserContentBlock
   [block :- s/Any
-   stringify-fn :- s/Any]
+   stringify-fn :- s/Any
+   tool-use-result :- s/Any]
   (if (string? block)
     {:type "text" :text block}
     {:type (:type block)
      :text (:text block)
      :tool_use_id (:tool_use_id block)
-     :content (when-let [c (:content block)] (stringify-fn c))}))
+     :content (when-let [c (:content block)] (stringify-fn c))
+     :toolUseResult (when (= (:type block) "tool_result")
+                      (parse-tool-use-result tool-use-result))}))
 
 (s/defn ^:private parse-user-content :- [c.schema/UserContentBlock]
   [content :- s/Any
-   stringify-fn :- s/Any]
+   stringify-fn :- s/Any
+   tool-use-result :- s/Any]
   (if (string? content)
     [{:type "text" :text content}]
-    (mapv #(parse-user-content-block % stringify-fn) content)))
+    (mapv #(parse-user-content-block % stringify-fn tool-use-result) content)))
 
 (s/defn parse-user-message :- c.schema/UserMessage
   [data :- s/Any
@@ -47,7 +70,7 @@
    :gitBranch (:gitBranch data)
    :timestamp (:timestamp data)
    :message {:role (get-in data [:message :role])
-             :content (parse-user-content (get-in data [:message :content]) stringify-fn)}
+             :content (parse-user-content (get-in data [:message :content]) stringify-fn (:toolUseResult data))}
    :thinkingMetadata (when-let [tm (:thinkingMetadata data)]
                        {:level (:level tm)
                         :disabled (boolean (:disabled tm))

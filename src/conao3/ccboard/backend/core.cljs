@@ -204,7 +204,7 @@
 (s/defn reload :- (s/eq nil)
   {:dev/after-load true}
   []
-  (println "Reloading...")
+  (println "Reloading server...")
   (-> (stop-server)
       (.then start-server))
   nil)

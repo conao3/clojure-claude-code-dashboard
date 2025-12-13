@@ -138,6 +138,20 @@
                     text
                     tool_use_id
                     content
+                    toolUseResult {
+                      type
+                      filePath
+                      oldString
+                      newString
+                      content
+                      structuredPatch {
+                        oldStart
+                        oldLines
+                        newStart
+                        newLines
+                        lines
+                      }
+                    }
                   }
                 }
               }
@@ -459,6 +473,103 @@
     "TodoWrite" "updating todos"
     ""))
 
+(s/defn ^:private EditDiffView :- c.schema/Hiccup
+  [{:keys [file-path structured-patch old-string new-string]} :- {:file-path (s/maybe s/Str)
+                                                                   (s/optional-key :structured-patch) s/Any
+                                                                   (s/optional-key :old-string) (s/maybe s/Str)
+                                                                   (s/optional-key :new-string) (s/maybe s/Str)}]
+  (let [render-structured-patch
+        (fn []
+          (let [all-lines (mapcat (fn [hunk]
+                                    (let [old-start (:oldStart hunk)
+                                          new-start (:newStart hunk)]
+                                      (loop [lines (:lines hunk)
+                                             old-line-num old-start
+                                             new-line-num new-start
+                                             result []]
+                                        (if (empty? lines)
+                                          result
+                                          (let [line (first lines)
+                                                prefix (subs line 0 1)
+                                                content (subs line 1)]
+                                            (case prefix
+                                              "-" (recur (rest lines)
+                                                         (inc old-line-num)
+                                                         new-line-num
+                                                         (conj result {:type :removed :old-num old-line-num :new-num nil :content content}))
+                                              "+" (recur (rest lines)
+                                                         old-line-num
+                                                         (inc new-line-num)
+                                                         (conj result {:type :added :old-num nil :new-num new-line-num :content content}))
+                                              (recur (rest lines)
+                                                     (inc old-line-num)
+                                                     (inc new-line-num)
+                                                     (conj result {:type :context :old-num old-line-num :new-num new-line-num :content content}))))))))
+                                  structured-patch)
+                max-line-num (apply max 1 (remove nil? (concat (map :old-num all-lines) (map :new-num all-lines))))
+                line-num-width (max 2 (count (str max-line-num)))]
+            [:div.overflow-x-auto
+             (map-indexed
+              (fn [idx {:keys [type old-num new-num content]}]
+                ^{:key idx}
+                [:div.flex
+                 {:class (case type
+                           :removed "bg-red-500 text-white"
+                           :added "bg-green-500 text-white"
+                           :context "bg-gray-50 text-gray-700")}
+                 [:div.text-right.pr-2.select-none.flex-shrink-0
+                  {:class (case type :removed "bg-red-600" :added "bg-green-600" :context "bg-gray-100 text-gray-500")
+                   :style {:min-width (str (* line-num-width 0.6) "rem")}}
+                  (or old-num "")]
+                 [:div.text-right.pr-2.select-none.flex-shrink-0
+                  {:class (case type :removed "bg-red-600" :added "bg-green-600" :context "bg-gray-100 text-gray-500")
+                   :style {:min-width (str (* line-num-width 0.6) "rem")}}
+                  (or new-num "")]
+                 [:div.px-1.select-none.flex-shrink-0
+                  (case type :removed "-" :added "+" :context " ")]
+                 [:div.flex-1.px-2.whitespace-pre content]])
+              all-lines)]))
+        render-old-new
+        (fn []
+          (let [old-lines (if old-string (str/split-lines old-string) [])
+                new-lines (if new-string (str/split-lines new-string) [])
+                max-line-num (max (count old-lines) (count new-lines))
+                line-num-width (max 2 (count (str max-line-num)))]
+            [:div.overflow-x-auto
+             (concat
+              (map-indexed
+               (fn [idx line]
+                 ^{:key (str "old-" idx)}
+                 [:div.flex.bg-red-500.text-white
+                  [:div.text-right.pr-2.bg-red-600.select-none.flex-shrink-0
+                   {:style {:min-width (str (* line-num-width 0.6) "rem")}}
+                   (inc idx)]
+                  [:div.text-right.pr-2.bg-red-600.select-none.flex-shrink-0
+                   {:style {:min-width (str (* line-num-width 0.6) "rem")}}]
+                  [:div.px-1.select-none.flex-shrink-0 "-"]
+                  [:div.flex-1.px-2.whitespace-pre line]])
+               old-lines)
+              (map-indexed
+               (fn [idx line]
+                 ^{:key (str "new-" idx)}
+                 [:div.flex.bg-green-500.text-white
+                  [:div.text-right.pr-2.bg-green-600.select-none.flex-shrink-0
+                   {:style {:min-width (str (* line-num-width 0.6) "rem")}}]
+                  [:div.text-right.pr-2.bg-green-600.select-none.flex-shrink-0
+                   {:style {:min-width (str (* line-num-width 0.6) "rem")}}
+                   (inc idx)]
+                  [:div.px-1.select-none.flex-shrink-0 "+"]
+                  [:div.flex-1.px-2.whitespace-pre line]])
+               new-lines))]))]
+    [:div.rounded-lg.overflow-hidden.border.border-gray-300.text-xs.font-mono
+     (when file-path
+       [:div.bg-gray-100.px-3.py-1.5.text-gray-700.border-b.border-gray-300.truncate
+        {:title file-path}
+        file-path])
+     (if (seq structured-patch)
+       (render-structured-patch)
+       (render-old-new))]))
+
 (s/defn safe-yaml-dump :- s/Str
   [raw-message :- (s/maybe s/Str)]
   (try
@@ -537,9 +648,10 @@
           tool-name (:name block)
           input-map (parse-tool-input (:input block))
           summary (tool-use-summary tool-name input-map)
-          show-result? (contains? #{"Edit" "Write"} tool-name)
+          is-edit? (= tool-name "Edit")
           result-content (:content result)
-          result-summary (when result-content
+          tool-use-result (:toolUseResult result)
+          result-summary (when (and result-content (not is-edit?))
                            (let [s (str result-content)]
                              (if (> (count s) 60) (str (subs s 0 60) "...") s)))]
       [:div.flex.flex-col.gap-1
@@ -559,13 +671,12 @@
            [:div.text-gray-400.text-xs "not found"])]
         (when (:source-message-id result)
           [RawDetails {:message-id (:source-message-id result)}])]
-       (when (and result show-result? result-content)
-         [:div.pl-6.text-xs.text-gray-600
-          [:details
-           [:summary.cursor-pointer.flex.items-center.gap-1
-            "└ Show result"]
-           [:pre.p-2.bg-gray-100.rounded.whitespace-pre-wrap.break-all.font-mono.max-h-64.overflow-auto
-            result-content]]])])
+       (when (and is-edit? tool-use-result)
+         [:div.pl-4.mt-1
+          [EditDiffView {:file-path (:filePath tool-use-result)
+                         :structured-patch (:structuredPatch tool-use-result)
+                         :old-string (:oldString tool-use-result)
+                         :new-string (:newString tool-use-result)}]])])
 
     "tool_result"
     nil
@@ -775,7 +886,21 @@
                                     {:type (.-type block)
                                      :text (.-text block)
                                      :tool_use_id (.-tool_use_id block)
-                                     :content (.-content block)})
+                                     :content (.-content block)
+                                     :toolUseResult (when-let [^js tur (.-toolUseResult block)]
+                                                      {:type (.-type tur)
+                                                       :filePath (.-filePath tur)
+                                                       :oldString (.-oldString tur)
+                                                       :newString (.-newString tur)
+                                                       :content (.-content tur)
+                                                       :structuredPatch (when-let [sp (.-structuredPatch tur)]
+                                                                          (mapv (fn [^js hunk]
+                                                                                  {:oldStart (.-oldStart hunk)
+                                                                                   :oldLines (.-oldLines hunk)
+                                                                                   :newStart (.-newStart hunk)
+                                                                                   :newLines (.-newLines hunk)
+                                                                                   :lines (js->clj (.-lines hunk))})
+                                                                                sp))})})
                                   (.-content msg))})
                 nil)}))
 
