@@ -369,7 +369,7 @@
   (let [copied? (r/atom false)]
     (s/fn [{:keys [text label class]} :- c.schema/CopyButtonProps]
       [:> rac/Button
-       {:className (str "px-2 py-1 rounded bg-gray-200 text-gray-700 opacity-0 group-hover:opacity-70 hover:opacity-100 pressed:opacity-100 flex items-center gap-1 text-xs " class)
+       {:className (str "px-2 py-1 rounded bg-gray-200 text-gray-700 group-hover:opacity-70 hover:opacity-100 pressed:opacity-100 flex items-center gap-1 text-xs " class)
         :onPress (fn []
                    (-> js/navigator .-clipboard (.writeText text))
                    (reset! copied? true)
@@ -532,16 +532,25 @@
 (s/defn RawDetails :- c.schema/Hiccup
   [{:keys [raw-message]} :- {:raw-message (s/maybe s/Str)}]
   (let [yaml-text (safe-yaml-dump raw-message)]
-    [:details {:class "absolute top-1/2 -translate-y-1/2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"}
-     [:summary.text-gray-500.hover:text-gray-700.cursor-pointer.p-1.list-none
+    [:> rac/DialogTrigger
+     [:> rac/Button {:class "absolute top-1/2 -translate-y-1/2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-gray-700 cursor-pointer p-1"}
       [:> lucide/Code {:size 16}]]
-     [:div.absolute.right-0.top-6.z-10.bg-gray-100.border.border-gray-300.rounded-lg.shadow-lg.p-3.w-96
-      [:div.flex.justify-between.items-center.mb-2
-       [:span.text-xs.font-medium.text-gray-800 "Raw"]
-       [:div.flex.gap-1
-        [CopyButton {:text yaml-text :label "Copy" :class "bg-gray-300 text-gray-900"}]
-        [CopyButton {:text raw-message :label "JSON" :class "bg-gray-300 text-gray-900"}]]]
-      [:pre.text-xs.whitespace-pre-wrap.break-all.bg-gray-25.p-2.rounded.max-h-64.overflow-auto.text-gray-900 yaml-text]]]))
+     [:> rac/ModalOverlay {:isDismissable true
+                           :className (fn [^js props]
+                                        (str "fixed inset-0 z-50 bg-black/50 flex items-center justify-center "
+                                             (when (.-isEntering props) "animate-in fade-in duration-200 ease-out ")
+                                             (when (.-isExiting props) "animate-out fade-out duration-150 ease-in")))}
+      [:> rac/Modal {:className (fn [^js props]
+                                  (str "bg-gray-100 border border-gray-300 rounded-lg shadow-lg p-4 w-[32rem] max-h-[80vh] overflow-hidden flex flex-col "
+                                       (when (.-isEntering props) "animate-in zoom-in-95 fade-in duration-200 ease-out ")
+                                       (when (.-isExiting props) "animate-out zoom-out-95 fade-out duration-150 ease-in")))}
+       [:> rac/Dialog {:class "outline-none flex flex-col flex-1 min-h-0"}
+        [:div.flex.justify-between.items-center.mb-3.shrink-0
+         [:> rac/Heading {:slot "title" :class "text-sm font-medium text-gray-800"} "Raw"]
+         [:div.flex.gap-2.shrink-0
+          [CopyButton {:text yaml-text :label "YAML" :class "bg-gray-300 text-gray-900"}]
+          [CopyButton {:text raw-message :label "JSON" :class "bg-gray-300 text-gray-900"}]]]
+        [:pre.text-xs.whitespace-pre-wrap.break-all.bg-gray-25.p-3.rounded.overflow-auto.text-gray-900.flex-1.min-h-0.max-h-96 yaml-text]]]]]))
 
 (s/defn AssistantMessage :- c.schema/Hiccup
   [{:keys [message tool-results]} :- c.schema/AssistantMessageProps]
