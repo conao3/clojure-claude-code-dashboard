@@ -505,62 +505,53 @@
                                                      (inc old-line-num)
                                                      (inc new-line-num)
                                                      (conj result {:type :context :old-num old-line-num :new-num new-line-num :content content}))))))))
-                                  structured-patch)
-                max-line-num (apply max 1 (remove nil? (concat (map :old-num all-lines) (map :new-num all-lines))))
-                line-num-width (max 2 (count (str max-line-num)))]
+                                  structured-patch)]
             [:div.overflow-x-auto
-             (map-indexed
-              (fn [idx {:keys [type old-num new-num content]}]
-                ^{:key idx}
-                [:div.flex
-                 {:class (case type
-                           :removed "bg-red-500 text-white"
-                           :added "bg-green-500 text-white"
-                           :context "bg-gray-50 text-gray-700")}
-                 [:div.text-right.pr-2.select-none.flex-shrink-0
-                  {:class (case type :removed "bg-red-600" :added "bg-green-600" :context "bg-gray-100 text-gray-500")
-                   :style {:min-width (str (* line-num-width 0.6) "rem")}}
-                  (or old-num "")]
-                 [:div.text-right.pr-2.select-none.flex-shrink-0
-                  {:class (case type :removed "bg-red-600" :added "bg-green-600" :context "bg-gray-100 text-gray-500")
-                   :style {:min-width (str (* line-num-width 0.6) "rem")}}
-                  (or new-num "")]
-                 [:div.px-1.select-none.flex-shrink-0
-                  (case type :removed "-" :added "+" :context " ")]
-                 [:div.flex-1.px-2.whitespace-pre content]])
-              all-lines)]))
+             [:table.w-full.border-collapse
+              [:tbody
+               (map-indexed
+                (fn [idx {:keys [type old-num new-num content]}]
+                  ^{:key idx}
+                  [:tr {:class (case type
+                                 :removed "bg-red-500 text-white"
+                                 :added "bg-green-500 text-white"
+                                 :context "bg-gray-50 text-gray-700")}
+                   [:td.text-right.pr-2.select-none
+                    {:class (case type :removed "bg-red-600" :added "bg-green-600" :context "bg-gray-100 text-gray-500")}
+                    (or old-num "")]
+                   [:td.text-right.pr-2.select-none
+                    {:class (case type :removed "bg-red-600" :added "bg-green-600" :context "bg-gray-100 text-gray-500")}
+                    (or new-num "")]
+                   [:td.px-1.select-none.w-4
+                    (case type :removed "-" :added "+" :context " ")]
+                   [:td.px-2.whitespace-pre content]])
+                all-lines)]]]))
         render-old-new
         (fn []
           (let [old-lines (if old-string (str/split-lines old-string) [])
-                new-lines (if new-string (str/split-lines new-string) [])
-                max-line-num (max (count old-lines) (count new-lines))
-                line-num-width (max 2 (count (str max-line-num)))]
+                new-lines (if new-string (str/split-lines new-string) [])]
             [:div.overflow-x-auto
-             (concat
-              (map-indexed
-               (fn [idx line]
-                 ^{:key (str "old-" idx)}
-                 [:div.flex.bg-red-500.text-white
-                  [:div.text-right.pr-2.bg-red-600.select-none.flex-shrink-0
-                   {:style {:min-width (str (* line-num-width 0.6) "rem")}}
-                   (inc idx)]
-                  [:div.text-right.pr-2.bg-red-600.select-none.flex-shrink-0
-                   {:style {:min-width (str (* line-num-width 0.6) "rem")}}]
-                  [:div.px-1.select-none.flex-shrink-0 "-"]
-                  [:div.flex-1.px-2.whitespace-pre line]])
-               old-lines)
-              (map-indexed
-               (fn [idx line]
-                 ^{:key (str "new-" idx)}
-                 [:div.flex.bg-green-500.text-white
-                  [:div.text-right.pr-2.bg-green-600.select-none.flex-shrink-0
-                   {:style {:min-width (str (* line-num-width 0.6) "rem")}}]
-                  [:div.text-right.pr-2.bg-green-600.select-none.flex-shrink-0
-                   {:style {:min-width (str (* line-num-width 0.6) "rem")}}
-                   (inc idx)]
-                  [:div.px-1.select-none.flex-shrink-0 "+"]
-                  [:div.flex-1.px-2.whitespace-pre line]])
-               new-lines))]))]
+             [:table.w-full.border-collapse
+              [:tbody
+               (concat
+                (map-indexed
+                 (fn [idx line]
+                   ^{:key (str "old-" idx)}
+                   [:tr.bg-red-500.text-white
+                    [:td.text-right.pr-2.bg-red-600.select-none (inc idx)]
+                    [:td.text-right.pr-2.bg-red-600.select-none]
+                    [:td.px-1.select-none.w-4 "-"]
+                    [:td.px-2.whitespace-pre line]])
+                 old-lines)
+                (map-indexed
+                 (fn [idx line]
+                   ^{:key (str "new-" idx)}
+                   [:tr.bg-green-500.text-white
+                    [:td.text-right.pr-2.bg-green-600.select-none]
+                    [:td.text-right.pr-2.bg-green-600.select-none (inc idx)]
+                    [:td.px-1.select-none.w-4 "+"]
+                    [:td.px-2.whitespace-pre line]])
+                 new-lines))]]]))]
     [:div.rounded-lg.overflow-hidden.border.border-gray-300.text-xs.font-mono
      (when file-path
        [:div.bg-gray-100.px-3.py-1.5.text-gray-700.border-b.border-gray-300.truncate
