@@ -363,12 +363,7 @@
        [:span.text-sm.font-medium.text-gray-600 "Sessions"]
        [:span.text-xs.text-gray-500.truncate.max-w-32 (c.lib/project-basename (:name project))]]
 
-      [:f> SessionsList {:project-id (:id project) :on-select-session on-select-session}]])
-
-   [:div.mt-auto.p-4.border-t.border-gray-200.shrink-0
-    [:div.flex.items-center.gap-3
-     [:div.w-8.h-8.rounded-full.bg-gray-500.flex.items-center.justify-center.text-white.text-sm "C"]
-     [:> lucide/Settings {:size 16 :className "ml-auto text-gray-600"}]]]])
+      [:f> SessionsList {:project-id (:id project) :on-select-session on-select-session}]])])
 
 (s/defn CopyButton :- c.schema/Hiccup
   []
@@ -832,8 +827,7 @@
   [:div.flex-1.flex.flex-col.bg-gray-25.min-h-0.overflow-hidden
    [:div.p-4.border-b.border-gray-200.shrink-0.flex.items-center.justify-between
     [:div.flex.items-center.gap-2
-     [:h2.text-base.font-medium.text-gray-900.truncate (or session-title "Select a session")]
-     [:> lucide/ChevronDown {:size 16 :className "text-gray-600"}]]]
+     [:h2.text-base.font-medium.text-gray-900.truncate (or session-title "Select a session")]]]
    [:div.flex-1.flex.flex-col.min-h-0.p-6
     [:f> MessageList]]])
 
