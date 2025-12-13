@@ -1,5 +1,6 @@
 (ns conao3.ccboard.lib
   (:require
+   [clojure.string :as str]
    [conao3.ccboard.schema :as c.schema]
    [conao3.ccboard.util :as c.util]
    [schema.core :as s]))
@@ -256,3 +257,7 @@
   (->> projects
        (filter #(= (:projectId %) project-id))
        first))
+
+(s/defn project-basename :- s/Str
+  [name :- s/Str]
+  (last (str/split name #"/")))

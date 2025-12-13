@@ -175,9 +175,6 @@
     }
   }"))
 
-(s/defn project-basename :- s/Str
-  [name :- s/Str]
-  (last (str/split name #"/")))
 
 (s/defn NavItem :- c.schema/Hiccup
   [{:keys [icon label active collapsed on-click badge]} :- c.schema/NavItemProps]
@@ -203,7 +200,7 @@
     :isDisabled (not (:hasSessions project))}
    [:> lucide/GitBranch {:size 14 :className "text-neutral-subdued-content flex-shrink-0"}]
    (when-not collapsed
-     [:span.text-sm.truncate.flex-1.text-left (project-basename (:name project))])])
+     [:span.text-sm.truncate.flex-1.text-left (c.lib/project-basename (:name project))])])
 
 (s/defn ^:private parse-project-node :- c.schema/Project
   [node :- s/Any]
@@ -406,7 +403,7 @@
   [:div.w-72.bg-background-base.border-r.border-gray-200.flex.flex-col
    [:div.p-4.border-b.border-gray-200.flex.items-center.justify-between
     [:h2.text-base.font-semibold.text-neutral-content.truncate
-     (if project (project-basename (:name project)) "Sessions")]
+     (if project (c.lib/project-basename (:name project)) "Sessions")]
     [:> rac/Button
      {:className "p-1 text-neutral-subdued-content hover:text-neutral-content outline-none"}
      [:> lucide/MoreHorizontal {:size 18}]]]
