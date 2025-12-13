@@ -2,6 +2,17 @@
   (:require
    [clojure.string :as str]))
 
+(defn clsx [& args]
+  (->> args
+       (mapcat (fn [arg]
+                 (cond
+                   (string? arg) [arg]
+                   (map? arg) (keep (fn [[k v]] (when v (name k))) arg)
+                   (sequential? arg) (apply clsx arg)
+                   :else nil)))
+       (remove str/blank?)
+       (str/join " ")))
+
 (defn encode-id [type raw-id]
   (js/btoa (str type ":" raw-id)))
 

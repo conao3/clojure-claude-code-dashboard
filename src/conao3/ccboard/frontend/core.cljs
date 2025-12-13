@@ -199,8 +199,9 @@
 (s/defn ProjectItem :- c.schema/Hiccup
   [{:keys [project active on-click]} :- c.schema/ProjectItemProps]
   [:> rac/Button
-   {:className (str "flex items-center gap-2 w-full rounded-lg px-3 py-2 transition-all outline-none text-left "
-                    (if active "bg-gray-200" "hover:bg-gray-100"))
+   {:className (c.util/clsx "flex items-center gap-2 w-full rounded-lg px-3 py-2 transition-all outline-none text-left"
+                            {:bg-gray-200 active
+                             :hover:bg-gray-100 (not active)})
     :onPress on-click}
    [:> lucide/Folder {:size 16 :className "text-gray-600 flex-shrink-0"}]
    [:span.text-sm.truncate.flex-1.text-gray-900 (c.lib/project-basename (:name project))]])
@@ -286,12 +287,15 @@
 (s/defn SessionItem :- c.schema/Hiccup
   [{:keys [session active on-click]} :- c.schema/SessionItemProps]
   [:> rac/Button
-   {:className (str "w-full text-left px-4 py-3 outline-none transition-all rounded-lg mx-2 mb-1 "
-                    (if active "bg-gray-50 shadow-sm" "hover:bg-gray-100"))
+   {:className (c.util/clsx "w-full text-left px-4 py-3 outline-none transition-all rounded-lg mx-2 mb-1"
+                            {:bg-gray-50 active
+                             :shadow-sm active
+                             :hover:bg-gray-100 (not active)})
     :onPress on-click}
    [:div.flex.items-center.gap-2
     [:span.w-2.h-2.rounded-full.flex-shrink-0
-     {:class (if active "bg-positive-900" "bg-gray-400")}]
+     {:class (c.util/clsx {:bg-positive-900 active
+                           :bg-gray-400 (not active)})}]
     [:span.text-sm.font-medium.text-gray-900.truncate.flex-1
      (subs (:sessionId session) 0 (min 24 (count (:sessionId session))))
      "..."]
@@ -384,7 +388,7 @@
   (let [copied? (r/atom false)]
     (s/fn [{:keys [text label class]} :- c.schema/CopyButtonProps]
       [:> rac/Button
-       {:className (str "px-2 py-1 rounded bg-gray-200 text-gray-700 group-hover:opacity-70 hover:opacity-100 pressed:opacity-100 flex items-center gap-1 text-xs " class)
+       {:className (c.util/clsx "px-2 py-1 rounded bg-gray-200 text-gray-700 group-hover:opacity-70 hover:opacity-100 pressed:opacity-100 flex items-center gap-1 text-xs" class)
         :onPress (fn []
                    (-> js/navigator .-clipboard (.writeText text))
                    (reset! copied? true)
@@ -475,9 +479,9 @@
 
 (s/defn ^:private EditDiffView :- c.schema/Hiccup
   [{:keys [file-path structured-patch old-string new-string]} :- {:file-path (s/maybe s/Str)
-                                                                   (s/optional-key :structured-patch) s/Any
-                                                                   (s/optional-key :old-string) (s/maybe s/Str)
-                                                                   (s/optional-key :new-string) (s/maybe s/Str)}]
+                                                                  (s/optional-key :structured-patch) s/Any
+                                                                  (s/optional-key :old-string) (s/maybe s/Str)
+                                                                  (s/optional-key :new-string) (s/maybe s/Str)}]
   (let [render-structured-patch
         (fn []
           (let [all-lines (mapcat (fn [hunk]
@@ -512,15 +516,22 @@
                (map-indexed
                 (fn [idx {:keys [type old-num new-num content]}]
                   ^{:key idx}
-                  [:tr {:class (case type
-                                 :removed "bg-red-500 text-white"
-                                 :added "bg-green-500 text-white"
-                                 :context "bg-gray-50 text-gray-700")}
+                  [:tr {:class (c.util/clsx {:bg-red-500 (= type :removed)
+                                             :bg-green-500 (= type :added)
+                                             :bg-gray-50 (= type :context)
+                                             :text-white (not= type :context)
+                                             :text-gray-700 (= type :context)})}
                    [:td.text-right.pr-2.select-none
-                    {:class (case type :removed "bg-red-600" :added "bg-green-600" :context "bg-gray-100 text-gray-500")}
+                    {:class (c.util/clsx {:bg-red-600 (= type :removed)
+                                          :bg-green-600 (= type :added)
+                                          :bg-gray-100 (= type :context)
+                                          :text-gray-500 (= type :context)})}
                     (or old-num "")]
                    [:td.text-right.pr-2.select-none
-                    {:class (case type :removed "bg-red-600" :added "bg-green-600" :context "bg-gray-100 text-gray-500")}
+                    {:class (c.util/clsx {:bg-red-600 (= type :removed)
+                                          :bg-green-600 (= type :added)
+                                          :bg-gray-100 (= type :context)
+                                          :text-gray-500 (= type :context)})}
                     (or new-num "")]
                    [:td.px-1.select-none.w-4
                     (case type :removed "-" :added "+" :context " ")]
@@ -655,7 +666,8 @@
        [:div.pl-4.relative.group
         [:div.flex.items-baseline.gap-2.text-sm.opacity-60
          [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/CornerDownRight {:size 14 :className "text-gray-600"}]]
-         [:div.font-medium.flex-shrink-0 {:class (if result "text-gray-900" "text-gray-400")} "Result"]
+         [:div.font-medium.flex-shrink-0 {:class (c.util/clsx {:text-gray-900 result
+                                                               :text-gray-400 (not result)})} "Result"]
          (if result
            (when result-summary
              [:div.text-gray-600.font-mono.text-xs.truncate {:title (str result-content)} result-summary])
