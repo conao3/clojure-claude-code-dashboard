@@ -486,12 +486,12 @@
           summary (tool-use-summary tool-name input-map)
           show-result? (contains? #{"Edit" "Write"} tool-name)]
       [:div.mt-2
-       [:div.flex.items-center.gap-2.text-sm
-        [:span.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0]
-        [tool-icon tool-name]
-        [:span.font-medium.text-gray-900 tool-name]
+       [:div.flex.items-baseline.gap-2.text-sm
+        [:div.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0.self-center]
+        [:div.flex.items-center.flex-shrink-0.self-center [tool-icon tool-name]]
+        [:div.font-medium.text-gray-900.flex-shrink-0 tool-name]
         (when (seq summary)
-          [:span.text-gray-600.font-mono.text-xs.truncate {:title summary} summary])]
+          [:div.text-gray-600.font-mono.text-xs.truncate {:title summary} summary])]
        (when (and result show-result? (:content result))
          [:div.mt-1.ml-6.text-xs.text-gray-600
           [:details
