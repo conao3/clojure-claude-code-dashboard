@@ -190,16 +190,16 @@
                    nil)))))
   nil)
 
-(s/defn stop-server :- (s/eq nil)
+(s/defn stop-server :- js/Promise
   []
-  (when-let [{:keys [server api-server admin-server]} @server-state]
+  (if-let [{:keys [server api-server admin-server]} @server-state]
     (-> (js/Promise.all #js [(.stop api-server) (when admin-server (.stop admin-server))])
         (.then (fn []
                  (.close server)
                  (reset! server-state nil)
                  (println "Server stopped")
-                 nil))))
-  nil)
+                 nil)))
+    (js/Promise.resolve nil)))
 
 (s/defn reload :- (s/eq nil)
   {:dev/after-load true}
