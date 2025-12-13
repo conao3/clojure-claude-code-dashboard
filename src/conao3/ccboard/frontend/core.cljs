@@ -462,11 +462,16 @@
   [{:keys [block tool-results]} :- c.schema/ContentBlockProps]
   (case (:type block)
     "text"
-    [:div.text-sm.leading-relaxed.text-gray-900
-     [Markdown {:children (:text block)}]]
+    [:div.mt-2
+     [:div.flex.items-center.gap-2.text-sm
+      [:span.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0]
+      [:> lucide/MessageSquare {:size 14 :className "text-gray-600"}]
+      [:span.font-medium.text-gray-900 "Message"]]
+     [:div.ml-6.mt-1.text-sm.text-gray-900
+      [Markdown {:children (:text block)}]]]
 
     "thinking"
-    [:details.mt-3
+    [:details.mt-2
      [:summary.flex.items-center.gap-2.cursor-pointer.text-sm.text-gray-600
       [:span.w-2.h-2.rounded-full.bg-notice-700.flex-shrink-0]
       [:> lucide/Brain {:size 14}]
