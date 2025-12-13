@@ -7,7 +7,10 @@
        (mapcat (fn [arg]
                  (cond
                    (string? arg) [arg]
-                   (map? arg) (keep (fn [[k v]] (when v (name k))) arg)
+                   (map? arg) (mapcat (fn [[k v]]
+                                        (when v
+                                          (str/split (name k) #"\.")))
+                                      arg)
                    (sequential? arg) (apply clsx arg)
                    :else nil)))
        (remove str/blank?)

@@ -516,22 +516,18 @@
                (map-indexed
                 (fn [idx {:keys [type old-num new-num content]}]
                   ^{:key idx}
-                  [:tr {:class (c.util/clsx {:bg-red-500 (= type :removed)
-                                             :bg-green-500 (= type :added)
-                                             :bg-gray-50 (= type :context)
-                                             :text-white (not= type :context)
-                                             :text-gray-700 (= type :context)})}
+                  [:tr {:class (c.util/clsx {:bg-red-500.text-white (= type :removed)
+                                             :bg-green-500.text-white (= type :added)
+                                             :bg-gray-50.text-gray-700 (= type :context)})}
                    [:td.text-right.pr-2.select-none
                     {:class (c.util/clsx {:bg-red-600 (= type :removed)
                                           :bg-green-600 (= type :added)
-                                          :bg-gray-100 (= type :context)
-                                          :text-gray-500 (= type :context)})}
+                                          :bg-gray-100.text-gray-500 (= type :context)})}
                     (or old-num "")]
                    [:td.text-right.pr-2.select-none
                     {:class (c.util/clsx {:bg-red-600 (= type :removed)
                                           :bg-green-600 (= type :added)
-                                          :bg-gray-100 (= type :context)
-                                          :text-gray-500 (= type :context)})}
+                                          :bg-gray-100.text-gray-500 (= type :context)})}
                     (or new-num "")]
                    [:td.px-1.select-none.w-4
                     (case type :removed "-" :added "+" :context " ")]
