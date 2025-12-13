@@ -9,6 +9,7 @@
    ["node:fs" :as fs]
    ["node:os" :as os]
    ["node:path" :as path]
+   ["node:readline" :as readline]
    [clojure.string :as str]
    [conao3.ccboard.lib :as c.lib]
    [conao3.ccboard.util :as c.util]
@@ -58,13 +59,37 @@
     (catch :default _e
       (c.lib/parse-broken-message project-id session-id idx line))))
 
-(defn ^:private list-messages [project-id session-id]
-  (let [file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))
-        content (try (.readFileSync fs file-path "utf-8") (catch :default _ ""))
-        lines (->> (str/split content #"\n") (filter #(not= % "")))]
-    (->> lines
-         (map-indexed (fn [idx line] (parse-message-line project-id session-id idx line)))
-         vec)))
+(defn ^:private read-lines-paginated [file-path skip take-n]
+  (js/Promise.
+   (fn [resolve _reject]
+     (if-not (.existsSync fs file-path)
+       (resolve {:lines [] :has-more false :start-idx 0})
+       (let [lines (atom [])
+             current-idx (atom 0)
+             has-more (atom false)
+             stream (.createReadStream fs file-path #js {:encoding "utf-8"})
+             rl (.createInterface readline #js {:input stream :crlfDelay js/Infinity})]
+         (.on rl "line"
+              (fn [line]
+                (when (not= line "")
+                  (cond
+                    (< @current-idx skip)
+                    nil
+
+                    (< (count @lines) take-n)
+                    (swap! lines conj line)
+
+                    :else
+                    (do
+                      (reset! has-more true)
+                      (.close rl)
+                      (.destroy stream)))
+                  (swap! current-idx inc))))
+         (.on rl "close"
+              (fn []
+                (resolve {:lines @lines
+                          :has-more @has-more
+                          :start-idx skip}))))))))
 
 (defn ^:private js-args->pagination-args [^js args]
   {:first-n (.-first args)
@@ -110,9 +135,26 @@
                     clj->js))}
    "Session" {"messages"
               (fn [parent ^js args]
-                (-> (list-messages (aget parent "projectId") (aget parent "sessionId"))
-                    (c.util/paginate (js-args->pagination-args args))
-                    clj->js))}
+                (let [project-id (aget parent "projectId")
+                      session-id (aget parent "sessionId")
+                      file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))
+                      {:keys [first-n after-cursor]} (js-args->pagination-args args)
+                      skip (or (c.util/decode-cursor after-cursor) -1)
+                      take-n (or first-n 20)]
+                  (-> (read-lines-paginated file-path (inc skip) take-n)
+                      (.then (fn [{:keys [lines has-more start-idx]}]
+                               (let [items (->> lines
+                                                (map-indexed (fn [i line]
+                                                               (parse-message-line project-id session-id (+ start-idx i) line)))
+                                                vec)]
+                                 (clj->js {:edges (map-indexed (fn [i item]
+                                                                 {:cursor (c.util/encode-cursor (+ start-idx i))
+                                                                  :node item})
+                                                               items)
+                                           :pageInfo {:hasNextPage has-more
+                                                      :hasPreviousPage (> start-idx 0)
+                                                      :startCursor (when (seq items) (c.util/encode-cursor start-idx))
+                                                      :endCursor (when (seq items) (c.util/encode-cursor (+ start-idx (dec (count items)))))}})))))))}
    "Message" {"__resolveType" (fn [obj] (aget obj "__typename"))}})
 
 (defn ^:private get-public-dir []

@@ -12,6 +12,15 @@
 (defn path->slug [p]
   (str/replace p "/" "-"))
 
+(defn encode-cursor [idx]
+  (js/btoa (str "cursor:" idx)))
+
+(defn decode-cursor [cursor]
+  (when cursor
+    (let [decoded (js/atob cursor)]
+      (when (and decoded (.startsWith decoded "cursor:"))
+        (js/parseInt (subs decoded 7))))))
+
 (defn find-cursor-idx [items cursor]
   (when cursor
     (->> items
@@ -47,3 +56,35 @@
                 :hasPreviousPage has-previous-page
                 :startCursor (some-> (first items) :id)
                 :endCursor (some-> (last items) :id)}}))
+
+(defn paginate-lazy [lines parse-fn {:keys [first-n after-cursor last-n before-cursor]}]
+  (let [total-count (count lines)
+        after-idx (decode-cursor after-cursor)
+        before-idx (decode-cursor before-cursor)
+        start-idx (cond
+                    (and after-idx before-idx) (inc after-idx)
+                    after-idx (inc after-idx)
+                    :else 0)
+        end-idx (cond
+                  (and after-idx before-idx) (min before-idx total-count)
+                  before-idx (min before-idx total-count)
+                  :else total-count)
+        filtered-count (- end-idx start-idx)
+        [take-start take-count] (cond
+                                  first-n [start-idx (min first-n filtered-count)]
+                                  last-n [(max start-idx (- end-idx last-n)) (min last-n filtered-count)]
+                                  :else [start-idx filtered-count])
+        items (->> (subvec (vec lines) take-start (+ take-start take-count))
+                   (map-indexed (fn [relative-idx line]
+                                  (parse-fn (+ take-start relative-idx) line)))
+                   vec)
+        has-next-page (< (+ take-start take-count) total-count)
+        has-previous-page (> take-start 0)]
+    {:edges (map-indexed (fn [relative-idx item]
+                           {:cursor (encode-cursor (+ take-start relative-idx))
+                            :node item})
+                         items)
+     :pageInfo {:hasNextPage has-next-page
+                :hasPreviousPage has-previous-page
+                :startCursor (when (seq items) (encode-cursor take-start))
+                :endCursor (when (seq items) (encode-cursor (+ take-start (dec (count items)))))}}))
