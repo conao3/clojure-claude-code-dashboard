@@ -18,7 +18,7 @@
                 :gitBranch "main"
                 :timestamp "2024-01-01T00:00:00Z"
                 :message {:role "user" :content "Hello, world!"}}
-          result (c.lib/parse-user-message data "project-id" "session-id" "uuid-123" "{}" stringify)]
+          result (c.lib/parse-user-message data "project-id" "session-id" "uuid-123" 0 "{}" stringify)]
       (is (= "UserMessage" (:__typename result)))
       (is (= "project-id" (:projectId result)))
       (is (= "session-id" (:sessionId result)))
@@ -41,7 +41,7 @@
                 :message {:role "user"
                           :content [{:type "text" :text "First block"}
                                     {:type "tool_result" :tool_use_id "tool-1" :content {:result "ok"}}]}}
-          result (c.lib/parse-user-message data "proj" "sess" "uuid-456" "{}" stringify)]
+          result (c.lib/parse-user-message data "proj" "sess" "uuid-456" 1 "{}" stringify)]
       (is (= 2 (count (-> result :message :content))))
       (is (= "text" (-> result :message :content first :type)))
       (is (= "First block" (-> result :message :content first :text)))
@@ -53,7 +53,7 @@
                 :uuid "uuid-789"
                 :message {:role "user" :content "test"}
                 :thinkingMetadata {:level "high" :disabled false :triggers ["trigger1"]}}
-          result (c.lib/parse-user-message data "proj" "sess" "uuid-789" "{}" stringify)]
+          result (c.lib/parse-user-message data "proj" "sess" "uuid-789" 2 "{}" stringify)]
       (is (= "high" (-> result :thinkingMetadata :level)))
       (is (false? (-> result :thinkingMetadata :disabled)))
       (is (= ["trigger1"] (-> result :thinkingMetadata :triggers))))))
@@ -80,7 +80,7 @@
                                   :output_tokens 50
                                   :cache_creation_input_tokens 10
                                   :cache_read_input_tokens 5}}}
-          result (c.lib/parse-assistant-message data "proj" "sess" "uuid-asst" "{}" stringify)]
+          result (c.lib/parse-assistant-message data "proj" "sess" "uuid-asst" 0 "{}" stringify)]
       (is (= "AssistantMessage" (:__typename result)))
       (is (= "proj" (:projectId result)))
       (is (= "sess" (:sessionId result)))
@@ -103,7 +103,7 @@
                                      :name "read_file"
                                      :input {:path "/home/user/file.txt"}}]
                           :usage {}}}
-          result (c.lib/parse-assistant-message data "proj" "sess" "uuid-tool" "{}" stringify)]
+          result (c.lib/parse-assistant-message data "proj" "sess" "uuid-tool" 1 "{}" stringify)]
       (is (= 1 (count (-> result :message :content))))
       (is (= "tool_use" (-> result :message :content first :type)))
       (is (= "tool-use-id" (-> result :message :content first :id)))
@@ -119,7 +119,7 @@
                                      :thinking "Let me think about this..."
                                      :signature "sig-123"}]
                           :usage {}}}
-          result (c.lib/parse-assistant-message data "proj" "sess" "uuid-think" "{}" stringify)]
+          result (c.lib/parse-assistant-message data "proj" "sess" "uuid-think" 2 "{}" stringify)]
       (is (= "thinking" (-> result :message :content first :type)))
       (is (= "Let me think about this..." (-> result :message :content first :thinking)))
       (is (= "sig-123" (-> result :message :content first :signature))))))
@@ -141,7 +141,7 @@
                 :timestamp "2024-01-01T00:00:00Z"
                 :level "info"
                 :compactMetadata {:trigger "auto" :preTokens 100}}
-          result (c.lib/parse-system-message data "proj" "sess" "uuid-sys" "{}")]
+          result (c.lib/parse-system-message data "proj" "sess" "uuid-sys" 0 "{}")]
       (is (= "SystemMessage" (:__typename result)))
       (is (= "parent" (:parentUuid result)))
       (is (= "logical-parent" (:logicalParentUuid result)))
@@ -159,7 +159,7 @@
                 :uuid "uuid-sum"
                 :summary "This is a summary"
                 :leafUuid "leaf-uuid"}
-          result (c.lib/parse-summary-message data "proj" "sess" "uuid-sum" "{}")]
+          result (c.lib/parse-summary-message data "proj" "sess" "uuid-sum" 0 "{}")]
       (is (= "SummaryMessage" (:__typename result)))
       (is (= "This is a summary" (:summary result)))
       (is (= "leaf-uuid" (:leafUuid result))))))
@@ -172,7 +172,7 @@
                            :trackedFileBackups {:file1 "backup1"}
                            :timestamp "2024-01-01T00:00:00Z"}
                 :isSnapshotUpdate true}
-          result (c.lib/parse-file-history-snapshot-message data "proj" "sess" "uuid-fhs" "{}" stringify)]
+          result (c.lib/parse-file-history-snapshot-message data "proj" "sess" "uuid-fhs" 0 "{}" stringify)]
       (is (= "FileHistorySnapshotMessage" (:__typename result)))
       (is (= "msg-id" (-> result :snapshot :messageId)))
       (is (some? (-> result :snapshot :trackedFileBackups)))
@@ -187,7 +187,7 @@
                 :timestamp "2024-01-01T00:00:00Z"
                 :content "queue content"
                 :sessionId "queue-session-id"}
-          result (c.lib/parse-queue-operation-message data "proj" "sess" "uuid-queue" "{}")]
+          result (c.lib/parse-queue-operation-message data "proj" "sess" "uuid-queue" 0 "{}")]
       (is (= "QueueOperationMessage" (:__typename result)))
       (is (= "enqueue" (:operation result)))
       (is (= "2024-01-01T00:00:00Z" (:timestamp result)))
@@ -196,7 +196,7 @@
 
 (deftest parse-unknown-message-test
   (testing "parses unknown message"
-    (let [result (c.lib/parse-unknown-message "proj" "sess" "msg-id" "raw line")]
+    (let [result (c.lib/parse-unknown-message "proj" "sess" "msg-id" 0 "raw line")]
       (is (= "UnknownMessage" (:__typename result)))
       (is (= "proj" (:projectId result)))
       (is (= "sess" (:sessionId result)))

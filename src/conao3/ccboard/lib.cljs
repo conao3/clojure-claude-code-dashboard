@@ -30,10 +30,11 @@
    project-id :- c.schema/ProjectId
    session-id :- c.schema/SessionId
    message-id :- c.schema/MessageId
+   idx :- s/Int
    line :- s/Str
    stringify-fn :- s/Any]
   {:__typename "UserMessage"
-   :id (c.util/encode-id "Message" (str project-id "/" session-id "/" message-id))
+   :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
    :projectId project-id
    :sessionId session-id
    :messageId message-id
@@ -71,13 +72,14 @@
    project-id :- c.schema/ProjectId
    session-id :- c.schema/SessionId
    message-id :- c.schema/MessageId
+   idx :- s/Int
    line :- s/Str
    stringify-fn :- s/Any]
   (let [msg (:message data)
         usage (:usage msg)
         cache-creation (:cache_creation usage)]
     {:__typename "AssistantMessage"
-     :id (c.util/encode-id "Message" (str project-id "/" session-id "/" message-id))
+     :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
      :projectId project-id
      :sessionId session-id
      :messageId message-id
@@ -111,11 +113,12 @@
    project-id :- c.schema/ProjectId
    session-id :- c.schema/SessionId
    message-id :- c.schema/MessageId
+   idx :- s/Int
    line :- s/Str
    stringify-fn :- s/Any]
   (let [snapshot (:snapshot data)]
     {:__typename "FileHistorySnapshotMessage"
-     :id (c.util/encode-id "Message" (str project-id "/" session-id "/" message-id))
+     :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
      :projectId project-id
      :sessionId session-id
      :messageId message-id
@@ -130,9 +133,10 @@
    project-id :- c.schema/ProjectId
    session-id :- c.schema/SessionId
    message-id :- c.schema/MessageId
+   idx :- s/Int
    line :- s/Str]
   {:__typename "QueueOperationMessage"
-   :id (c.util/encode-id "Message" (str project-id "/" session-id "/" message-id))
+   :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
    :projectId project-id
    :sessionId session-id
    :messageId message-id
@@ -147,9 +151,10 @@
    project-id :- c.schema/ProjectId
    session-id :- c.schema/SessionId
    message-id :- c.schema/MessageId
+   idx :- s/Int
    line :- s/Str]
   {:__typename "SystemMessage"
-   :id (c.util/encode-id "Message" (str project-id "/" session-id "/" message-id))
+   :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
    :projectId project-id
    :sessionId session-id
    :messageId message-id
@@ -175,9 +180,10 @@
    project-id :- c.schema/ProjectId
    session-id :- c.schema/SessionId
    message-id :- c.schema/MessageId
+   idx :- s/Int
    line :- s/Str]
   {:__typename "SummaryMessage"
-   :id (c.util/encode-id "Message" (str project-id "/" session-id "/" message-id))
+   :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
    :projectId project-id
    :sessionId session-id
    :messageId message-id
@@ -189,9 +195,10 @@
   [project-id :- c.schema/ProjectId
    session-id :- c.schema/SessionId
    message-id :- c.schema/MessageId
+   idx :- s/Int
    line :- s/Str]
   {:__typename "UnknownMessage"
-   :id (c.util/encode-id "Message" (str project-id "/" session-id "/" message-id))
+   :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
    :projectId project-id
    :sessionId session-id
    :messageId message-id
@@ -218,13 +225,13 @@
    line :- s/Str
    stringify-fn :- s/Any]
   (case (:type data)
-    "user" (parse-user-message data project-id session-id message-id line stringify-fn)
-    "assistant" (parse-assistant-message data project-id session-id message-id line stringify-fn)
-    "file-history-snapshot" (parse-file-history-snapshot-message data project-id session-id message-id line stringify-fn)
-    "queue-operation" (parse-queue-operation-message data project-id session-id message-id line)
-    "system" (parse-system-message data project-id session-id message-id line)
-    "summary" (parse-summary-message data project-id session-id message-id line)
-    (parse-unknown-message project-id session-id message-id line)))
+    "user" (parse-user-message data project-id session-id message-id idx line stringify-fn)
+    "assistant" (parse-assistant-message data project-id session-id message-id idx line stringify-fn)
+    "file-history-snapshot" (parse-file-history-snapshot-message data project-id session-id message-id idx line stringify-fn)
+    "queue-operation" (parse-queue-operation-message data project-id session-id message-id idx line)
+    "system" (parse-system-message data project-id session-id message-id idx line)
+    "summary" (parse-summary-message data project-id session-id message-id idx line)
+    (parse-unknown-message project-id session-id message-id idx line)))
 
 (s/defn make-project :- c.schema/Project
   [project-path :- s/Str]

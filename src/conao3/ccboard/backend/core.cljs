@@ -106,17 +106,12 @@
                   (when (.existsSync fs file-path)
                     (let [stat (.statSync fs file-path)]
                       (c.lib/make-session project-id session-id (.toISOString (.-birthtime stat))))))
-      "Message" (let [[project-id session-id message-id] (str/split raw-id #"/")
+      "Message" (let [[project-id session-id idx-str] (str/split raw-id #"/")
+                      idx (js/parseInt idx-str 10)
                       file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))
                       content (try (.readFileSync fs file-path "utf-8") (catch :default _ ""))
-                      lines (->> (str/split content #"\n") (filter #(not= % "")))
-                      idx (->> lines
-                               (keep-indexed (fn [i l]
-                                               (let [parsed-data (js->clj (js/JSON.parse l) :keywordize-keys true)]
-                                                 (when (= message-id (or (:uuid parsed-data) (:messageId parsed-data)))
-                                                   i))))
-                               first)]
-                  (when idx
+                      lines (->> (str/split content #"\n") (filter #(not= % "")))]
+                  (when (< idx (count lines))
                     (parse-message-line project-id session-id idx (nth lines idx))))
       nil)))
 
