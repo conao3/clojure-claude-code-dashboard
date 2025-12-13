@@ -181,8 +181,7 @@
   [:> rac/Button
    {:className (str "flex items-center gap-2 w-full rounded-lg px-3 py-2 transition-all outline-none text-left "
                     (if active "bg-gray-200" "hover:bg-gray-100"))
-    :onPress on-click
-    :isDisabled (not (:hasSessions project))}
+    :onPress on-click}
    [:> lucide/Folder {:size 16 :className "text-gray-600 flex-shrink-0"}]
    [:span.text-sm.truncate.flex-1.text-gray-900 (c.lib/project-basename (:name project))]])
 
@@ -209,7 +208,7 @@
                                                 edges (-> data .-projects .-edges)
                                                 page-info (-> data .-projects .-pageInfo)
                                                 items (mapv #(parse-project-node (.-node %)) edges)]
-                                            (clj->js {:items items
+                                            (clj->js {:items (filterv :hasSessions items)
                                                       :cursor (when (.-hasNextPage page-info)
                                                                 (.-endCursor page-info))})))))))})
         check-scroll-and-load (fn []
@@ -347,23 +346,18 @@
        :placeholder "Find a small todo in the codebase and do it"
        :class "w-full bg-gray-50 border border-gray-200 rounded-lg py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none focus:border-accent-700 focus:ring-1 focus:ring-accent-700"}]]]
 
-   [:div.px-4.pb-3.flex.items-center.gap-2.shrink-0
-    [:> rac/Button
-     {:className "flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-900 hover:bg-gray-100 outline-none text-sm"}
-     [:> lucide/GitBranch {:size 14}]
-     "Select repository"]
-    [:> rac/Button
-     {:className "flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-900 hover:bg-gray-100 outline-none text-sm"}
-     [:> lucide/Shield {:size 14}]
-     "Default"]]
+   [:div.px-4.pb-3.flex.items-center.justify-between.shrink-0
+    [:span.text-sm.font-medium.text-gray-600 "Projects"]]
 
-   [:div.px-4.py-2.flex.items-center.justify-between.shrink-0
-    [:span.text-sm.font-medium.text-gray-600 "Sessions"]
-    [:> rac/Button
-     {:className "p-1 rounded text-gray-600 hover:text-gray-900 outline-none"}
-     [:> lucide/SlidersHorizontal {:size 14}]]]
+   [:f> ProjectsList {:on-select-project on-select-project}]
 
-   [:f> SessionsList {:project-id (:id project) :on-select-session on-select-session}]
+   (when project
+     [:<>
+      [:div.px-4.py-2.flex.items-center.justify-between.shrink-0.border-t.border-gray-200
+       [:span.text-sm.font-medium.text-gray-600 "Sessions"]
+       [:span.text-xs.text-gray-500.truncate.max-w-32 (c.lib/project-basename (:name project))]]
+
+      [:f> SessionsList {:project-id (:id project) :on-select-session on-select-session}]])
 
    [:div.mt-auto.p-4.border-t.border-gray-200.shrink-0
     [:div.flex.items-center.gap-3
