@@ -2,3 +2,14 @@
 @plugin "tailwindcss-react-aria-components";
 @plugin "tailwindcss-animate";
 @import "./spectrum-colors.css";
+
+details summary {
+  list-style: none !important;
+}
+details summary::marker {
+  display: none !important;
+  content: '' !important;
+}
+details summary::-webkit-details-marker {
+  display: none !important;
+}
