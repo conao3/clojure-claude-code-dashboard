@@ -462,22 +462,23 @@
   [{:keys [block tool-results]} :- c.schema/ContentBlockProps]
   (case (:type block)
     "text"
-    [:div.mt-2
+    [:div.flex.flex-col.gap-1
      [:div.flex.items-center.gap-2.text-sm
-      [:span.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0]
+      [:div.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0]
       [:> lucide/MessageSquare {:size 14 :className "text-gray-600"}]
-      [:span.font-medium.text-gray-900 "Message"]]
-     [:div.ml-6.mt-1.text-sm.text-gray-900
+      [:div.font-medium.text-gray-900 "Message"]]
+     [:div.pl-6.text-sm.text-gray-900
       [Markdown {:children (:text block)}]]]
 
     "thinking"
-    [:details.mt-2
+    [:details
      [:summary.flex.items-center.gap-2.cursor-pointer.text-sm.text-gray-600
-      [:span.w-2.h-2.rounded-full.bg-notice-700.flex-shrink-0]
+      [:div.w-2.h-2.rounded-full.bg-notice-700.flex-shrink-0]
       [:> lucide/Brain {:size 14}]
-      [:span "Thinking..."]]
-     [:div.mt-2.ml-6.p-3.rounded-lg.bg-notice-200.border.border-notice-400
-      [:pre.text-xs.whitespace-pre-wrap.break-all.text-gray-700 (:thinking block)]]]
+      [:div "Thinking..."]]
+     [:div.pl-6.pt-2
+      [:div.p-3.rounded-lg.bg-notice-200.border.border-notice-400
+       [:pre.text-xs.whitespace-pre-wrap.break-all.text-gray-700 (:thinking block)]]]]
 
     "tool_use"
     (let [result (get tool-results (:id block))
@@ -485,7 +486,7 @@
           input-map (parse-tool-input (:input block))
           summary (tool-use-summary tool-name input-map)
           show-result? (contains? #{"Edit" "Write"} tool-name)]
-      [:div.mt-2
+      [:div.flex.flex-col.gap-1
        [:div.flex.items-baseline.gap-2.text-sm
         [:div.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0.self-center]
         [:div.flex.items-center.flex-shrink-0.self-center [tool-icon tool-name]]
@@ -493,28 +494,28 @@
         (when (seq summary)
           [:div.text-gray-600.font-mono.text-xs.truncate {:title summary} summary])]
        (when (and result show-result? (:content result))
-         [:div.mt-1.ml-6.text-xs.text-gray-600
+         [:div.pl-6.text-xs.text-gray-600
           [:details
            [:summary.cursor-pointer.flex.items-center.gap-1
             "└ Show result"]
-           [:pre.mt-1.p-2.bg-gray-100.rounded.whitespace-pre-wrap.break-all.font-mono.max-h-64.overflow-auto
+           [:pre.p-2.bg-gray-100.rounded.whitespace-pre-wrap.break-all.font-mono.max-h-64.overflow-auto
             (:content result)]]])])
 
     "tool_result"
     nil
 
-    [:div.mt-3.p-3.rounded-lg.bg-notice-400.text-notice-1200
+    [:div.p-3.rounded-lg.bg-notice-400.text-notice-1200
      [:div.text-xs.font-medium (str "Unknown: " (:type block))]]))
 
 (s/defn UserMessageBubble :- c.schema/Hiccup
   [{:keys [content]} :- {:content c.schema/Hiccup}]
-  [:div.mb-4.rounded-2xl.p-4.bg-accent-200
+  [:div.rounded-2xl.p-4.bg-accent-200
    content])
 
 (s/defn AssistantMessageBubble :- c.schema/Hiccup
   [{:keys [content raw-details]} :- {:content c.schema/Hiccup
                                      (s/optional-key :raw-details) (s/maybe c.schema/Hiccup)}]
-  [:div.mb-4.relative.group
+  [:div.relative.group
    content
    raw-details])
 
@@ -530,7 +531,7 @@
   (let [yaml-text (safe-yaml-dump (:rawMessage message))
         content-blocks (get-in message [:message :content])]
     [AssistantMessageBubble
-     {:content (into [:div]
+     {:content (into [:div.flex.flex-col.gap-2]
                      (map-indexed
                       (fn [idx block]
                         ^{:key idx} [ContentBlock {:block block :tool-results tool-results}])
@@ -566,7 +567,7 @@
 (s/defn SystemMessageItem :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/SystemMessageItemProps]
   (let [yaml-text (safe-yaml-dump (:rawMessage message))]
-    [:div.mb-3.opacity-60
+    [:div.opacity-60
      [:div {:class "rounded-lg p-3 bg-informative-200 border border-informative-400"}
       [:div.flex.items-center.gap-2.text-xs.text-informative-1200
        [:> lucide/Settings {:size 12}]
@@ -589,7 +590,7 @@
 (s/defn SummaryMessageItem :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/SummaryMessageItemProps]
   (let [yaml-text (safe-yaml-dump (:rawMessage message))]
-    [:div.mb-3.opacity-60
+    [:div.opacity-60
      [:div {:class "rounded-lg p-3 bg-positive-200 border border-positive-400"}
       [:div.flex.items-center.gap-2.text-xs.text-positive-1200
        [:> lucide/FileText {:size 12}]
@@ -606,29 +607,32 @@
   [{:keys [message]} :- c.schema/FileHistorySnapshotMessageProps]
   (let [yaml-text (safe-yaml-dump (:rawMessage message))
         snapshot (:snapshot message)
-        tracked-file-backups (-> (:trackedFileBackups snapshot) js/JSON.parse js/Object.keys js->clj)]
-    [:div.mb-3.opacity-50
-     [:div.rounded-lg.p-3.bg-gray-100.border.border-gray-300
-      [:div.flex.items-center.gap-2.text-xs.text-gray-600
-       [:> lucide/History {:size 12}]
-       [:span "FileHistorySnapshot"]
-       (when (:isSnapshotUpdate message)
-         [:span.text-xs.bg-gray-600.text-white.px-1.rounded "update"])]
-      [:details.mt-2
-       [:summary.text-xs.text-gray-600.cursor-pointer
-        (str (count tracked-file-backups) " tracked files")]
-       [:ul.mt-1.text-xs.text-gray-600.ml-4.list-disc
+        tracked-file-backups (-> (:trackedFileBackups snapshot) js/JSON.parse js/Object.keys js->clj)
+        file-count (count tracked-file-backups)]
+    [:div.flex.flex-col.gap-1.opacity-50
+     [:div.flex.items-baseline.gap-2.text-sm
+      [:div.w-2.h-2.rounded-full.bg-gray-500.flex-shrink-0.self-center]
+      [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/History {:size 14 :className "text-gray-600"}]]
+      [:div.font-medium.text-gray-900.flex-shrink-0 "FileHistorySnapshot"]
+      (when (:isSnapshotUpdate message)
+        [:div.text-xs.bg-gray-600.text-white.px-1.rounded.flex-shrink-0 "update"])
+      [:div.text-gray-600.text-xs.truncate (str file-count " tracked files")]]
+     [:div.pl-6.text-xs.text-gray-600
+      [:details
+       [:summary.cursor-pointer.flex.items-center.gap-1
+        "└ Show details"]
+       [:ul.mt-1.ml-4.list-disc
         (for [path tracked-file-backups]
           ^{:key path} [:li.truncate path])]
        [:div.relative.group.mt-2
         [:div.absolute.top-1.right-1
          [CopyButton {:text yaml-text :label "Copy"}]]
-        [:pre.text-xs.whitespace-pre-wrap.break-all.bg-gray-50.p-2.rounded.max-h-32.overflow-auto yaml-text]]]]]))
+        [:pre.p-2.bg-gray-100.rounded.whitespace-pre-wrap.break-all.font-mono.max-h-32.overflow-auto yaml-text]]]]]))
 
 (s/defn QueueOperationMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/QueueOperationMessageProps]
   (let [yaml-text (safe-yaml-dump (:rawMessage message))]
-    [:div.mb-3.opacity-50
+    [:div.opacity-50
      [:div.rounded-lg.p-3.bg-gray-100.border.border-gray-300
       [:div.flex.items-center.gap-2.text-xs.text-gray-600
        [:> lucide/ListOrdered {:size 12}]
@@ -647,7 +651,7 @@
 (s/defn UnknownMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/UnknownMessageProps]
   (let [yaml-text (safe-yaml-dump (:rawMessage message))]
-    [:div.mb-3
+    [:div
      [:div.rounded-lg.p-3.bg-notice-600.text-notice-1400
       [:div.flex.items-center.gap-2.text-xs
        [:> lucide/HelpCircle {:size 12}]
@@ -658,7 +662,7 @@
 
 (s/defn BrokenMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/BrokenMessageProps]
-  [:div.mb-3
+  [:div
    [:div.rounded-lg.p-3.bg-negative-700.text-negative-1400
     [:div.flex.items-center.gap-2.text-xs
      [:> lucide/AlertTriangle {:size 12}]
@@ -682,7 +686,7 @@
       "SummaryMessage" [SummaryMessageItem {:message message}]
       nil)
     (catch :default e
-      [:div.mb-3
+      [:div
        [:div.rounded-lg.p-3.bg-negative-700.text-negative-1400
         [:div.flex.items-center.gap-2.text-xs
          [:> lucide/AlertTriangle {:size 12}]
@@ -803,7 +807,7 @@
           [:span (str message-count " messages" (when has-next-page "+"))]
           [:span "•"]
           [:span (str tool-call-count " tool calls")]]
-         [:div.flex-1.overflow-y-auto.min-h-0.pr-4.pl-2
+         [:div.flex-1.flex.flex-col.gap-4.overflow-y-auto.min-h-0.pr-4.pl-2
           {:ref scroll-container-ref
            :on-scroll (fn [_e] (check-scroll-and-load))}
           (if (empty? messages)
