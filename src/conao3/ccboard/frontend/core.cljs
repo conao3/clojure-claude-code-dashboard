@@ -459,70 +459,6 @@
     "TodoWrite" "updating todos"
     ""))
 
-(s/defn ContentBlock :- c.schema/Hiccup
-  [{:keys [block tool-results]} :- c.schema/ContentBlockProps]
-  (case (:type block)
-    "text"
-    [:div.flex.flex-col.gap-1
-     [:div.flex.items-center.gap-2.text-sm
-      [:div.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0]
-      [:> lucide/MessageSquare {:size 14 :className "text-gray-600"}]
-      [:div.font-medium.text-gray-900 "Message"]]
-     [:div.pl-6.text-sm.text-gray-900
-      [Markdown {:children (:text block)}]]]
-
-    "thinking"
-    [:details
-     [:summary.flex.items-center.gap-2.cursor-pointer.text-sm.text-gray-600
-      [:div.w-2.h-2.rounded-full.bg-notice-700.flex-shrink-0]
-      [:> lucide/Brain {:size 14}]
-      [:div "Thinking..."]]
-     [:div.pl-6.pt-2
-      [:div.p-3.rounded-lg.bg-notice-200.border.border-notice-400
-       [:pre.text-xs.whitespace-pre-wrap.break-all.text-gray-700 (:thinking block)]]]]
-
-    "tool_use"
-    (let [result (get tool-results (:id block))
-          tool-name (:name block)
-          input-map (parse-tool-input (:input block))
-          summary (tool-use-summary tool-name input-map)
-          show-result? (contains? #{"Edit" "Write"} tool-name)]
-      [:div.flex.flex-col.gap-1
-       [:div.flex.items-baseline.gap-2.text-sm
-        [:div.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0.self-center]
-        [:div.flex.items-center.flex-shrink-0.self-center [tool-icon tool-name]]
-        [:div.font-medium.text-gray-900.flex-shrink-0 tool-name]
-        (when (seq summary)
-          [:div.text-gray-600.font-mono.text-xs.truncate {:title summary} summary])]
-       (when (and result show-result? (:content result))
-         [:div.pl-6.text-xs.text-gray-600
-          [:details
-           [:summary.cursor-pointer.flex.items-center.gap-1
-            "└ Show result"]
-           [:pre.p-2.bg-gray-100.rounded.whitespace-pre-wrap.break-all.font-mono.max-h-64.overflow-auto
-            (:content result)]]])])
-
-    "tool_result"
-    nil
-
-    [:div.p-3.rounded-lg.bg-notice-400.text-notice-1200
-     [:div.text-xs.font-medium (str "Unknown: " (:type block))]]))
-
-(s/defn UserMessageBubble :- c.schema/Hiccup
-  [{:keys [content raw-details]} :- {:content c.schema/Hiccup
-                                     (s/optional-key :raw-details) (s/maybe c.schema/Hiccup)}]
-  [:div.relative.group
-   [:div.rounded-2xl.p-4.bg-accent-200
-    content]
-   raw-details])
-
-(s/defn AssistantMessageBubble :- c.schema/Hiccup
-  [{:keys [content raw-details]} :- {:content c.schema/Hiccup
-                                     (s/optional-key :raw-details) (s/maybe c.schema/Hiccup)}]
-  [:div.relative.group
-   content
-   raw-details])
-
 (s/defn safe-yaml-dump :- s/Str
   [raw-message :- (s/maybe s/Str)]
   (try
@@ -573,6 +509,85 @@
        [:> rac/Button {:slot "close" :class "p-1 rounded hover:bg-gray-300 transition-colors cursor-pointer"}
         [:> lucide/X {:size 16 :className "text-gray-600"}]]]
       [:f> RawDetailsContent {:message-id message-id}]]]]])
+
+(s/defn ContentBlock :- c.schema/Hiccup
+  [{:keys [block tool-results]} :- c.schema/ContentBlockProps]
+  (case (:type block)
+    "text"
+    [:div.flex.flex-col.gap-1
+     [:div.flex.items-center.gap-2.text-sm
+      [:div.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0]
+      [:> lucide/MessageSquare {:size 14 :className "text-gray-600"}]
+      [:div.font-medium.text-gray-900 "Message"]]
+     [:div.pl-6.text-sm.text-gray-900
+      [Markdown {:children (:text block)}]]]
+
+    "thinking"
+    [:details
+     [:summary.flex.items-center.gap-2.cursor-pointer.text-sm.text-gray-600
+      [:div.w-2.h-2.rounded-full.bg-notice-700.flex-shrink-0]
+      [:> lucide/Brain {:size 14}]
+      [:div "Thinking..."]]
+     [:div.pl-6.pt-2
+      [:div.p-3.rounded-lg.bg-notice-200.border.border-notice-400
+       [:pre.text-xs.whitespace-pre-wrap.break-all.text-gray-700 (:thinking block)]]]]
+
+    "tool_use"
+    (let [result (get tool-results (:id block))
+          tool-name (:name block)
+          input-map (parse-tool-input (:input block))
+          summary (tool-use-summary tool-name input-map)
+          show-result? (contains? #{"Edit" "Write"} tool-name)
+          result-content (:content result)
+          result-summary (when result-content
+                           (let [s (str result-content)]
+                             (if (> (count s) 60) (str (subs s 0 60) "...") s)))]
+      [:div.flex.flex-col.gap-1
+       [:div.flex.items-baseline.gap-2.text-sm
+        [:div.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0.self-center]
+        [:div.flex.items-center.flex-shrink-0.self-center [tool-icon tool-name]]
+        [:div.font-medium.text-gray-900.flex-shrink-0 tool-name]
+        (when (seq summary)
+          [:div.text-gray-600.font-mono.text-xs.truncate {:title summary} summary])]
+       [:div.pl-4.relative.group
+        [:div.flex.items-baseline.gap-2.text-sm.opacity-60
+         [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/CornerDownRight {:size 14 :className "text-gray-600"}]]
+         [:div.font-medium.flex-shrink-0 {:class (if result "text-gray-900" "text-gray-400")} "Result"]
+         (if result
+           (when result-summary
+             [:div.text-gray-600.font-mono.text-xs.truncate {:title (str result-content)} result-summary])
+           [:div.text-gray-400.text-xs "not found"])]
+        (when (:source-message-id result)
+          [RawDetails {:message-id (:source-message-id result)}])]
+       (when (and result show-result? result-content)
+         [:div.pl-6.text-xs.text-gray-600
+          [:details
+           [:summary.cursor-pointer.flex.items-center.gap-1
+            "└ Show result"]
+           [:pre.p-2.bg-gray-100.rounded.whitespace-pre-wrap.break-all.font-mono.max-h-64.overflow-auto
+            result-content]]])])
+
+    "tool_result"
+    nil
+
+    [:div.p-3.rounded-lg.bg-notice-400.text-notice-1200
+     [:div.text-xs.font-medium (str "Unknown: " (:type block))]]))
+
+(s/defn UserMessageBubble :- c.schema/Hiccup
+  [{:keys [content raw-details]} :- {:content c.schema/Hiccup
+                                     (s/optional-key :raw-details) (s/maybe c.schema/Hiccup)}]
+  [:div.relative.group
+   [:div.rounded-2xl.p-4.bg-accent-200
+    content]
+   raw-details])
+
+(s/defn AssistantMessageBubble :- c.schema/Hiccup
+  [{:keys [content raw-details]} :- {:content c.schema/Hiccup
+                                     (s/optional-key :raw-details) (s/maybe c.schema/Hiccup)}]
+  [:div.relative.group
+   content
+   raw-details])
+
 
 (s/defn AssistantMessage :- c.schema/Hiccup
   [{:keys [message tool-results]} :- c.schema/AssistantMessageProps]
@@ -811,8 +826,11 @@
                           (js->clj item :keywordize-keys true)))
           has-next-page (.-current has-next-page-ref)
           tool-results (->> messages
-                            (mapcat #(get-in % [:message :content]))
-                            (filter #(= (:type %) "tool_result"))
+                            (filter #(= (:__typename %) "UserMessage"))
+                            (mapcat (fn [msg]
+                                      (->> (get-in msg [:message :content])
+                                           (filter #(= (:type %) "tool_result"))
+                                           (map #(assoc % :source-message-id (:id msg))))))
                             (reduce (fn [m block] (assoc m (:tool_use_id block) block)) {}))
           message-count (count messages)
           tool-call-count (->> messages

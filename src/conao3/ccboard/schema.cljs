@@ -233,7 +233,11 @@
    :api-server s/Any
    :admin-server (s/maybe s/Any)})
 
-(def ToolResults {s/Str ContentBlock})
+(def ToolResultWithSource
+  (merge ContentBlock
+         {(s/optional-key :source-message-id) (s/maybe s/Str)}))
+
+(def ToolResults {s/Str ToolResultWithSource})
 
 (def DisplayedToolUseIds #{s/Str})
 
