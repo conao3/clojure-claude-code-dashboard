@@ -516,17 +516,17 @@
                (map-indexed
                 (fn [idx {:keys [type old-num new-num content]}]
                   ^{:key idx}
-                  [:tr {:class (c.util/clsx {:bg-red-500.text-white (= type :removed)
-                                             :bg-green-500.text-white (= type :added)
+                  [:tr {:class (c.util/clsx {:bg-red-300.text-white (= type :removed)
+                                             :bg-green-300.text-white (= type :added)
                                              :bg-gray-50.text-gray-700 (= type :context)})}
                    [:td.text-right.pr-2.select-none
-                    {:class (c.util/clsx {:bg-red-600 (= type :removed)
-                                          :bg-green-600 (= type :added)
+                    {:class (c.util/clsx {:bg-red-400 (= type :removed)
+                                          :bg-green-400 (= type :added)
                                           :bg-gray-100.text-gray-500 (= type :context)})}
                     (or old-num "")]
                    [:td.text-right.pr-2.select-none
-                    {:class (c.util/clsx {:bg-red-600 (= type :removed)
-                                          :bg-green-600 (= type :added)
+                    {:class (c.util/clsx {:bg-red-400 (= type :removed)
+                                          :bg-green-400 (= type :added)
                                           :bg-gray-100.text-gray-500 (= type :context)})}
                     (or new-num "")]
                    [:td.px-1.select-none.w-4
@@ -544,18 +544,18 @@
                 (map-indexed
                  (fn [idx line]
                    ^{:key (str "old-" idx)}
-                   [:tr.bg-red-500.text-white
-                    [:td.text-right.pr-2.bg-red-600.select-none (inc idx)]
-                    [:td.text-right.pr-2.bg-red-600.select-none]
+                   [:tr.bg-red-300.text-white
+                    [:td.text-right.pr-2.bg-red-400.select-none (inc idx)]
+                    [:td.text-right.pr-2.bg-red-400.select-none]
                     [:td.px-1.select-none.w-4 "-"]
                     [:td.px-2.whitespace-pre line]])
                  old-lines)
                 (map-indexed
                  (fn [idx line]
                    ^{:key (str "new-" idx)}
-                   [:tr.bg-green-500.text-white
-                    [:td.text-right.pr-2.bg-green-600.select-none]
-                    [:td.text-right.pr-2.bg-green-600.select-none (inc idx)]
+                   [:tr.bg-green-300.text-white
+                    [:td.text-right.pr-2.bg-green-400.select-none]
+                    [:td.text-right.pr-2.bg-green-400.select-none (inc idx)]
                     [:td.px-1.select-none.w-4 "+"]
                     [:td.px-2.whitespace-pre line]])
                  new-lines))]]]))]
