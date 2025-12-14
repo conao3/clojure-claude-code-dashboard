@@ -361,15 +361,17 @@
       [:div.flex-1.overflow-auto.pr-3
        {:class (c.util/clsx l-padding)}
        [:f> ProjectsList {:on-select-project on-select-project}]]]
-     (when project
-       [:div.flex.flex-1.flex-col.gap-2.overflow-hidden
-        [:div.flex.shrink-0.items-center.justify-between.border-t.border-gray-200.px-4.pt-3
-         {:class (c.util/clsx l-padding)}
-         [:span.text-sm.font-medium.text-gray-600 "Sessions"]
-         [:span.max-w-32.truncate.text-xs.text-gray-500 (c.lib/project-basename (:name project))]]
-        [:div.flex-1.overflow-auto.py-1
-         {:class (c.util/clsx l-padding)}
-         [:f> SessionsList {:project-id (:id project) :on-select-session on-select-session}]]])]))
+     [:div.flex.flex-1.flex-col.gap-2.overflow-hidden
+      [:div.flex.shrink-0.items-center.justify-between.border-t.border-gray-200.px-4.pt-3
+       {:class (c.util/clsx l-padding)}
+       [:span.text-sm.font-medium.text-gray-600 "Sessions"]
+       (when project
+         [:span.max-w-32.truncate.text-xs.text-gray-500 (c.lib/project-basename (:name project))])]
+      [:div.flex-1.overflow-auto.py-1
+       {:class (c.util/clsx l-padding)}
+       (if project
+         [:f> SessionsList {:project-id (:id project) :on-select-session on-select-session}]
+         [:p.text-sm.text-gray-600 "Select a project"])]]]))
 
 (s/defn CopyButton :- c.schema/Hiccup
   []
