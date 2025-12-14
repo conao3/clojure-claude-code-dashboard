@@ -78,10 +78,8 @@
     }
   }"))
 
-(defonce sidebar-collapsed (r/atom false))
 (defonce selected-project-id (r/atom nil))
 (defonce selected-session-id (r/atom nil))
-(defonce session-search (r/atom ""))
 
 (s/defn ^:private parse-url-path :- (s/maybe c.schema/UrlPath)
   []
@@ -264,12 +262,6 @@
           [:> lucide/Loader2 {:size 14 :className "animate-spin"}]])])))
 
 
-(s/defn format-date :- (s/maybe s/Str)
-  [date-str :- (s/maybe s/Str)]
-  (when date-str
-    (let [date (js/Date. date-str)]
-      (str (.toLocaleDateString date "ja-JP") " " (.toLocaleTimeString date "ja-JP" #js {:hour "2-digit" :minute "2-digit"})))))
-
 (s/defn format-relative-date :- s/Str
   [date-str :- (s/maybe s/Str)]
   (if-not date-str
@@ -423,21 +415,6 @@
     :components (clj->js markdown-components)
     :className class}
    children])
-
-(s/defn ToolResultBlock :- c.schema/Hiccup
-  [{:keys [block show-content?]} :- {:block c.schema/ContentBlock
-                                     (s/optional-key :show-content?) (s/maybe s/Bool)}]
-  (when show-content?
-    [:div.mt-1.ml-6.text-xs.text-gray-600
-     [:details
-      [:summary.cursor-pointer.flex.items-center.gap-1
-       [:span "└"]
-       [:span (let [content-str (str (:content block))]
-                (if (> (count content-str) 50)
-                  (str (subs content-str 0 50) "...")
-                  content-str))]]
-      [:pre.mt-1.p-2.bg-gray-100.rounded.whitespace-pre-wrap.break-all.font-mono.max-h-48.overflow-auto
-       (:content block)]]]))
 
 (s/defn ^:private tool-icon :- c.schema/Hiccup
   [tool-name :- s/Str]
