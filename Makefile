@@ -87,6 +87,10 @@ validate-graphql:
 generate-possible-types:
 	pnpm exec node tools/generate-possible-types/index.mjs
 
+.PHONY: format
+format:
+	pnpm exec node tools/sort-tailwind-classes/index.mjs src
+
 ### CI targets
 
 .PHONY: ci-backend

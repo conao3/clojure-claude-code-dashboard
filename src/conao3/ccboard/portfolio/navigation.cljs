@@ -15,7 +15,7 @@
      [:<>
       [:span.flex-1.text-left.text-sm label]
       (when badge
-        [:span.bg-accent-background.text-white.text-xs.px-1.5.py-0.5.rounded-full.min-w-5.text-center badge])])])
+        [:span.5.5.min-w-5.rounded-full.bg-accent-background.px-1.py-0.text-center.text-xs.text-white badge])])])
 
 (defn ProjectItem [{:keys [project active collapsed on-click]}]
   (let [session-count (count (:sessions project))]
@@ -25,9 +25,9 @@
                       (if active " bg-accent-background/15 text-neutral-content" " text-neutral-subdued-content hover:text-neutral-content"))
       :onPress on-click
       :isDisabled (zero? session-count)}
-     [:> lucide/GitBranch {:size 14 :className "text-neutral-subdued-content flex-shrink-0"}]
+     [:> lucide/GitBranch {:size 14 :className "flex-shrink-0 text-neutral-subdued-content"}]
      (when-not collapsed
-       [:span.text-sm.truncate.flex-1.text-left (:name project)])
+       [:span.flex-1.truncate.text-left.text-sm (:name project)])
      (when (and (not collapsed) (pos? session-count))
        [:span.text-xs.text-neutral-subdued-content session-count])]))
 
@@ -38,16 +38,16 @@
                       "bg-accent-background/10 border-l-3 border-l-accent-background"
                       "border-l-3 border-l-transparent hover:bg-background-layer-1"))
     :onPress on-click}
-   [:div.flex.items-center.gap-2.mb-1
-    [:span.w-2.h-2.rounded-full.bg-positive-visual.flex-shrink-0]
-    [:span.text-sm.font-medium.text-neutral-content.truncate.flex-1
+   [:div.mb-1.flex.items-center.gap-2
+    [:span.h-2.w-2.flex-shrink-0.rounded-full.bg-positive-visual]
+    [:span.flex-1.truncate.text-sm.font-medium.text-neutral-content
      (:sessionId session)]]
    [:div.text-xs.text-neutral-subdued-content
     (:createdAt session)]])
 
 (defscene nav-item-default
   :title "NavItem - Default"
-  [:div.bg-background-layer-1.p-4.w-60
+  [:div.w-60.bg-background-layer-1.p-4
    [NavItem {:icon lucide/Home
              :label "Dashboard"
              :active false
@@ -56,7 +56,7 @@
 
 (defscene nav-item-active
   :title "NavItem - Active"
-  [:div.bg-background-layer-1.p-4.w-60
+  [:div.w-60.bg-background-layer-1.p-4
    [NavItem {:icon lucide/Folder
              :label "Projects"
              :active true
@@ -65,7 +65,7 @@
 
 (defscene nav-item-with-badge
   :title "NavItem - With Badge"
-  [:div.bg-background-layer-1.p-4.w-60
+  [:div.w-60.bg-background-layer-1.p-4
    [NavItem {:icon lucide/Folder
              :label "Projects"
              :active true
@@ -75,7 +75,7 @@
 
 (defscene nav-item-collapsed
   :title "NavItem - Collapsed"
-  [:div.bg-background-layer-1.p-4.w-16
+  [:div.w-16.bg-background-layer-1.p-4
    [NavItem {:icon lucide/Settings
              :label "Settings"
              :active false
@@ -84,7 +84,7 @@
 
 (defscene nav-item-collapsed-active
   :title "NavItem - Collapsed Active"
-  [:div.bg-background-layer-1.p-4.w-16
+  [:div.w-16.bg-background-layer-1.p-4
    [NavItem {:icon lucide/Folder
              :label "Projects"
              :active true
@@ -93,7 +93,7 @@
 
 (defscene project-item-default
   :title "ProjectItem - Default"
-  [:div.bg-background-layer-1.p-4.w-60
+  [:div.w-60.bg-background-layer-1.p-4
    [ProjectItem {:project {:id "1"
                            :name "ccboard"
                            :sessions [{:id "s1"} {:id "s2"} {:id "s3"}]}
@@ -103,7 +103,7 @@
 
 (defscene project-item-active
   :title "ProjectItem - Active"
-  [:div.bg-background-layer-1.p-4.w-60
+  [:div.w-60.bg-background-layer-1.p-4
    [ProjectItem {:project {:id "1"
                            :name "ccboard"
                            :sessions [{:id "s1"} {:id "s2"}]}
@@ -113,7 +113,7 @@
 
 (defscene project-item-no-sessions
   :title "ProjectItem - No Sessions (Disabled)"
-  [:div.bg-background-layer-1.p-4.w-60
+  [:div.w-60.bg-background-layer-1.p-4
    [ProjectItem {:project {:id "2"
                            :name "empty-project"
                            :sessions []}
@@ -123,7 +123,7 @@
 
 (defscene project-item-long-name
   :title "ProjectItem - Long Name"
-  [:div.bg-background-layer-1.p-4.w-60
+  [:div.w-60.bg-background-layer-1.p-4
    [ProjectItem {:project {:id "3"
                            :name "very-long-project-name-that-should-be-truncated"
                            :sessions [{:id "s1"} {:id "s2"} {:id "s3"} {:id "s4"} {:id "s5"}]}
@@ -133,7 +133,7 @@
 
 (defscene session-item-default
   :title "SessionItem - Default"
-  [:div.bg-background-base.w-72
+  [:div.w-72.bg-background-base
    [SessionItem {:session {:id "session-1"
                            :sessionId "abc123def456"
                            :createdAt "2024/12/10 14:30"}
@@ -142,7 +142,7 @@
 
 (defscene session-item-active
   :title "SessionItem - Active"
-  [:div.bg-background-base.w-72
+  [:div.w-72.bg-background-base
    [SessionItem {:session {:id "session-2"
                            :sessionId "xyz789ghi012"
                            :createdAt "2024/12/10 15:45"}
@@ -151,7 +151,7 @@
 
 (defscene session-item-long-id
   :title "SessionItem - Long ID"
-  [:div.bg-background-base.w-72
+  [:div.w-72.bg-background-base
    [SessionItem {:session {:id "session-3"
                            :sessionId "very-long-session-id-that-should-be-truncated-properly"
                            :createdAt "2024/12/09 09:15"}
