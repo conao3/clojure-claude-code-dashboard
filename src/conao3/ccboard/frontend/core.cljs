@@ -197,11 +197,11 @@
 (s/defn ProjectItem :- c.schema/Hiccup
   [{:keys [project active on-click]} :- c.schema/ProjectItemProps]
   [:> rac/Button
-   {:className (c.util/clsx "flex items-center gap-2 w-full rounded-lg px-3 py-2 transition-all outline-none text-left"
-                            {:bg-gray-200 active
-                             :hover:bg-gray-100 (not active)})
+   {:class (c.util/clsx "flex items-center gap-2 w-full rounded-lg px-3 py-2 transition-all outline-none text-left"
+                        {:bg-gray-200 active
+                         :hover:bg-gray-100 (not active)})
     :onPress on-click}
-   [:> lucide/Folder {:size 16 :className "text-gray-600 flex-shrink-0"}]
+   [:> lucide/Folder {:size 16 :class "text-gray-600 flex-shrink-0"}]
    [:span.text-sm.truncate.flex-1.text-gray-900 (c.lib/project-basename (:name project))]])
 
 (s/defn ^:private parse-project-node :- c.schema/Project
@@ -248,7 +248,7 @@
       (and (.-isLoading async-list) (zero? (count (.-items async-list)))) [:div.p-3.text-gray-600.text-sm "Loading..."]
       (.-error async-list) [:div.p-3.text-negative-1100.text-sm (str "Error: " (.-error async-list))]
       :else
-      [:div.flex-1.overflow-y-auto.min-h-0.p-2.flex.flex-col.gap-1
+      [:div.flex-1.overflow-y-auto.p-2.flex.flex-col.gap-1
        {:ref scroll-container-ref
         :on-scroll (fn [_e] (check-scroll-and-load))}
        (for [^js project (.-items async-list)]
@@ -259,7 +259,7 @@
                          :on-click #(on-select-project p)}]))
        (when (.-isLoading async-list)
          [:div.flex.items-center.justify-center.py-2.text-gray-600
-          [:> lucide/Loader2 {:size 14 :className "animate-spin"}]])])))
+          [:> lucide/Loader2 {:size 14 :class "animate-spin"}]])])))
 
 
 (s/defn format-relative-date :- s/Str
@@ -279,10 +279,10 @@
 (s/defn SessionItem :- c.schema/Hiccup
   [{:keys [session active on-click]} :- c.schema/SessionItemProps]
   [:> rac/Button
-   {:className (c.util/clsx "w-full text-left px-4 py-3 outline-none transition-all rounded-lg mx-2 mb-1"
-                            {:bg-gray-50 active
-                             :shadow-sm active
-                             :hover:bg-gray-100 (not active)})
+   {:class (c.util/clsx "w-full text-left px-4 py-3 outline-none transition-all rounded-lg mx-2 mb-1"
+                        {:bg-gray-50 active
+                         :shadow-sm active
+                         :hover:bg-gray-100 (not active)})
     :onPress on-click}
    [:div.flex.items-center.gap-2
     [:span.w-2.h-2.rounded-full.flex-shrink-0
@@ -334,7 +334,7 @@
       (and (.-isLoading async-list) (zero? (count (.-items async-list)))) [:div.p-4.text-gray-600.text-sm "Loading sessions..."]
       (.-error async-list) [:div.p-4.text-negative-1100.text-sm (str "Error: " (.-error async-list))]
       :else
-      [:div.flex-1.overflow-y-auto.pb-2
+      [:div.flex-1.overflow-y-auto.overflow-x-hidden.pb-2
        {:ref scroll-container-ref}
        (for [^js session (.-items async-list)]
          (let [s {:__typename "Session" :id (.-id session) :projectId (.-projectId session) :sessionId (.-sessionId session) :createdAt (.-createdAt session)}]
@@ -344,29 +344,25 @@
                          :on-click #(on-select-session s)}]))
        (when (.-isLoading async-list)
          [:div.flex.items-center.justify-center.py-4.text-gray-600
-          [:> lucide/Loader2 {:size 16 :className "animate-spin"}]])])))
+          [:> lucide/Loader2 {:size 16 :class "animate-spin"}]])])))
 
 (s/defn Sidebar :- c.schema/Hiccup
   [{:keys [on-select-project on-select-session project]} :- c.schema/SidebarProps]
-  [:div.flex.flex-col.h-full.min-h-0.w-80.bg-gray-75.border-r.border-gray-200
-   [:div.p-4.flex.items-center.gap-3.shrink-0
+  [:div.flex.flex-col.h-full.w-80.bg-gray-75.border-r.border-gray-200.overflow-hidden.flex-shrink-0
+   [:div.p-4.flex.items-center.gap-2
     [:div.w-8.h-8.rounded-full.flex.items-center.justify-center.flex-shrink-0.bg-notice-300
-     [:> lucide/Sparkles {:size 16 :className "text-notice-1200"}]]
-    [:span.font-semibold.text-gray-900 "Claude Code"]]
-
+     [:> lucide/Sparkles {:size 16 :class "text-notice-1200"}]]
+    [:span.font-semibold.text-gray-900 "CCboard"]]
    [:div.px-4.pb-3.shrink-0
     [:div.relative
-     [:> lucide/Search {:size 14 :className "absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"}]
+     [:> lucide/Search {:size 14 :class "absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"}]
      [:input
       {:type "text"
        :placeholder "Find a small todo in the codebase and do it"
        :class "w-full bg-gray-50 border border-gray-200 rounded-lg py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none focus:border-accent-700 focus:ring-1 focus:ring-accent-700"}]]]
-
    [:div.px-4.pb-3.flex.items-center.justify-between.shrink-0
     [:span.text-sm.font-medium.text-gray-600 "Projects"]]
-
    [:f> ProjectsList {:on-select-project on-select-project}]
-
    (when project
      [:<>
       [:div.px-4.py-2.flex.items-center.justify-between.shrink-0.border-t.border-gray-200
@@ -380,7 +376,7 @@
   (let [copied? (r/atom false)]
     (s/fn [{:keys [text label class]} :- c.schema/CopyButtonProps]
       [:> rac/Button
-       {:className (c.util/clsx "px-2 py-1 rounded bg-gray-200 text-gray-700 group-hover:opacity-70 hover:opacity-100 pressed:opacity-100 flex items-center gap-1 text-xs" class)
+       {:class (c.util/clsx "px-2 py-1 rounded bg-gray-200 text-gray-700 group-hover:opacity-70 hover:opacity-100 pressed:opacity-100 flex items-center gap-1 text-xs" class)
         :onPress (fn []
                    (-> js/navigator .-clipboard (.writeText text))
                    (reset! copied? true)
@@ -413,23 +409,23 @@
   [:> ReactMarkdown/default
    {:remarkPlugins #js [remarkGfm/default]
     :components (clj->js markdown-components)
-    :className class}
+    :class class}
    children])
 
 (s/defn ^:private tool-icon :- c.schema/Hiccup
   [tool-name :- s/Str]
   (let [icon-class "text-gray-600"]
     (case tool-name
-      "Read" [:> lucide/FileText {:size 14 :className icon-class}]
-      "Edit" [:> lucide/Pencil {:size 14 :className icon-class}]
-      "Write" [:> lucide/FilePlus {:size 14 :className icon-class}]
-      "Bash" [:> lucide/Terminal {:size 14 :className icon-class}]
-      "Glob" [:> lucide/Search {:size 14 :className icon-class}]
-      "Grep" [:> lucide/Search {:size 14 :className icon-class}]
-      "Task" [:> lucide/ListTodo {:size 14 :className icon-class}]
-      "WebFetch" [:> lucide/Globe {:size 14 :className icon-class}]
-      "WebSearch" [:> lucide/Search {:size 14 :className icon-class}]
-      [:> lucide/Wrench {:size 14 :className icon-class}])))
+      "Read" [:> lucide/FileText {:size 14 :class icon-class}]
+      "Edit" [:> lucide/Pencil {:size 14 :class icon-class}]
+      "Write" [:> lucide/FilePlus {:size 14 :class icon-class}]
+      "Bash" [:> lucide/Terminal {:size 14 :class icon-class}]
+      "Glob" [:> lucide/Search {:size 14 :class icon-class}]
+      "Grep" [:> lucide/Search {:size 14 :class icon-class}]
+      "Task" [:> lucide/ListTodo {:size 14 :class icon-class}]
+      "WebFetch" [:> lucide/Globe {:size 14 :class icon-class}]
+      "WebSearch" [:> lucide/Search {:size 14 :class icon-class}]
+      [:> lucide/Wrench {:size 14 :class icon-class}])))
 
 (s/defn ^:private parse-tool-input :- s/Any
   [input :- (s/maybe s/Str)]
@@ -560,16 +556,16 @@
         raw-message (some-> ^js node .-rawMessage)]
     (cond
       loading
-      [:div.flex.items-center.justify-center.flex-1.min-h-0
-       [:> lucide/Loader2 {:size 24 :className "animate-spin text-gray-500"}]]
+      [:div.flex.items-center.justify-center.flex-1
+       [:> lucide/Loader2 {:size 24 :class "animate-spin text-gray-500"}]]
 
       (nil? raw-message)
-      [:div.flex.items-center.justify-center.flex-1.min-h-0.text-gray-500
+      [:div.flex.items-center.justify-center.flex-1.text-gray-500
        "No data available"]
 
       :else
       (let [yaml-text (safe-yaml-dump raw-message)]
-        [:div.relative.group.flex-1.min-h-0
+        [:div.relative.group.flex-1
          [:div.absolute.top-2.right-2.flex.gap-1.opacity-0.group-hover:opacity-100.transition-opacity.z-10
           [CopyButton {:text yaml-text :label "YAML" :class "bg-gray-300 text-gray-900"}]
           [CopyButton {:text raw-message :label "JSON" :class "bg-gray-300 text-gray-900"}]]
@@ -581,40 +577,40 @@
    [:> rac/Button {:class "opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-gray-700 cursor-pointer p-1"}
     [:> lucide/Code {:size 16}]]
    [:> rac/ModalOverlay {:isDismissable true
-                         :className (fn [^js props]
-                                      (str "fixed inset-0 z-50 bg-black/50 flex items-center justify-center "
-                                           (when (.-isEntering props) "animate-in fade-in duration-200 ease-out ")
-                                           (when (.-isExiting props) "animate-out fade-out duration-150 ease-in")))}
-    [:> rac/Modal {:className (fn [^js props]
-                                (str "bg-gray-100 border border-gray-300 rounded-lg shadow-lg p-4 w-[32rem] max-h-[80vh] overflow-hidden flex flex-col "
-                                     (when (.-isEntering props) "animate-in zoom-in-95 fade-in duration-200 ease-out ")
-                                     (when (.-isExiting props) "animate-out zoom-out-95 fade-out duration-150 ease-in")))}
+                         :class (fn [^js props]
+                                  (str "fixed inset-0 z-50 bg-black/50 flex items-center justify-center "
+                                       (when (.-isEntering props) "animate-in fade-in duration-200 ease-out ")
+                                       (when (.-isExiting props) "animate-out fade-out duration-150 ease-in")))}
+    [:> rac/Modal {:class (fn [^js props]
+                            (str "bg-gray-100 border border-gray-300 rounded-lg shadow-lg p-4 w-[32rem] max-h-[80vh] overflow-hidden flex flex-col "
+                                 (when (.-isEntering props) "animate-in zoom-in-95 fade-in duration-200 ease-out ")
+                                 (when (.-isExiting props) "animate-out zoom-out-95 fade-out duration-150 ease-in")))}
      [:> rac/Dialog {:class "outline-none flex flex-col flex-1 min-h-0"}
       [:div.flex.justify-between.items-center.mb-3.shrink-0
        [:> rac/Heading {:slot "title" :class "text-sm font-medium text-gray-800"} "Raw"]
        [:> rac/Button {:slot "close" :class "p-1 rounded hover:bg-gray-300 transition-colors cursor-pointer"}
-        [:> lucide/X {:size 16 :className "text-gray-600"}]]]
+        [:> lucide/X {:size 16 :class "text-gray-600"}]]]
       [:f> RawDetailsContent {:message-id message-id}]]]]])
 
 (s/defn ContentBlock :- c.schema/Hiccup
   [{:keys [block tool-results]} :- c.schema/ContentBlockProps]
   (case (:type block)
     "text"
-    [:div.flex.flex-col.gap-1
+    [:div.flex.flex-col.gap-1.min-w-0
      [:div.flex.items-center.gap-2.text-sm
       [:div.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0]
-      [:> lucide/MessageSquare {:size 14 :className "text-gray-600"}]
+      [:> lucide/MessageSquare {:size 14 :class "text-gray-600"}]
       [:div.font-medium.text-gray-900 "Message"]]
-     [:div.pl-6.text-sm.text-gray-900
+     [:div.pl-6.text-sm.text-gray-900.min-w-0.overflow-hidden
       [Markdown {:children (:text block)}]]]
 
     "thinking"
-    [:details
+    [:details.min-w-0
      [:summary.flex.items-center.gap-2.cursor-pointer.text-sm.text-gray-600
       [:div.w-2.h-2.rounded-full.bg-notice-700.flex-shrink-0]
       [:> lucide/Brain {:size 14}]
       [:div "Thinking..."]]
-     [:div.pl-6.pt-2
+     [:div.pl-6.pt-2.min-w-0.overflow-hidden
       [:div.p-3.rounded-lg.bg-notice-200.border.border-notice-400
        [:pre.text-xs.whitespace-pre-wrap.break-all.text-gray-700 (:thinking block)]]]]
 
@@ -629,16 +625,16 @@
           result-summary (when (and result-content (not is-edit?))
                            (let [s (str result-content)]
                              (if (> (count s) 60) (str (subs s 0 60) "...") s)))]
-      [:div.flex.flex-col.gap-1
-       [:div.flex.items-baseline.gap-2.text-sm
+      [:div.flex.flex-col.gap-1.min-w-0
+       [:div.flex.items-baseline.gap-2.text-sm.min-w-0
         [:div.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0.self-center]
         [:div.flex.items-center.flex-shrink-0.self-center [tool-icon tool-name]]
         [:div.font-medium.text-gray-900.flex-shrink-0 tool-name]
         (when (seq summary)
-          [:div.text-gray-600.font-mono.text-xs.truncate {:title summary} summary])]
+          [:div.text-gray-600.font-mono.text-xs.truncate.min-w-0 {:title summary} summary])]
        [:div.pl-4
         [:div.flex.items-center.gap-2.text-sm.opacity-60.group
-         [:> lucide/CornerDownRight {:size 14 :className "text-gray-600"}]
+         [:> lucide/CornerDownRight {:size 14 :class "text-gray-600"}]
          [:div.font-medium {:class (c.util/clsx {:text-gray-900 result
                                                  :text-gray-400 (not result)})} "Result"]
          (if result
@@ -673,9 +669,9 @@
 (s/defn AssistantMessageBubble :- c.schema/Hiccup
   [{:keys [content raw-details]} :- {:content c.schema/Hiccup
                                      (s/optional-key :raw-details) (s/maybe c.schema/Hiccup)}]
-  [:div.group
-   [:div.flex.items-start.gap-2
-    [:div.flex-1 content]
+  [:div.group.min-w-0
+   [:div.flex.items-start.gap-2.min-w-0
+    [:div.flex-1.min-w-0 content]
     raw-details]])
 
 
@@ -683,7 +679,7 @@
   [{:keys [message tool-results]} :- c.schema/AssistantMessageProps]
   (let [content-blocks (get-in message [:message :content])]
     [AssistantMessageBubble
-     {:content (into [:div.flex.flex-col.gap-2]
+     {:content (into [:div.flex.flex-col.gap-2.min-w-0]
                      (map-indexed
                       (fn [idx block]
                         ^{:key idx} [ContentBlock {:block block :tool-results tool-results}])
@@ -711,11 +707,11 @@
   [{:keys [message]} :- c.schema/SystemMessageItemProps]
   (let [subtype (:subtype message)
         timestamp (:timestamp message)]
-    [:div.flex.flex-row.justify-between.relative.group.w-full
+    [:div.flex.justify-between.relative.group.w-full
      [:div.flex.flex-col.gap-1.opacity-60
       [:div.flex.items-baseline.gap-2.text-sm
        [:div.w-2.h-2.rounded-full.bg-informative-900.flex-shrink-0.self-center]
-       [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/Settings {:size 14 :className "text-gray-600"}]]
+       [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/Settings {:size 14 :class "text-gray-600"}]]
        [:div.font-medium.text-gray-900.flex-shrink-0 "System"]
        (when subtype
          [:div.text-gray-600.text-xs.flex-shrink-0 subtype])
@@ -729,11 +725,11 @@
         truncated-summary (if (> (count summary-text) 80)
                             (str (subs summary-text 0 80) "...")
                             summary-text)]
-    [:div.flex.flex-row.justify-between.relative.group.w-full
+    [:div.flex.justify-between.relative.group.w-full
      [:div.flex.flex-col.gap-1.opacity-60
       [:div.flex.items-baseline.gap-2.text-sm
        [:div.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0.self-center]
-       [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/FileText {:size 14 :className "text-gray-600"}]]
+       [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/FileText {:size 14 :class "text-gray-600"}]]
        [:div.font-medium.text-gray-900.flex-shrink-0 "Summary"]
        (when (seq summary-text)
          [:div.text-gray-600.text-xs.truncate {:title summary-text} truncated-summary])]]
@@ -745,11 +741,11 @@
         tracked-file-backups (-> (:trackedFileBackups snapshot) js/JSON.parse js/Object.keys js->clj)
         file-count (count tracked-file-backups)
         files-text (str/join "\n" tracked-file-backups)]
-    [:div.flex.flex-row.justify-between.relative.group.w-full
+    [:div.flex.justify-between.relative.group.w-full
      [:div.flex.flex-col.gap-1.opacity-60
       [:div.flex.items-baseline.gap-2.text-sm
        [:div.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0.self-center]
-       [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/History {:size 14 :className "text-gray-600"}]]
+       [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/History {:size 14 :class "text-gray-600"}]]
        [:div.font-medium.text-gray-900.flex-shrink-0 "FileHistorySnapshot"]
        (when (:isSnapshotUpdate message)
          [:div.text-xs.bg-gray-600.text-white.px-1.rounded.flex-shrink-0 "update"])
@@ -767,11 +763,11 @@
   [{:keys [message]} :- c.schema/QueueOperationMessageProps]
   (let [operation (:operation message)
         timestamp (:timestamp message)]
-    [:div.flex.flex-row.justify-between.relative.group.w-full
+    [:div.flex.justify-between.relative.group.w-full
      [:div.flex.flex-col.gap-1.opacity-60
       [:div.flex.items-baseline.gap-2.text-sm
        [:div.w-2.h-2.rounded-full.bg-gray-500.flex-shrink-0.self-center]
-       [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/ListOrdered {:size 14 :className "text-gray-600"}]]
+       [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/ListOrdered {:size 14 :class "text-gray-600"}]]
        [:div.font-medium.text-gray-900.flex-shrink-0 "Queue"]
        (when operation
          [:div.text-gray-600.text-xs.flex-shrink-0 operation])
@@ -781,22 +777,22 @@
 
 (s/defn UnknownMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/UnknownMessageProps]
-  [:div.flex.flex-row.justify-between.relative.group.w-full
+  [:div.flex.justify-between.relative.group.w-full
    [:div.flex.flex-col.gap-1.opacity-60
     [:div.flex.items-baseline.gap-2.text-sm
      [:div.w-2.h-2.rounded-full.bg-notice-700.flex-shrink-0.self-center]
-     [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/HelpCircle {:size 14 :className "text-gray-600"}]]
+     [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/HelpCircle {:size 14 :class "text-gray-600"}]]
      [:div.font-medium.text-gray-900.flex-shrink-0 "Unknown"]
      [:div.text-gray-600.text-xs.truncate (:messageId message)]]]
    [RawDetails {:message-id (:id message)}]])
 
 (s/defn BrokenMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/BrokenMessageProps]
-  [:div.flex.flex-row.justify-between.relative.group.w-full
+  [:div.flex.justify-between.relative.group.w-full
    [:div.flex.flex-col.gap-1
     [:div.flex.items-baseline.gap-2.text-sm
      [:div.w-2.h-2.rounded-full.bg-negative-900.flex-shrink-0.self-center]
-     [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/AlertTriangle {:size 14 :className "text-negative-1100"}]]
+     [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/AlertTriangle {:size 14 :class "text-negative-1100"}]]
      [:div.font-medium.text-negative-1100.flex-shrink-0 "Broken"]
      [:div.text-gray-600.text-xs.truncate (:messageId message)]]]
    [RawDetails {:message-id (:id message)}]])
@@ -947,12 +943,12 @@
         (and (.-isLoading async-list) (zero? (count messages))) [:div.flex-1.flex.items-center.justify-center.text-gray-600 "Loading messages..."]
         (.-error async-list) [:div.flex-1.flex.items-center.justify-center.text-negative-1100 (str "Error: " (.-error async-list))]
         :else
-        [:div.flex-1.flex.flex-col.min-h-0
+        [:div.flex-1.flex.flex-col.min-w-0.overflow-hidden
          [:div.flex.items-center.gap-4.text-sm.text-gray-600.mb-4.shrink-0
           [:span (str message-count " messages" (when has-next-page "+"))]
           [:span "•"]
           [:span (str tool-call-count " tool calls")]]
-         [:div.flex-1.flex.flex-col.gap-4.overflow-y-auto.min-h-0.pr-4.pl-2
+         [:div.flex-1.flex.flex-col.gap-4.overflow-y-auto.overflow-x-hidden.pr-4.pl-2.min-w-0
           {:ref scroll-container-ref
            :on-scroll (fn [_e] (check-scroll-and-load))}
           (if (empty? messages)
@@ -964,16 +960,16 @@
                                      :tool-results tool-results}])
              (when (.-isLoading async-list)
                [:div.flex.items-center.justify-center.py-4.text-gray-600
-                [:> lucide/Loader2 {:size 20 :className "animate-spin mr-2"}]
+                [:> lucide/Loader2 {:size 20 :class "animate-spin mr-2"}]
                 "Loading more..."])])]]))))
 
 (s/defn MessagesPanel :- c.schema/Hiccup
   [{:keys [session-title]} :- {:session-title (s/maybe s/Str)}]
-  [:div.flex-1.flex.flex-col.bg-gray-25.min-h-0.overflow-hidden
+  [:div.flex.flex-col.bg-gray-25.overflow-hidden.h-full.min-w-0.flex-1
    [:div.p-4.border-b.border-gray-200.shrink-0.flex.items-center.justify-between
     [:div.flex.items-center.gap-2
      [:h2.text-base.font-medium.text-gray-900.truncate (or session-title "Select a session")]]]
-   [:div.flex-1.flex.flex-col.min-h-0.p-6
+   [:div.flex-1.flex.flex-col.p-6.min-w-0.overflow-hidden
     [:f> MessageList]]])
 
 (defonce url-initialized (atom false))
@@ -999,7 +995,7 @@
                                 parts (.split decoded "/")]
                             (aget parts (dec (.-length parts))))
                           (catch :default _ nil)))]
-    [:div.flex.flex-1.min-h-0
+    [:div.flex.h-full
      [:f> Sidebar {:on-select-project (fn [project]
                                         (reset! selected-project-id (:id project))
                                         (reset! selected-session-id nil)
@@ -1015,7 +1011,7 @@
 (s/defn App :- c.schema/Hiccup
   []
   [:> apollo.react/ApolloProvider {:client apollo-client}
-   [:div.h-screen.flex.flex-col.bg-background-layer-2.text-neutral-content.text-sm
+   [:div.h-screen.bg-background-layer-2.text-neutral-content.text-sm
     [:f> MainContent]]])
 
 (defonce root (-> js/document (.getElementById "app") reagent.dom.client/create-root))
