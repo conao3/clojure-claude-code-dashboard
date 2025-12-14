@@ -601,7 +601,7 @@
 (s/defn RawDetails :- c.schema/Hiccup
   [{:keys [message-id]} :- {:message-id (s/maybe s/Str)}]
   [:> rac/DialogTrigger
-   [:> rac/Button {:class "absolute top-1/2 -translate-y-1/2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-gray-700 cursor-pointer p-1"}
+   [:> rac/Button {:class "opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-gray-700 cursor-pointer p-1"}
     [:> lucide/Code {:size 16}]]
    [:> rac/ModalOverlay {:isDismissable true
                          :className (fn [^js props]
@@ -659,17 +659,18 @@
         [:div.font-medium.text-gray-900.flex-shrink-0 tool-name]
         (when (seq summary)
           [:div.text-gray-600.font-mono.text-xs.truncate {:title summary} summary])]
-       [:div.pl-4.relative.group
-        [:div.flex.items-baseline.gap-2.text-sm.opacity-60
-         [:div.flex.items-center.flex-shrink-0.self-center [:> lucide/CornerDownRight {:size 14 :className "text-gray-600"}]]
-         [:div.font-medium.flex-shrink-0 {:class (c.util/clsx {:text-gray-900 result
-                                                               :text-gray-400 (not result)})} "Result"]
+       [:div.pl-4
+        [:div.flex.items-center.gap-2.text-sm.opacity-60.group
+         [:> lucide/CornerDownRight {:size 14 :className "text-gray-600"}]
+         [:div.font-medium {:class (c.util/clsx {:text-gray-900 result
+                                                 :text-gray-400 (not result)})} "Result"]
          (if result
            (when result-summary
              [:div.text-gray-600.font-mono.text-xs.truncate {:title (str result-content)} result-summary])
-           [:div.text-gray-400.text-xs "not found"])]
-        (when (:source-message-id result)
-          [RawDetails {:message-id (:source-message-id result)}])]
+           [:div.text-gray-400.text-xs "not found"])
+         [:div.flex-1]
+         (when (:source-message-id result)
+           [RawDetails {:message-id (:source-message-id result)}])]]
        (when (and is-edit? tool-use-result)
          [:div.pl-4.mt-1
           [EditDiffView {:file-path (:filePath tool-use-result)
@@ -686,17 +687,19 @@
 (s/defn UserMessageBubble :- c.schema/Hiccup
   [{:keys [content raw-details]} :- {:content c.schema/Hiccup
                                      (s/optional-key :raw-details) (s/maybe c.schema/Hiccup)}]
-  [:div.relative.group
-   [:div.rounded-2xl.p-4.bg-accent-200
-    content]
-   raw-details])
+  [:div.group
+   [:div.flex.items-start.gap-2
+    [:div.flex-1.rounded-2xl.p-4.bg-accent-200
+     content]
+    raw-details]])
 
 (s/defn AssistantMessageBubble :- c.schema/Hiccup
   [{:keys [content raw-details]} :- {:content c.schema/Hiccup
                                      (s/optional-key :raw-details) (s/maybe c.schema/Hiccup)}]
-  [:div.relative.group
-   content
-   raw-details])
+  [:div.group
+   [:div.flex.items-start.gap-2
+    [:div.flex-1 content]
+    raw-details]])
 
 
 (s/defn AssistantMessage :- c.schema/Hiccup
