@@ -734,7 +734,7 @@
   [{:keys [message]} :- c.schema/SystemMessageItemProps]
   (let [subtype (:subtype message)
         timestamp (:timestamp message)]
-    [:div.relative.group
+    [:div.flex.flex-row.justify-between.relative.group.w-full
      [:div.flex.flex-col.gap-1.opacity-60
       [:div.flex.items-baseline.gap-2.text-sm
        [:div.w-2.h-2.rounded-full.bg-informative-900.flex-shrink-0.self-center]
@@ -752,7 +752,7 @@
         truncated-summary (if (> (count summary-text) 80)
                             (str (subs summary-text 0 80) "...")
                             summary-text)]
-    [:div.relative.group
+    [:div.flex.flex-row.justify-between.relative.group.w-full
      [:div.flex.flex-col.gap-1.opacity-60
       [:div.flex.items-baseline.gap-2.text-sm
        [:div.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0.self-center]
@@ -768,7 +768,7 @@
         tracked-file-backups (-> (:trackedFileBackups snapshot) js/JSON.parse js/Object.keys js->clj)
         file-count (count tracked-file-backups)
         files-text (str/join "\n" tracked-file-backups)]
-    [:div.relative.group
+    [:div.flex.flex-row.justify-between.relative.group.w-full
      [:div.flex.flex-col.gap-1.opacity-60
       [:div.flex.items-baseline.gap-2.text-sm
        [:div.w-2.h-2.rounded-full.bg-positive-900.flex-shrink-0.self-center]
@@ -790,7 +790,7 @@
   [{:keys [message]} :- c.schema/QueueOperationMessageProps]
   (let [operation (:operation message)
         timestamp (:timestamp message)]
-    [:div.relative.group
+    [:div.flex.flex-row.justify-between.relative.group.w-full
      [:div.flex.flex-col.gap-1.opacity-60
       [:div.flex.items-baseline.gap-2.text-sm
        [:div.w-2.h-2.rounded-full.bg-gray-500.flex-shrink-0.self-center]
@@ -804,7 +804,7 @@
 
 (s/defn UnknownMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/UnknownMessageProps]
-  [:div.relative.group
+  [:div.flex.flex-row.justify-between.relative.group.w-full
    [:div.flex.flex-col.gap-1.opacity-60
     [:div.flex.items-baseline.gap-2.text-sm
      [:div.w-2.h-2.rounded-full.bg-notice-700.flex-shrink-0.self-center]
@@ -815,7 +815,7 @@
 
 (s/defn BrokenMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/BrokenMessageProps]
-  [:div.relative.group
+  [:div.flex.flex-row.justify-between.relative.group.w-full
    [:div.flex.flex-col.gap-1
     [:div.flex.items-baseline.gap-2.text-sm
      [:div.w-2.h-2.rounded-full.bg-negative-900.flex-shrink-0.self-center]
