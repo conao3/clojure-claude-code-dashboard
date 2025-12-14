@@ -637,13 +637,15 @@
     [:> lucide/Code {:size 16}]]
    [:> rac/ModalOverlay {:isDismissable true
                          :class (fn [^js props]
-                                  (str "fixed inset-0 z-50 bg-black/50 flex items-center justify-center "
-                                       (when (.-isEntering props) "animate-in fade-in duration-200 ease-out ")
-                                       (when (.-isExiting props) "animate-out fade-out duration-150 ease-in")))}
+                                  (c.util/clsx
+                                   "fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                                   {"animate-in fade-in duration-200 ease-out" (.-isEntering props)
+                                    "animate-out fade-out duration-150 ease-in" (.-isExiting props)}))}
     [:> rac/Modal {:class (fn [^js props]
-                            (str "bg-gray-100 border border-gray-300 rounded-lg shadow-lg p-4 w-[32rem] max-h-[80vh] overflow-hidden flex flex-col "
-                                 (when (.-isEntering props) "animate-in zoom-in-95 fade-in duration-200 ease-out ")
-                                 (when (.-isExiting props) "animate-out zoom-out-95 fade-out duration-150 ease-in")))}
+                            (c.util/clsx
+                             "flex max-h-[80vh] w-[32rem] flex-col overflow-hidden rounded-lg border border-gray-300 bg-gray-100 p-4 shadow-lg"
+                             {"animate-in zoom-in-95 fade-in duration-200 ease-out" (.-isEntering props)
+                              "animate-out zoom-out-95 fade-out duration-150 ease-in" (.-isExiting props)}))}
      [:> rac/Dialog {:class "flex min-h-0 flex-1 flex-col outline-none"}
       [:div.mb-3.flex.shrink-0.items-center.justify-between
        [:> rac/Heading {:slot "title" :class "text-sm font-medium text-gray-800"} "Raw"]
