@@ -317,7 +317,7 @@
      [:span {:class (c.util/clsx "relative inline-flex h-full w-full rounded-full"
                                  {:bg-purple-400 active
                                   :bg-gray-400 (not active)})}]]
-    [:div.flex.flex-1.min-w-0.flex-col.gap-0.5
+    [:div.5.flex.min-w-0.flex-1.flex-col.gap-0
      [:span {:class (c.util/clsx "truncate font-mono text-xs font-medium tracking-tight transition-colors duration-200"
                                  {:text-purple-600 active
                                   :text-gray-800 (not active)
@@ -400,7 +400,7 @@
        [:span.text-xs.text-gray-500 "Dashboard"]]]
      [:div.flex.flex-1.flex-col.gap-2.overflow-hidden.border-t
       {:class "border-gray-200/50"}
-      [:div.flex.items-center.gap-2.pt-4.text-xs.font-semibold.uppercase.tracking-wider.text-gray-600
+      [:div.flex.items-center.gap-2.pt-4.text-xs.font-semibold.tracking-wider.text-gray-600.uppercase
        {:class (c.util/clsx l-padding)}
        [:> lucide/FolderOpen {:size 12}]
        "Projects"]
@@ -410,11 +410,11 @@
      [:div.flex.flex-1.flex-col.gap-2.overflow-hidden
       [:div.flex.shrink-0.items-center.justify-between.border-t.px-4.pt-4
        {:class (c.util/clsx "border-gray-200/50" l-padding)}
-       [:div.flex.items-center.gap-2.text-xs.font-semibold.uppercase.tracking-wider.text-gray-600
+       [:div.flex.items-center.gap-2.text-xs.font-semibold.tracking-wider.text-gray-600.uppercase
         [:> lucide/MessageCircle {:size 12}]
         "Sessions"]
        (when project
-         [:span.max-w-32.truncate.rounded-full.bg-gray-200.px-2.py-0.5.font-mono.text-xs.text-gray-600
+         [:span.5.max-w-32.truncate.rounded-full.bg-gray-200.px-2.py-0.font-mono.text-xs.text-gray-600
           (c.lib/project-basename (:name project))])]
       [:div.flex-1.overflow-auto.py-1
        {:class (c.util/clsx l-padding)}
@@ -660,7 +660,7 @@
       [Markdown {:children (:text block)}]]]
 
     "thinking"
-    [:details.min-w-0.group
+    [:details.group.min-w-0
      [:summary.flex.cursor-pointer.items-center.gap-2.rounded-lg.border.px-3.py-2.text-sm.transition-all.duration-200
       {:class "border-orange-500/40 bg-orange-900/15 hover:border-orange-400/60 hover:bg-orange-900/25"}
       [:div.relative.flex.h-2.w-2.flex-shrink-0
@@ -742,9 +742,9 @@
 (s/defn AssistantMessageBubble :- c.schema/Hiccup
   [{:keys [content raw-details]} :- {:content c.schema/Hiccup
                                      (s/optional-key :raw-details) (s/maybe c.schema/Hiccup)}]
-  [:div.group.min-w-0.animate-fade-in-up
+  [:div.group.animate-fade-in-up.min-w-0
    [:div.flex.min-w-0.items-start.gap-3
-    [:div.flex.h-8.w-8.flex-shrink-0.items-center.justify-center.rounded-lg.tech-gradient.shadow-lg
+    [:div.tech-gradient.flex.h-8.w-8.flex-shrink-0.items-center.justify-center.rounded-lg.shadow-lg
      {:class "shadow-purple-900/20"}
      [:> lucide/Sparkles {:size 16 :class "text-white"}]]
     [:div.min-w-0.flex-1.rounded-2xl.rounded-tl-sm.border.bg-gray-50.p-4.shadow-lg
@@ -794,7 +794,7 @@
       [:div.flex.items-center.gap-2.text-xs
        [:span.font-medium.text-blue-300 "System"]
        (when subtype
-         [:span.rounded.px-1.5.py-0.5.font-mono.text-blue-400 {:class "bg-blue-800/30"} subtype])
+         [:span.5.5.rounded.px-1.py-0.font-mono.text-blue-400 {:class "bg-blue-800/30"} subtype])
        (when timestamp
          [:span.text-gray-500 timestamp])]]
      [RawDetails {:message-id (:id message)}]]))
@@ -833,12 +833,12 @@
        [:div.flex.items-center.gap-2.text-xs
         [:span.font-medium.text-gray-700 "FileHistorySnapshot"]
         (when (:isSnapshotUpdate message)
-          [:span.rounded.px-1.5.py-0.5.font-mono.text-xs.text-cyan-600 {:class "bg-cyan-800/30"} "update"])
+          [:span.5.5.rounded.px-1.py-0.font-mono.text-xs.text-cyan-600 {:class "bg-cyan-800/30"} "update"])
         [:span.text-gray-700 (str file-count " files")]]]
       [RawDetails {:message-id (:id message)}]]
      (when (pos? file-count)
        [:details.group/details
-        [:summary.flex.cursor-pointer.items-center.gap-1.text-xs.text-gray-600.transition-colors.hover:text-gray-800
+        [:summary.hover.flex.cursor-pointer.items-center.gap-1.text-xs.text-gray-600.transition-colors:text-gray-800
          [:> lucide/ChevronRight {:size 12 :class "transition-transform duration-200 group-open/details:rotate-90"}]
          "Show tracked files"]
         [:pre.mt-2.max-h-48.overflow-auto.rounded-lg.border.bg-gray-50.p-3.font-mono.text-xs.leading-relaxed.whitespace-pre-wrap.break-all.text-gray-600
@@ -858,7 +858,7 @@
       [:div.flex.items-center.gap-2.text-xs
        [:span.font-medium.text-gray-600 "Queue"]
        (when operation
-         [:span.rounded.px-1.5.py-0.5.font-mono.text-gray-600 {:class "bg-gray-300/50"} operation])
+         [:span.5.5.rounded.px-1.py-0.font-mono.text-gray-600 {:class "bg-gray-300/50"} operation])
        (when timestamp
          [:span.text-gray-500 timestamp])]]
      [RawDetails {:message-id (:id message)}]]))
