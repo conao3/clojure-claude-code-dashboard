@@ -731,10 +731,7 @@
                                      (s/optional-key :raw-details) (s/maybe c.schema/Hiccup)}]
   [:div.group.animate-fade-in-up
    [:div.flex.items-start.gap-3
-    [:div.flex.h-8.w-8.flex-shrink-0.items-center.justify-center.rounded-lg
-     {:class "bg-cyan-800/30"}
-     [:> lucide/User {:size 16 :class "text-cyan-400"}]]
-    [:div.flex-1.rounded-2xl.rounded-tl-sm.border.p-4.shadow-lg
+    [:div.flex-1.rounded-2xl.border.p-4.shadow-lg
      {:class "border-cyan-700/30 bg-cyan-900/20 shadow-cyan-900/10"}
      content]
     raw-details]])
@@ -744,10 +741,7 @@
                                      (s/optional-key :raw-details) (s/maybe c.schema/Hiccup)}]
   [:div.group.animate-fade-in-up.min-w-0
    [:div.flex.min-w-0.items-start.gap-3
-    [:div.tech-gradient.flex.h-8.w-8.flex-shrink-0.items-center.justify-center.rounded-lg.shadow-lg
-     {:class "shadow-purple-900/20"}
-     [:> lucide/Sparkles {:size 16 :class "text-white"}]]
-    [:div.min-w-0.flex-1.rounded-2xl.rounded-tl-sm.border.bg-gray-50.p-4.shadow-lg
+    [:div.min-w-0.flex-1.rounded-2xl.border.bg-gray-50.p-4.shadow-lg
      {:class "border-gray-200/50 shadow-black/5"}
      content]
     raw-details]])
