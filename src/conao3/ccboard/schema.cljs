@@ -212,14 +212,14 @@
 
 (def Message
   (s/conditional
-   #(= (:__typename %) "UserMessage") UserMessage
-   #(= (:__typename %) "AssistantMessage") AssistantMessage
-   #(= (:__typename %) "FileHistorySnapshotMessage") FileHistorySnapshotMessage
-   #(= (:__typename %) "QueueOperationMessage") QueueOperationMessage
-   #(= (:__typename %) "SystemMessage") SystemMessage
-   #(= (:__typename %) "SummaryMessage") SummaryMessage
-   #(= (:__typename %) "UnknownMessage") UnknownMessage
-   #(= (:__typename %) "BrokenMessage") BrokenMessage
+   #(= "UserMessage" (:__typename %)) UserMessage
+   #(= "AssistantMessage" (:__typename %)) AssistantMessage
+   #(= "FileHistorySnapshotMessage" (:__typename %)) FileHistorySnapshotMessage
+   #(= "QueueOperationMessage" (:__typename %)) QueueOperationMessage
+   #(= "SystemMessage" (:__typename %)) SystemMessage
+   #(= "SummaryMessage" (:__typename %)) SummaryMessage
+   #(= "UnknownMessage" (:__typename %)) UnknownMessage
+   #(= "BrokenMessage" (:__typename %)) BrokenMessage
    :else s/Any))
 
 (def FrontendMessage

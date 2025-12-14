@@ -33,6 +33,7 @@
           packages = with pkgs; [
             jdk
             clojure
+            clj-kondo
             nodejs
             pnpm
           ];

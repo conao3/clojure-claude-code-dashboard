@@ -280,7 +280,7 @@
           diff-days (js/Math.floor (/ diff-ms 86400000))]
       (cond
         (zero? diff-days) "Today"
-        (= diff-days 1) "Yesterday"
+        (= 1 diff-days) "Yesterday"
         (< diff-days 7) (str diff-days " days ago")
         :else (.toLocaleDateString date "en-US" #js {:month "short" :day "numeric"})))))
 
@@ -516,18 +516,18 @@
                (map-indexed
                 (fn [idx {:keys [old-num new-num content] line-type :type}]
                   ^{:key idx}
-                  [:tr {:class (c.util/clsx {:bg-red-300.text-white (= line-type :removed)
-                                             :bg-green-300.text-white (= line-type :added)
-                                             :bg-gray-50.text-gray-700 (= line-type :context)})}
+                  [:tr {:class (c.util/clsx {:bg-red-300.text-white (= :removed line-type)
+                                             :bg-green-300.text-white (= :added line-type)
+                                             :bg-gray-50.text-gray-700 (= :context line-type)})}
                    [:td.text-right.pr-2.select-none
-                    {:class (c.util/clsx {:bg-red-400 (= line-type :removed)
-                                          :bg-green-400 (= line-type :added)
-                                          :bg-gray-100.text-gray-500 (= line-type :context)})}
+                    {:class (c.util/clsx {:bg-red-400 (= :removed line-type)
+                                          :bg-green-400 (= :added line-type)
+                                          :bg-gray-100.text-gray-500 (= :context line-type)})}
                     (or old-num "")]
                    [:td.text-right.pr-2.select-none
-                    {:class (c.util/clsx {:bg-red-400 (= line-type :removed)
-                                          :bg-green-400 (= line-type :added)
-                                          :bg-gray-100.text-gray-500 (= line-type :context)})}
+                    {:class (c.util/clsx {:bg-red-400 (= :removed line-type)
+                                          :bg-green-400 (= :added line-type)
+                                          :bg-gray-100.text-gray-500 (= :context line-type)})}
                     (or new-num "")]
                    [:td.px-1.select-none.w-4
                     (case line-type :removed "-" :added "+" :context " ")]
@@ -646,7 +646,7 @@
           tool-name (:name block)
           input-map (parse-tool-input (:input block))
           summary (tool-use-summary tool-name input-map)
-          is-edit? (= tool-name "Edit")
+          is-edit? (= "Edit" tool-name)
           result-content (:content result)
           tool-use-result (:toolUseResult result)
           result-summary (when (and result-content (not is-edit?))
@@ -716,7 +716,7 @@
 (s/defn UserMessage :- c.schema/Hiccup
   [{:keys [message]} :- c.schema/UserMessageProps]
   (let [content-blocks (get-in message [:message :content])
-        text-blocks (filter #(= (:type %) "text") content-blocks)
+        text-blocks (filter #(= "text" (:type %)) content-blocks)
         has-text? (seq text-blocks)]
     (when has-text?
       [UserMessageBubble
@@ -724,7 +724,7 @@
                        (map-indexed
                         (fn [idx block]
                           ^{:key idx}
-                          (when (= (:type block) "text")
+                          (when (= "text" (:type block))
                             [:div.text-sm.leading-relaxed.text-gray-900
                              [Markdown {:children (:text block)}]]))
                         content-blocks))
@@ -953,17 +953,17 @@
                           (js->clj item :keywordize-keys true)))
           has-next-page (.-current has-next-page-ref)
           tool-results (->> messages
-                            (filter #(= (:__typename %) "UserMessage"))
+                            (filter #(= "UserMessage" (:__typename %)))
                             (mapcat (fn [msg]
                                       (->> (get-in msg [:message :content])
-                                           (filter #(= (:type %) "tool_result"))
+                                           (filter #(= "tool_result" (:type %)))
                                            (map #(assoc % :source-message-id (:id msg))))))
                             (reduce (fn [m block] (assoc m (:tool_use_id block) block)) {}))
           message-count (count messages)
           tool-call-count (->> messages
-                               (filter #(= (:__typename %) "AssistantMessage"))
+                               (filter #(= "AssistantMessage" (:__typename %)))
                                (mapcat #(get-in % [:message :content]))
-                               (filter #(= (:type %) "tool_use"))
+                               (filter #(= "tool_use" (:type %)))
                                count)]
       (cond
         (nil? session-id) [:div.flex-1.flex.items-center.justify-center.text-gray-600 "Select a session to view messages"]

@@ -1,9 +1,9 @@
 (ns conao3.ccboard.portfolio.layout
   (:require
-   [portfolio.reagent-18 :refer-macros [defscene]]
    ["lucide-react" :as lucide]
    ["react-aria-components" :as rac]
-   [conao3.ccboard.portfolio.navigation :as nav]))
+   [conao3.ccboard.portfolio.navigation :as nav]
+   [portfolio.reagent-18 :refer-macros [defscene]]))
 
 (defn Sidebar [{:keys [projects selected-project on-select-project collapsed]}]
   [:div {:class (str "flex flex-col bg-background-layer-1 border-r border-gray-200 transition-all duration-200 "

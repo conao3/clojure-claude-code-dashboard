@@ -37,7 +37,7 @@
      :text (:text block)
      :tool_use_id (:tool_use_id block)
      :content (when-let [c (:content block)] (stringify-fn c))
-     :toolUseResult (when (= (:type block) "tool_result")
+     :toolUseResult (when (= "tool_result" (:type block))
                       (parse-tool-use-result tool-use-result))}))
 
 (s/defn ^:private parse-user-content :- [c.schema/UserContentBlock]

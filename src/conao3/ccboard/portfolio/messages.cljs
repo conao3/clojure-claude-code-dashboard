@@ -1,8 +1,8 @@
 (ns conao3.ccboard.portfolio.messages
   (:require
-   [portfolio.reagent-18 :refer-macros [defscene]]
    ["lucide-react" :as lucide]
    ["react-aria-components" :as rac]
+   [portfolio.reagent-18 :refer-macros [defscene]]
    [reagent.core :as r]))
 
 (defn CopyButton []
@@ -58,16 +58,16 @@
      [:div.text-xs.font-medium (str "Unknown: " (:type block))]]))
 
 (defn MessageBubble [{:keys [role icon icon-class children timestamp tool-count thinking?]}]
-  [:div {:class (str "mb-4 " (when (= role :user) "pl-12"))}
+  [:div {:class (str "mb-4 " (when (= :user role) "pl-12"))}
    [:div {:class (str "rounded-xl p-4 border "
-                      (if (= role :user)
+                      (if (= :user role)
                         "bg-accent-background-subdued border-accent-background"
                         "bg-background-layer-1 border-gray-200"))}
     [:div.flex.items-center.gap-2.mb-2
      (when icon
        [:> icon {:size 14 :className icon-class}])
-     [:span {:class (str "text-xs font-medium " (if (= role :user) "text-accent-content" "text-purple-400"))}
-      (if (= role :user) "You" "Claude")]
+     [:span {:class (str "text-xs font-medium " (if (= :user role) "text-accent-content" "text-purple-400"))}
+      (if (= :user role) "You" "Claude")]
      [:span.text-xs.text-neutral-subdued-content timestamp]
      (when (or tool-count thinking?)
        [:div.ml-auto.flex.gap-3

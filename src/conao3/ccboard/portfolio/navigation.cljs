@@ -1,8 +1,8 @@
 (ns conao3.ccboard.portfolio.navigation
   (:require
-   [portfolio.reagent-18 :refer-macros [defscene]]
    ["lucide-react" :as lucide]
-   ["react-aria-components" :as rac]))
+   ["react-aria-components" :as rac]
+   [portfolio.reagent-18 :refer-macros [defscene]]))
 
 (defn NavItem [{:keys [icon label active collapsed on-click badge]}]
   [:> rac/Button
