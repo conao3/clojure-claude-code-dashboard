@@ -319,12 +319,12 @@
                                   :bg-gray-400 (not active)})}]]
     [:div.flex.flex-1.min-w-0.flex-col.gap-0.5
      [:span {:class (c.util/clsx "truncate font-mono text-xs font-medium tracking-tight transition-colors duration-200"
-                                 {:text-purple-300 active
+                                 {:text-purple-600 active
                                   :text-gray-800 (not active)
                                   :group-hover:text-gray-900 (not active)})}
       (subs (:sessionId session) 0 (min 20 (count (:sessionId session))))
       "..."]
-     [:span.text-xs.text-gray-500 (format-relative-date (:createdAt session))]]]])
+     [:span.text-xs.text-gray-600 (format-relative-date (:createdAt session))]]]])
 
 (s/defn ^:private parse-session-node :- c.schema/Session
   [node :- s/Any]
@@ -400,7 +400,7 @@
        [:span.text-xs.text-gray-500 "Dashboard"]]]
      [:div.flex.flex-1.flex-col.gap-2.overflow-hidden.border-t
       {:class "border-gray-200/50"}
-      [:div.flex.items-center.gap-2.pt-4.text-xs.font-semibold.uppercase.tracking-wider.text-gray-500
+      [:div.flex.items-center.gap-2.pt-4.text-xs.font-semibold.uppercase.tracking-wider.text-gray-600
        {:class (c.util/clsx l-padding)}
        [:> lucide/FolderOpen {:size 12}]
        "Projects"]
@@ -410,7 +410,7 @@
      [:div.flex.flex-1.flex-col.gap-2.overflow-hidden
       [:div.flex.shrink-0.items-center.justify-between.border-t.px-4.pt-4
        {:class (c.util/clsx "border-gray-200/50" l-padding)}
-       [:div.flex.items-center.gap-2.text-xs.font-semibold.uppercase.tracking-wider.text-gray-500
+       [:div.flex.items-center.gap-2.text-xs.font-semibold.uppercase.tracking-wider.text-gray-600
         [:> lucide/MessageCircle {:size 12}]
         "Sessions"]
        (when project
@@ -472,7 +472,7 @@
 
 (s/defn ^:private tool-icon :- c.schema/Hiccup
   [tool-name :- s/Str]
-  (let [icon-class "text-purple-300"]
+  (let [icon-class "text-purple-500"]
     (case tool-name
       "Read" [:> lucide/FileText {:size 12 :class icon-class}]
       "Edit" [:> lucide/Pencil {:size 12 :class icon-class}]
@@ -662,13 +662,13 @@
     "thinking"
     [:details.min-w-0.group
      [:summary.flex.cursor-pointer.items-center.gap-2.rounded-lg.border.px-3.py-2.text-sm.transition-all.duration-200
-      {:class "border-orange-600/30 bg-orange-900/10 hover:border-orange-500/50 hover:bg-orange-900/20"}
+      {:class "border-orange-500/40 bg-orange-900/15 hover:border-orange-400/60 hover:bg-orange-900/25"}
       [:div.relative.flex.h-2.w-2.flex-shrink-0
        [:span.absolute.inset-0.animate-ping.rounded-full.bg-orange-500.opacity-50]
        [:span.relative.inline-flex.h-2.w-2.rounded-full.bg-orange-400]]
-      [:> lucide/Brain {:size 14 :class "text-orange-400"}]
-      [:div.font-medium.text-orange-300 "Extended Thinking"]
-      [:> lucide/ChevronRight {:size 14 :class "text-orange-400 transition-transform duration-200 group-open:rotate-90"}]]
+      [:> lucide/Brain {:size 14 :class "text-orange-500"}]
+      [:div.font-medium.text-orange-600 "Extended Thinking"]
+      [:> lucide/ChevronRight {:size 14 :class "text-orange-500 transition-transform duration-200 group-open:rotate-90"}]]
      [:div.min-w-0.overflow-hidden.pt-2.pl-2
       [:div.rounded-lg.border.p-4
        {:class "border-orange-700/20 bg-orange-900/5"}
@@ -687,25 +687,25 @@
                              (if (> (count s) 60) (str (subs s 0 60) "...") s)))]
       [:div.flex.min-w-0.flex-col.gap-2
        [:div.flex.min-w-0.items-center.gap-2.rounded-lg.border.px-3.py-2.text-sm.transition-all.duration-200
-        {:class "border-purple-700/30 bg-purple-900/10"}
+        {:class "border-purple-600/40 bg-purple-900/15"}
         [:div.flex.h-6.w-6.flex-shrink-0.items-center.justify-center.rounded-md
-         {:class "bg-purple-800/40"}
+         {:class "bg-purple-700/50"}
          [tool-icon tool-name]]
-        [:div.flex-shrink-0.font-medium.text-purple-300 tool-name]
+        [:div.flex-shrink-0.font-medium.text-purple-600 tool-name]
         (when (seq summary)
-          [:div.min-w-0.truncate.font-mono.text-xs {:class "text-purple-400/80" :title summary} summary])]
+          [:div.min-w-0.truncate.font-mono.text-xs.text-purple-500 {:title summary} summary])]
        [:div.ml-3.border-l-2.pl-4
-        {:class "border-purple-800/30"}
+        {:class "border-purple-700/40"}
         [:div.flex.items-center.gap-2.text-sm
          [:div {:class (c.util/clsx "h-1.5 w-1.5 rounded-full"
-                                    {:bg-green-400 result
-                                     :bg-gray-500 (not result)})}]
+                                    {:bg-green-500 result
+                                     :bg-gray-400 (not result)})}]
          [:div {:class (c.util/clsx "text-xs font-medium"
-                                    {:text-green-400 result
+                                    {:text-green-600 result
                                      :text-gray-500 (not result)})}
           (if result "Completed" "Pending")]
          (when result-summary
-           [:div.truncate.font-mono.text-xs.text-gray-500 {:title (str result-content)} result-summary])
+           [:div.truncate.font-mono.text-xs.text-gray-800 {:title (str result-content)} result-summary])
          [:div.flex-1]
          (when (:source-message-id result)
            [RawDetails {:message-id (:source-message-id result)}])]]
@@ -824,21 +824,21 @@
         file-count (count tracked-file-backups)
         files-text (str/join "\n" tracked-file-backups)]
     [:div.group.relative.flex.w-full.flex-col.gap-2.rounded-lg.border.px-3.py-2.transition-all.duration-200
-     {:class "border-gray-300/20 bg-gray-100/50 hover:border-gray-300/40"}
+     {:class "border-gray-300/30 bg-gray-100/60 hover:border-gray-400/50"}
      [:div.flex.items-center.justify-between
       [:div.flex.items-center.gap-3
        [:div.flex.h-6.w-6.items-center.justify-center.rounded-md
-        {:class "bg-gray-300/50"}
-        [:> lucide/History {:size 12 :class "text-gray-500"}]]
+        {:class "bg-gray-300/60"}
+        [:> lucide/History {:size 12 :class "text-gray-600"}]]
        [:div.flex.items-center.gap-2.text-xs
-        [:span.font-medium.text-gray-600 "FileHistorySnapshot"]
+        [:span.font-medium.text-gray-700 "FileHistorySnapshot"]
         (when (:isSnapshotUpdate message)
-          [:span.rounded.px-1.5.py-0.5.font-mono.text-xs.text-cyan-400 {:class "bg-cyan-800/30"} "update"])
-        [:span.text-gray-500 (str file-count " files")]]]
+          [:span.rounded.px-1.5.py-0.5.font-mono.text-xs.text-cyan-600 {:class "bg-cyan-800/30"} "update"])
+        [:span.text-gray-700 (str file-count " files")]]]
       [RawDetails {:message-id (:id message)}]]
      (when (pos? file-count)
        [:details.group/details
-        [:summary.flex.cursor-pointer.items-center.gap-1.text-xs.text-gray-500.transition-colors.hover:text-gray-700
+        [:summary.flex.cursor-pointer.items-center.gap-1.text-xs.text-gray-600.transition-colors.hover:text-gray-800
          [:> lucide/ChevronRight {:size 12 :class "transition-transform duration-200 group-open/details:rotate-90"}]
          "Show tracked files"]
         [:pre.mt-2.max-h-48.overflow-auto.rounded-lg.border.bg-gray-50.p-3.font-mono.text-xs.leading-relaxed.whitespace-pre-wrap.break-all.text-gray-600
@@ -1036,7 +1036,7 @@
         (.-error async-list) [:div.flex.flex-1.items-center.justify-center.text-negative-1100 (str "Error: " (.-error async-list))]
         :else
         [:div.flex.min-w-0.flex-1.flex-col.overflow-hidden
-         [:div.mb-4.flex.shrink-0.items-center.gap-4.text-sm.text-gray-600
+         [:div.mb-4.flex.shrink-0.items-center.gap-4.text-sm.text-gray-700
           [:span (str message-count " messages" (when has-next-page "+"))]
           [:span "•"]
           [:span (str tool-call-count " tool calls")]]
@@ -1069,7 +1069,7 @@
       [:h2.truncate.text-base.font-semibold.tracking-tight.text-gray-900
        (or session-title "Select a session")]
       (when session-title
-        [:span.font-mono.text-xs.text-gray-500 "Session transcript"])]]]
+        [:span.font-mono.text-xs.text-gray-700 "Session transcript"])]]]
    [:div.flex.min-w-0.flex-1.flex-col.overflow-hidden.p-6
     [:f> MessageList]]])
 
