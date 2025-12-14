@@ -657,24 +657,23 @@
   [{:keys [block tool-results]} :- c.schema/ContentBlockProps]
   (case (:type block)
     "text"
-    [:div.flex.min-w-0.flex-col.gap-2
-     [:div.min-w-0.overflow-hidden.text-sm.leading-relaxed.text-gray-800
-      [Markdown {:children (:text block)}]]]
+    [:div.min-w-0.overflow-hidden.text-sm.leading-normal.text-gray-800
+     [Markdown {:children (:text block)}]]
 
     "thinking"
     [:details.group.min-w-0
-     [:summary.flex.cursor-pointer.items-center.gap-2.rounded-lg.border.px-3.py-2.text-sm.transition-all.duration-200
+     [:summary.flex.cursor-pointer.items-center.gap-1.5.rounded-md.border.px-2.py-1.text-xs.transition-all.duration-200
       {:class "border-orange-500/40 bg-orange-900/15 hover:border-orange-400/60 hover:bg-orange-900/25"}
-      [:div.relative.flex.h-2.w-2.flex-shrink-0
+      [:div.relative.flex.h-1.5.w-1.5.flex-shrink-0
        [:span.absolute.inset-0.animate-ping.rounded-full.bg-orange-500.opacity-50]
-       [:span.relative.inline-flex.h-2.w-2.rounded-full.bg-orange-400]]
-      [:> lucide/Brain {:size 14 :class "text-orange-500"}]
+       [:span.relative.inline-flex.h-1.5.w-1.5.rounded-full.bg-orange-400]]
+      [:> lucide/Brain {:size 12 :class "text-orange-500"}]
       [:div.font-medium.text-orange-600 "Extended Thinking"]
-      [:> lucide/ChevronRight {:size 14 :class "text-orange-500 transition-transform duration-200 group-open:rotate-90"}]]
-     [:div.min-w-0.overflow-hidden.pt-2.pl-2
-      [:div.rounded-lg.border.p-4
+      [:> lucide/ChevronRight {:size 12 :class "text-orange-500 transition-transform duration-200 group-open:rotate-90"}]]
+     [:div.min-w-0.overflow-hidden.pt-1.pl-2
+      [:div.rounded-md.border.p-2
        {:class "border-orange-700/20 bg-orange-900/5"}
-       [:pre.font-mono.text-xs.leading-relaxed.whitespace-pre-wrap.break-all.text-gray-600 (:thinking block)]]]]
+       [:pre.font-mono.text-xs.leading-tight.whitespace-pre-wrap.break-all.text-gray-600 (:thinking block)]]]]
 
     "tool_use"
     (let [result (get tool-results (:id block))
@@ -687,33 +686,30 @@
           result-summary (when (and result-content (not is-edit?))
                            (let [s (str result-content)]
                              (if (> (count s) 60) (str (subs s 0 60) "...") s)))]
-      [:div.flex.min-w-0.flex-col.gap-2
-       [:div.flex.min-w-0.items-center.gap-2.rounded-lg.border.px-3.py-2.text-sm.transition-all.duration-200
+      [:div.flex.min-w-0.flex-col.gap-0.5
+       [:div.flex.min-w-0.items-center.gap-1.5.rounded-md.border.px-2.py-1.text-xs.transition-all.duration-200
         {:class "border-purple-600/40 bg-purple-900/15"}
-        [:div.flex.h-6.w-6.flex-shrink-0.items-center.justify-center.rounded-md
+        [:div.flex.h-5.w-5.flex-shrink-0.items-center.justify-center.rounded
          {:class "bg-purple-700/50"}
          [tool-icon tool-name]]
         [:div.flex-shrink-0.font-medium.text-purple-600 tool-name]
         (when (seq summary)
-          [:div.min-w-0.truncate.font-mono.text-xs.text-purple-500 {:title summary} summary])]
-       [:div.ml-3.border-l-2.pl-4
-        {:class "border-purple-700/40"}
-        [:div.flex.items-center.gap-2.text-sm
+          [:div.min-w-0.truncate.font-mono.text-xs.text-purple-500 {:title summary} summary])
+        [:div.flex-1]
+        [:div.flex.items-center.gap-1.5
          [:div {:class (c.util/clsx "h-1.5 w-1.5 rounded-full"
                                     {:bg-green-500 result
                                      :bg-gray-400 (not result)})}]
-         [:div {:class (c.util/clsx "text-xs font-medium"
+         [:div {:class (c.util/clsx "text-xs"
                                     {:text-green-600 result
                                      :text-gray-500 (not result)})}
           (if result "Completed" "Pending")]
-         (when result-summary
-           [:div.truncate.font-mono.text-xs.text-gray-800 {:title (str result-content)} result-summary])
-         [:div.flex-1]
          (when (:source-message-id result)
            [RawDetails {:message-id (:source-message-id result)}])]]
+       (when result-summary
+         [:div.ml-6.truncate.font-mono.text-xs.text-gray-700 {:title (str result-content)} result-summary])
        (when (and is-edit? tool-use-result)
-         [:div.mt-1.ml-3.border-l-2.pl-4
-          {:class "border-purple-800/30"}
+         [:div.ml-6.mt-0.5
           [EditDiffView {:file-path (:filePath tool-use-result)
                          :structured-patch (:structuredPatch tool-use-result)
                          :old-string (:oldString tool-use-result)
@@ -742,8 +738,8 @@
   [{:keys [content raw-details]} :- {:content c.schema/Hiccup
                                      (s/optional-key :raw-details) (s/maybe c.schema/Hiccup)}]
   [:div.group.animate-fade-in-up.min-w-0
-   [:div.flex.min-w-0.items-start.gap-3
-    [:div.min-w-0.flex-1.rounded-2xl.border.bg-gray-50.p-4.shadow-lg
+   [:div.flex.min-w-0.items-start.gap-2
+    [:div.min-w-0.flex-1.rounded-xl.border.bg-gray-50.px-3.py-2.shadow-sm
      {:class "border-gray-200/50 shadow-black/5"}
      content]
     raw-details]])
@@ -753,7 +749,7 @@
   [{:keys [message tool-results]} :- c.schema/AssistantMessageProps]
   (let [content-blocks (get-in message [:message :content])]
     [AssistantMessageBubble
-     {:content (into [:div.flex.min-w-0.flex-col.gap-2]
+     {:content (into [:div.flex.min-w-0.flex-col.gap-1]
                      (map-indexed
                       (fn [idx block]
                         ^{:key idx} [ContentBlock {:block block :tool-results tool-results}])
@@ -1036,7 +1032,7 @@
           [:span (str message-count " messages" (when has-next-page "+"))]
           [:span "•"]
           [:span (str tool-call-count " tool calls")]]
-         [:div.flex.min-w-0.flex-1.flex-col.gap-4.overflow-x-hidden.overflow-y-auto.pr-4.pl-2
+         [:div.flex.min-w-0.flex-1.flex-col.gap-2.overflow-x-hidden.overflow-y-auto.pr-4.pl-2
           {:ref scroll-container-ref
            :on-scroll (fn [_e] (check-scroll-and-load))}
           (if (empty? messages)
