@@ -4,6 +4,12 @@
 @plugin "tailwindcss-react-aria-components";
 @plugin "tailwindcss-animate";
 @import "./spectrum-colors.css";
+@import "./custom.css";
+
+@theme {
+  --font-sans: 'Geist', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
 
 details summary {
   list-style: none !important;
