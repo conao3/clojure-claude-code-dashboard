@@ -1,0 +1,6 @@
+{:linters {:single-key-in {:level :warning}
+           :shadowed-var {:level :warning}
+           :used-underscored-binding {:level :warning}
+           :unused-value {:level :warning}
+           :redundant-call {:level :warning}
+           :redundant-str-call {:level :warning}}}

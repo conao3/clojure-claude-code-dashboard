@@ -16,12 +16,12 @@
        (remove str/blank?)
        (str/join " ")))
 
-(defn encode-id [type raw-id]
-  (js/btoa (str type ":" raw-id)))
+(defn encode-id [node-type raw-id]
+  (js/btoa (str node-type ":" raw-id)))
 
 (defn decode-id [id]
-  (let [[type raw-id] (str/split (js/atob id) #":")]
-    {:type type :raw-id raw-id}))
+  (let [[node-type raw-id] (str/split (js/atob id) #":")]
+    {:node-type node-type :raw-id raw-id}))
 
 (defn path->slug [p]
   (str/replace p "/" "-"))

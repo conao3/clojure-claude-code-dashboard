@@ -57,7 +57,7 @@
     [:div.mt-3.p-3.rounded-lg.bg-notice-background.text-white
      [:div.text-xs.font-medium (str "Unknown: " (:type block))]]))
 
-(defn MessageBubble [{:keys [role icon icon-class children time tool-count thinking?]}]
+(defn MessageBubble [{:keys [role icon icon-class children timestamp tool-count thinking?]}]
   [:div {:class (str "mb-4 " (when (= role :user) "pl-12"))}
    [:div {:class (str "rounded-xl p-4 border "
                       (if (= role :user)
@@ -68,7 +68,7 @@
        [:> icon {:size 14 :className icon-class}])
      [:span {:class (str "text-xs font-medium " (if (= role :user) "text-accent-content" "text-purple-400"))}
       (if (= role :user) "You" "Claude")]
-     [:span.text-xs.text-neutral-subdued-content time]
+     [:span.text-xs.text-neutral-subdued-content timestamp]
      (when (or tool-count thinking?)
        [:div.ml-auto.flex.gap-3
         (when thinking?

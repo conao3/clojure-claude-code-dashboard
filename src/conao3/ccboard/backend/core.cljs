@@ -61,9 +61,9 @@
 
 (defn ^:private read-lines-paginated [file-path skip take-n]
   (js/Promise.
-   (fn [resolve _reject]
+   (fn [resolve-fn _reject]
      (if-not (.existsSync fs file-path)
-       (resolve {:lines [] :has-more false :start-idx 0})
+       (resolve-fn {:lines [] :has-more false :start-idx 0})
        (let [lines (atom [])
              current-idx (atom 0)
              has-more (atom false)
@@ -87,7 +87,7 @@
                   (swap! current-idx inc))))
          (.on rl "close"
               (fn []
-                (resolve {:lines @lines
+                (resolve-fn {:lines @lines
                           :has-more @has-more
                           :start-idx skip}))))))))
 
@@ -98,8 +98,8 @@
    :before-cursor (.-before args)})
 
 (defn ^:private node-resolver [^js args]
-  (let [{:keys [type raw-id]} (c.util/decode-id (.-id args))]
-    (case type
+  (let [{:keys [node-type raw-id]} (c.util/decode-id (.-id args))]
+    (case node-type
       "Project" (c.lib/find-project-by-id (list-projects) raw-id)
       "Session" (let [[project-id session-id] (str/split raw-id #"/")
                       file-path (.join path (projects-dir) project-id (str session-id ".jsonl"))]

@@ -289,5 +289,5 @@
        first))
 
 (s/defn project-basename :- s/Str
-  [name :- s/Str]
-  (last (str/split name #"/")))
+  [project-name :- s/Str]
+  (last (str/split project-name #"/")))

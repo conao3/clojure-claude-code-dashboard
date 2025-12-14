@@ -219,47 +219,47 @@
   [{:keys [on-select-project]} :- c.schema/ProjectsListProps]
   (let [scroll-container-ref (react/useRef nil)
         current-project-id @selected-project-id
-        list (stately/useAsyncList
-              #js {:load (fn [^js opts]
-                           (let [cursor (.-cursor opts)]
-                             (-> (.query apollo-client (clj->js {:query projects-query
-                                                                 :variables {:first 20 :after cursor}}))
-                                 (.then (fn [^js result]
-                                          (let [data (.-data result)
-                                                edges (-> data .-projects .-edges)
-                                                page-info (-> data .-projects .-pageInfo)
-                                                items (mapv #(parse-project-node (.-node %)) edges)]
-                                            (clj->js {:items (filterv :hasSessions items)
-                                                      :cursor (when (.-hasNextPage page-info)
-                                                                (.-endCursor page-info))})))))))})
+        async-list (stately/useAsyncList
+                    #js {:load (fn [^js opts]
+                                 (let [cursor (.-cursor opts)]
+                                   (-> (.query apollo-client (clj->js {:query projects-query
+                                                                       :variables {:first 20 :after cursor}}))
+                                       (.then (fn [^js result]
+                                                (let [data (.-data result)
+                                                      edges (-> data .-projects .-edges)
+                                                      page-info (-> data .-projects .-pageInfo)
+                                                      items (mapv #(parse-project-node (.-node %)) edges)]
+                                                  (clj->js {:items (filterv :hasSessions items)
+                                                            :cursor (when (.-hasNextPage page-info)
+                                                                      (.-endCursor page-info))})))))))})
         check-scroll-and-load (fn []
                                 (when-let [container (.-current scroll-container-ref)]
                                   (let [scroll-top (.-scrollTop container)
                                         scroll-height (.-scrollHeight container)
                                         client-height (.-clientHeight container)
                                         threshold 200]
-                                    (when (and (not (.-isLoading list))
+                                    (when (and (not (.-isLoading async-list))
                                                (> (+ scroll-top client-height threshold) scroll-height))
-                                      (.loadMore list)))))]
+                                      (.loadMore async-list)))))]
     (react/useEffect
      (fn []
        (check-scroll-and-load)
        js/undefined)
-     #js [(count (.-items list)) (.-isLoading list)])
+     #js [(count (.-items async-list)) (.-isLoading async-list)])
     (cond
-      (and (.-isLoading list) (zero? (count (.-items list)))) [:div.p-3.text-gray-600.text-sm "Loading..."]
-      (.-error list) [:div.p-3.text-negative-1100.text-sm (str "Error: " (.-error list))]
+      (and (.-isLoading async-list) (zero? (count (.-items async-list)))) [:div.p-3.text-gray-600.text-sm "Loading..."]
+      (.-error async-list) [:div.p-3.text-negative-1100.text-sm (str "Error: " (.-error async-list))]
       :else
       [:div.flex-1.overflow-y-auto.min-h-0.p-2.flex.flex-col.gap-1
        {:ref scroll-container-ref
         :on-scroll (fn [_e] (check-scroll-and-load))}
-       (for [^js project (.-items list)]
+       (for [^js project (.-items async-list)]
          (let [p {:__typename "Project" :id (.-id project) :name (.-name project) :projectId (.-projectId project) :hasSessions (.-hasSessions project)}]
            ^{:key (:id p)}
            [ProjectItem {:project p
                          :active (= (:id p) current-project-id)
                          :on-click #(on-select-project p)}]))
-       (when (.-isLoading list)
+       (when (.-isLoading async-list)
          [:div.flex.items-center.justify-center.py-2.text-gray-600
           [:> lucide/Loader2 {:size 14 :className "animate-spin"}]])])))
 
@@ -315,42 +315,42 @@
   (let [scroll-container-ref (react/useRef nil)
         project-id-ref (react/useRef project-id)
         current-session-id @selected-session-id
-        list (stately/useAsyncList
-              #js {:load (fn [^js opts]
-                           (let [pid (.-current project-id-ref)]
-                             (if (nil? pid)
-                               (js/Promise.resolve (clj->js {:items []}))
-                               (let [cursor (.-cursor opts)]
-                                 (-> (.query apollo-client (clj->js {:query project-sessions-query
-                                                                     :variables {:id pid :first 20 :after cursor}}))
-                                     (.then (fn [^js result]
-                                              (let [data (.-data result)
-                                                    edges (-> data .-node .-sessions .-edges)
-                                                    page-info (-> data .-node .-sessions .-pageInfo)
-                                                    items (mapv #(parse-session-node (.-node %)) edges)]
-                                                (clj->js {:items items
-                                                          :cursor (when (.-hasNextPage page-info)
-                                                                    (.-endCursor page-info))})))))))))})]
+        async-list (stately/useAsyncList
+                    #js {:load (fn [^js opts]
+                                 (let [pid (.-current project-id-ref)]
+                                   (if (nil? pid)
+                                     (js/Promise.resolve (clj->js {:items []}))
+                                     (let [cursor (.-cursor opts)]
+                                       (-> (.query apollo-client (clj->js {:query project-sessions-query
+                                                                           :variables {:id pid :first 20 :after cursor}}))
+                                           (.then (fn [^js result]
+                                                    (let [data (.-data result)
+                                                          edges (-> data .-node .-sessions .-edges)
+                                                          page-info (-> data .-node .-sessions .-pageInfo)
+                                                          items (mapv #(parse-session-node (.-node %)) edges)]
+                                                      (clj->js {:items items
+                                                                :cursor (when (.-hasNextPage page-info)
+                                                                          (.-endCursor page-info))})))))))))})]
     (react/useEffect
      (fn []
        (set! (.-current project-id-ref) project-id)
-       (when project-id (.reload list))
+       (when project-id (.reload async-list))
        js/undefined)
      #js [project-id])
     (cond
       (nil? project-id) [:p.p-4.text-gray-600.text-sm "Select a project"]
-      (and (.-isLoading list) (zero? (count (.-items list)))) [:div.p-4.text-gray-600.text-sm "Loading sessions..."]
-      (.-error list) [:div.p-4.text-negative-1100.text-sm (str "Error: " (.-error list))]
+      (and (.-isLoading async-list) (zero? (count (.-items async-list)))) [:div.p-4.text-gray-600.text-sm "Loading sessions..."]
+      (.-error async-list) [:div.p-4.text-negative-1100.text-sm (str "Error: " (.-error async-list))]
       :else
       [:div.flex-1.overflow-y-auto.pb-2
        {:ref scroll-container-ref}
-       (for [^js session (.-items list)]
+       (for [^js session (.-items async-list)]
          (let [s {:__typename "Session" :id (.-id session) :projectId (.-projectId session) :sessionId (.-sessionId session) :createdAt (.-createdAt session)}]
            ^{:key (:id s)}
            [SessionItem {:session s
                          :active (= (:id s) current-session-id)
                          :on-click #(on-select-session s)}]))
-       (when (.-isLoading list)
+       (when (.-isLoading async-list)
          [:div.flex.items-center.justify-center.py-4.text-gray-600
           [:> lucide/Loader2 {:size 16 :className "animate-spin"}]])])))
 
@@ -514,23 +514,23 @@
              [:table.w-full.border-collapse
               [:tbody
                (map-indexed
-                (fn [idx {:keys [type old-num new-num content]}]
+                (fn [idx {:keys [old-num new-num content] line-type :type}]
                   ^{:key idx}
-                  [:tr {:class (c.util/clsx {:bg-red-300.text-white (= type :removed)
-                                             :bg-green-300.text-white (= type :added)
-                                             :bg-gray-50.text-gray-700 (= type :context)})}
+                  [:tr {:class (c.util/clsx {:bg-red-300.text-white (= line-type :removed)
+                                             :bg-green-300.text-white (= line-type :added)
+                                             :bg-gray-50.text-gray-700 (= line-type :context)})}
                    [:td.text-right.pr-2.select-none
-                    {:class (c.util/clsx {:bg-red-400 (= type :removed)
-                                          :bg-green-400 (= type :added)
-                                          :bg-gray-100.text-gray-500 (= type :context)})}
+                    {:class (c.util/clsx {:bg-red-400 (= line-type :removed)
+                                          :bg-green-400 (= line-type :added)
+                                          :bg-gray-100.text-gray-500 (= line-type :context)})}
                     (or old-num "")]
                    [:td.text-right.pr-2.select-none
-                    {:class (c.util/clsx {:bg-red-400 (= type :removed)
-                                          :bg-green-400 (= type :added)
-                                          :bg-gray-100.text-gray-500 (= type :context)})}
+                    {:class (c.util/clsx {:bg-red-400 (= line-type :removed)
+                                          :bg-green-400 (= line-type :added)
+                                          :bg-gray-100.text-gray-500 (= line-type :context)})}
                     (or new-num "")]
                    [:td.px-1.select-none.w-4
-                    (case type :removed "-" :added "+" :context " ")]
+                    (case line-type :removed "-" :added "+" :context " ")]
                    [:td.px-2.whitespace-pre content]])
                 all-lines)]]]))
         render-old-new
@@ -912,44 +912,44 @@
         scroll-container-ref (react/useRef nil)
         session-id-ref (react/useRef session-id)
         has-next-page-ref (react/useRef false)
-        list (stately/useAsyncList
-              #js {:load (fn [^js opts]
-                           (let [sid (.-current session-id-ref)]
-                             (if (nil? sid)
-                               (js/Promise.resolve (clj->js {:items []}))
-                               (let [cursor (.-cursor opts)]
-                                 (-> (.query apollo-client (clj->js {:query session-messages-query
-                                                                     :variables {:id sid :first 20 :after cursor}}))
-                                     (.then (fn [^js result]
-                                              (let [data (.-data result)
-                                                    edges (-> data .-node .-messages .-edges)
-                                                    page-info (-> data .-node .-messages .-pageInfo)
-                                                    items (mapv #(parse-message-node (.-node %)) edges)]
-                                                (set! (.-current has-next-page-ref) (.-hasNextPage page-info))
-                                                (clj->js {:items items
-                                                          :cursor (when (.-hasNextPage page-info)
-                                                                    (.-endCursor page-info))})))))))))})
+        async-list (stately/useAsyncList
+                    #js {:load (fn [^js opts]
+                                 (let [sid (.-current session-id-ref)]
+                                   (if (nil? sid)
+                                     (js/Promise.resolve (clj->js {:items []}))
+                                     (let [cursor (.-cursor opts)]
+                                       (-> (.query apollo-client (clj->js {:query session-messages-query
+                                                                           :variables {:id sid :first 20 :after cursor}}))
+                                           (.then (fn [^js result]
+                                                    (let [data (.-data result)
+                                                          edges (-> data .-node .-messages .-edges)
+                                                          page-info (-> data .-node .-messages .-pageInfo)
+                                                          items (mapv #(parse-message-node (.-node %)) edges)]
+                                                      (set! (.-current has-next-page-ref) (.-hasNextPage page-info))
+                                                      (clj->js {:items items
+                                                                :cursor (when (.-hasNextPage page-info)
+                                                                          (.-endCursor page-info))})))))))))})
         check-scroll-and-load (fn []
                                 (when-let [container (.-current scroll-container-ref)]
                                   (let [scroll-top (.-scrollTop container)
                                         scroll-height (.-scrollHeight container)
                                         client-height (.-clientHeight container)
                                         threshold 200]
-                                    (when (and (not (.-isLoading list))
+                                    (when (and (not (.-isLoading async-list))
                                                (> (+ scroll-top client-height threshold) scroll-height))
-                                      (.loadMore list)))))]
+                                      (.loadMore async-list)))))]
     (react/useEffect
      (fn []
        (set! (.-current session-id-ref) session-id)
-       (when session-id (.reload list))
+       (when session-id (.reload async-list))
        js/undefined)
      #js [session-id])
     (react/useEffect
      (fn []
        (check-scroll-and-load)
        js/undefined)
-     #js [(count (.-items list)) (.-isLoading list)])
-    (let [messages (vec (for [^js item (.-items list)]
+     #js [(count (.-items async-list)) (.-isLoading async-list)])
+    (let [messages (vec (for [^js item (.-items async-list)]
                           (js->clj item :keywordize-keys true)))
           has-next-page (.-current has-next-page-ref)
           tool-results (->> messages
@@ -967,8 +967,8 @@
                                count)]
       (cond
         (nil? session-id) [:div.flex-1.flex.items-center.justify-center.text-gray-600 "Select a session to view messages"]
-        (and (.-isLoading list) (zero? (count messages))) [:div.flex-1.flex.items-center.justify-center.text-gray-600 "Loading messages..."]
-        (.-error list) [:div.flex-1.flex.items-center.justify-center.text-negative-1100 (str "Error: " (.-error list))]
+        (and (.-isLoading async-list) (zero? (count messages))) [:div.flex-1.flex.items-center.justify-center.text-gray-600 "Loading messages..."]
+        (.-error async-list) [:div.flex-1.flex.items-center.justify-center.text-negative-1100 (str "Error: " (.-error async-list))]
         :else
         [:div.flex-1.flex.flex-col.min-h-0
          [:div.flex.items-center.gap-4.text-sm.text-gray-600.mb-4.shrink-0
@@ -985,7 +985,7 @@
                ^{:key idx}
                [safe-render-message {:message message
                                      :tool-results tool-results}])
-             (when (.-isLoading list)
+             (when (.-isLoading async-list)
                [:div.flex.items-center.justify-center.py-4.text-gray-600
                 [:> lucide/Loader2 {:size 20 :className "animate-spin mr-2"}]
                 "Loading more..."])])]]))))

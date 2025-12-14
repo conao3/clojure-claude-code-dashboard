@@ -12,7 +12,7 @@
 (def Hiccup s/Any)
 
 (def DecodedId
-  {:type s/Str
+  {:node-type s/Str
    :raw-id RawId})
 
 (def UrlPath
