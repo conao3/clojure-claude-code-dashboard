@@ -1,6 +1,10 @@
 .PHONY: all
 all:
 
+.PHONY: lint
+lint:
+	clj-kondo --lint src
+
 .PHONY: server
 server:
 	pnpm exec shadow-cljs server
@@ -88,6 +92,7 @@ generate-possible-types:
 .PHONY: ci-backend
 ci-backend:
 	clojure -P
+	${MAKE} lint
 
 .PHONY: ci-frontend
 ci-frontend:
