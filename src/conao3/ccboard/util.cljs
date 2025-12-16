@@ -1,5 +1,7 @@
 (ns conao3.ccboard.util
   (:require
+   [camel-snake-kebab.core :as csk]
+   [camel-snake-kebab.extras :as cske]
    [clojure.string :as str]))
 
 (defn clsx [& args]
@@ -15,6 +17,9 @@
                    :else nil)))
        (remove str/blank?)
        (str/join " ")))
+
+(defn keyword-map [m]
+  (cske/transform-keys csk/->kebab-case-keyword m))
 
 (defn encode-id [node-type raw-id]
   (js/btoa (str node-type ":" raw-id)))

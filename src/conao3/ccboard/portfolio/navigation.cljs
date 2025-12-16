@@ -17,13 +17,13 @@
       (when badge
         [:span.5.5.min-w-5.rounded-full.bg-accent-background.px-1.py-0.text-center.text-xs.text-white badge])])])
 
-(defn ProjectItem [{:keys [project active collapsed on-click]}]
+(defn ProjectItem [{:keys [project is-selected collapsed on-press]}]
   (let [session-count (count (:sessions project))]
     [:> rac/Button
      {:className (str "flex items-center gap-2 w-full rounded transition-all outline-none "
                       (if collapsed "p-2 justify-center" "px-3 py-2 justify-start")
-                      (if active " bg-accent-background/15 text-neutral-content" " text-neutral-subdued-content hover:text-neutral-content"))
-      :onPress on-click
+                      (if is-selected " bg-accent-background/15 text-neutral-content" " text-neutral-subdued-content hover:text-neutral-content"))
+      :onPress on-press
       :isDisabled (zero? session-count)}
      [:> lucide/GitBranch {:size 14 :className "flex-shrink-0 text-neutral-subdued-content"}]
      (when-not collapsed
@@ -97,9 +97,9 @@
    [ProjectItem {:project {:id "1"
                            :name "ccboard"
                            :sessions [{:id "s1"} {:id "s2"} {:id "s3"}]}
-                 :active false
+                 :is-selected false
                  :collapsed false
-                 :on-click #(js/console.log "clicked")}]])
+                 :on-press #(js/console.log "clicked")}]])
 
 (defscene project-item-active
   :title "ProjectItem - Active"
@@ -107,9 +107,9 @@
    [ProjectItem {:project {:id "1"
                            :name "ccboard"
                            :sessions [{:id "s1"} {:id "s2"}]}
-                 :active true
+                 :is-selected true
                  :collapsed false
-                 :on-click #(js/console.log "clicked")}]])
+                 :on-press #(js/console.log "clicked")}]])
 
 (defscene project-item-no-sessions
   :title "ProjectItem - No Sessions (Disabled)"
@@ -117,9 +117,9 @@
    [ProjectItem {:project {:id "2"
                            :name "empty-project"
                            :sessions []}
-                 :active false
+                 :is-selected false
                  :collapsed false
-                 :on-click #(js/console.log "clicked")}]])
+                 :on-press #(js/console.log "clicked")}]])
 
 (defscene project-item-long-name
   :title "ProjectItem - Long Name"
@@ -127,9 +127,9 @@
    [ProjectItem {:project {:id "3"
                            :name "very-long-project-name-that-should-be-truncated"
                            :sessions [{:id "s1"} {:id "s2"} {:id "s3"} {:id "s4"} {:id "s5"}]}
-                 :active false
+                 :is-selected false
                  :collapsed false
-                 :on-click #(js/console.log "clicked")}]])
+                 :on-press #(js/console.log "clicked")}]])
 
 (defscene session-item-default
   :title "SessionItem - Default"
@@ -138,7 +138,7 @@
                            :sessionId "abc123def456"
                            :createdAt "2024/12/10 14:30"}
                  :active false
-                 :on-click #(js/console.log "clicked")}]])
+                 :on-press #(js/console.log "clicked")}]])
 
 (defscene session-item-active
   :title "SessionItem - Active"
@@ -147,7 +147,7 @@
                            :sessionId "xyz789ghi012"
                            :createdAt "2024/12/10 15:45"}
                  :active true
-                 :on-click #(js/console.log "clicked")}]])
+                 :on-press #(js/console.log "clicked")}]])
 
 (defscene session-item-long-id
   :title "SessionItem - Long ID"
@@ -156,4 +156,4 @@
                            :sessionId "very-long-session-id-that-should-be-truncated-properly"
                            :createdAt "2024/12/09 09:15"}
                  :active false
-                 :on-click #(js/console.log "clicked")}]])
+                 :on-press #(js/console.log "clicked")}]])

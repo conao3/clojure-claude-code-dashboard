@@ -260,8 +260,8 @@
 
 (def ProjectItemProps
   {:project Project
-   :active s/Bool
-   :on-click s/Any})
+   :is-selected s/Bool
+   :on-press s/Any})
 
 (def SessionItemProps
   {:session Session

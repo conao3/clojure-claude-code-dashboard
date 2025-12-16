@@ -42,9 +42,9 @@
     (for [project projects]
       ^{:key (:id project)}
       [nav/ProjectItem {:project project
-                        :active (= (:id project) (:id selected-project))
+                        :is-selected (= (:id project) (:id selected-project))
                         :collapsed collapsed
-                        :on-click #(when on-select-project (on-select-project project))}])]
+                        :on-press #(when on-select-project (on-select-project project))}])]
 
    [:div.border-t.border-gray-200.p-2
     [nav/NavItem {:icon lucide/Settings :label "Settings" :active false :collapsed collapsed :on-click #()}]]])
