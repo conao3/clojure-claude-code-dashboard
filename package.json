@@ -1,6 +1,6 @@
 {
   "name": "@conao3/ccboard",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A dashboard for viewing Claude Code sessions and messages (ccboard)",
   "license": "Apache-2.0",
   "packageManager": "pnpm@10.24.0",
