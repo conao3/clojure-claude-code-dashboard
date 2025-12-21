@@ -251,7 +251,7 @@
        {:ref scroll-container-ref
         :on-scroll (fn [_e] (check-scroll-and-load))}
        (for [^js project_ (.-items async-list)
-             :let [project (-> project_ clj->js c.util/keyword-map)]]
+             :let [project (js->clj project_ :keywordize-keys true)]]
          ^{:key (:id project)}
          [ProjectItem {:project project
                        :is-selected (= (:id project) current-project-id)
