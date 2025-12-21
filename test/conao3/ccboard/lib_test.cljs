@@ -19,7 +19,7 @@
                 :timestamp "2024-01-01T00:00:00Z"
                 :message {:role "user" :content "Hello, world!"}}
           result (c.lib/parse-user-message data "project-id" "session-id" "uuid-123" 0 "{}" stringify)]
-      (is (= "UserMessage" (:__typename result)))
+      (is (= "UserMessage" (:typename result)))
       (is (= "project-id" (:projectId result)))
       (is (= "session-id" (:sessionId result)))
       (is (= "uuid-123" (:messageId result)))
@@ -81,7 +81,7 @@
                                   :cache_creation_input_tokens 10
                                   :cache_read_input_tokens 5}}}
           result (c.lib/parse-assistant-message data "proj" "sess" "uuid-asst" 0 "{}" stringify)]
-      (is (= "AssistantMessage" (:__typename result)))
+      (is (= "AssistantMessage" (:typename result)))
       (is (= "proj" (:projectId result)))
       (is (= "sess" (:sessionId result)))
       (is (= "uuid-asst" (:messageId result)))
@@ -142,7 +142,7 @@
                 :level "info"
                 :compactMetadata {:trigger "auto" :preTokens 100}}
           result (c.lib/parse-system-message data "proj" "sess" "uuid-sys" 0 "{}")]
-      (is (= "SystemMessage" (:__typename result)))
+      (is (= "SystemMessage" (:typename result)))
       (is (= "parent" (:parentUuid result)))
       (is (= "logical-parent" (:logicalParentUuid result)))
       (is (true? (:isSidechain result)))
@@ -160,7 +160,7 @@
                 :summary "This is a summary"
                 :leafUuid "leaf-uuid"}
           result (c.lib/parse-summary-message data "proj" "sess" "uuid-sum" 0 "{}")]
-      (is (= "SummaryMessage" (:__typename result)))
+      (is (= "SummaryMessage" (:typename result)))
       (is (= "This is a summary" (:summary result)))
       (is (= "leaf-uuid" (:leafUuid result))))))
 
@@ -173,7 +173,7 @@
                            :timestamp "2024-01-01T00:00:00Z"}
                 :isSnapshotUpdate true}
           result (c.lib/parse-file-history-snapshot-message data "proj" "sess" "uuid-fhs" 0 "{}" stringify)]
-      (is (= "FileHistorySnapshotMessage" (:__typename result)))
+      (is (= "FileHistorySnapshotMessage" (:typename result)))
       (is (= "msg-id" (-> result :snapshot :messageId)))
       (is (some? (-> result :snapshot :trackedFileBackups)))
       (is (= "2024-01-01T00:00:00Z" (-> result :snapshot :timestamp)))
@@ -188,7 +188,7 @@
                 :content "queue content"
                 :sessionId "queue-session-id"}
           result (c.lib/parse-queue-operation-message data "proj" "sess" "uuid-queue" 0 "{}")]
-      (is (= "QueueOperationMessage" (:__typename result)))
+      (is (= "QueueOperationMessage" (:typename result)))
       (is (= "enqueue" (:operation result)))
       (is (= "2024-01-01T00:00:00Z" (:timestamp result)))
       (is (= "queue content" (:content result)))
@@ -197,7 +197,7 @@
 (deftest parse-unknown-message-test
   (testing "parses unknown message"
     (let [result (c.lib/parse-unknown-message "proj" "sess" "msg-id" 0 "raw line")]
-      (is (= "UnknownMessage" (:__typename result)))
+      (is (= "UnknownMessage" (:typename result)))
       (is (= "proj" (:projectId result)))
       (is (= "sess" (:sessionId result)))
       (is (= "msg-id" (:messageId result)))
@@ -206,7 +206,7 @@
 (deftest parse-broken-message-test
   (testing "parses broken message with index as id"
     (let [result (c.lib/parse-broken-message "proj" "sess" 5 "broken json")]
-      (is (= "BrokenMessage" (:__typename result)))
+      (is (= "BrokenMessage" (:typename result)))
       (is (= "proj" (:projectId result)))
       (is (= "sess" (:sessionId result)))
       (is (= "5" (:messageId result)))
@@ -220,16 +220,16 @@
           summary-data {:type "summary" :uuid "sum1" :summary "sum" :leafUuid "leaf"}
           unknown-data {:type "something-else" :uuid "x1"}]
 
-      (is (= "UserMessage" (:__typename (c.lib/parse-message user-data "p" "s" "u1" 0 "{}" stringify))))
-      (is (= "AssistantMessage" (:__typename (c.lib/parse-message assistant-data "p" "s" "a1" 1 "{}" stringify))))
-      (is (= "SystemMessage" (:__typename (c.lib/parse-message system-data "p" "s" "s1" 2 "{}" stringify))))
-      (is (= "SummaryMessage" (:__typename (c.lib/parse-message summary-data "p" "s" "sum1" 3 "{}" stringify))))
-      (is (= "UnknownMessage" (:__typename (c.lib/parse-message unknown-data "p" "s" "x1" 4 "{}" stringify)))))))
+      (is (= "UserMessage" (:typename (c.lib/parse-message user-data "p" "s" "u1" 0 "{}" stringify))))
+      (is (= "AssistantMessage" (:typename (c.lib/parse-message assistant-data "p" "s" "a1" 1 "{}" stringify))))
+      (is (= "SystemMessage" (:typename (c.lib/parse-message system-data "p" "s" "s1" 2 "{}" stringify))))
+      (is (= "SummaryMessage" (:typename (c.lib/parse-message summary-data "p" "s" "sum1" 3 "{}" stringify))))
+      (is (= "UnknownMessage" (:typename (c.lib/parse-message unknown-data "p" "s" "x1" 4 "{}" stringify)))))))
 
 (deftest make-project-test
   (testing "creates project from path"
     (let [result (c.lib/make-project "/home/user/myproject")]
-      (is (= "Project" (:__typename result)))
+      (is (= "Project" (:typename result)))
       (is (= "-home-user-myproject" (:projectId result)))
       (is (= "/home/user/myproject" (:name result)))
       (is (some? (:id result))))))
@@ -237,7 +237,7 @@
 (deftest make-session-test
   (testing "creates session"
     (let [result (c.lib/make-session "project-id" "session-id" "2024-01-01T00:00:00Z")]
-      (is (= "Session" (:__typename result)))
+      (is (= "Session" (:typename result)))
       (is (= "project-id" (:projectId result)))
       (is (= "session-id" (:sessionId result)))
       (is (= "2024-01-01T00:00:00Z" (:createdAt result)))
@@ -249,14 +249,14 @@
                                   (keyword "/home/user/proj2") {:other "data"}}}
           result (c.lib/claude-json->projects claude-json)]
       (is (= 2 (count result)))
-      (is (every? #(= "Project" (:__typename %)) result))
+      (is (every? #(= "Project" (:typename %)) result))
       (is (some #(= "/home/user/proj1" (:name %)) result))
       (is (some #(= "/home/user/proj2" (:name %)) result)))))
 
 (deftest find-project-by-id-test
   (testing "finds project by projectId"
-    (let [projects [{:__typename "Project" :id "id1" :projectId "proj-1" :name "/path/1"}
-                    {:__typename "Project" :id "id2" :projectId "proj-2" :name "/path/2"}
-                    {:__typename "Project" :id "id3" :projectId "proj-3" :name "/path/3"}]]
+    (let [projects [{:typename "Project" :id "id1" :projectId "proj-1" :name "/path/1"}
+                    {:typename "Project" :id "id2" :projectId "proj-2" :name "/path/2"}
+                    {:typename "Project" :id "id3" :projectId "proj-3" :name "/path/3"}]]
       (is (= "proj-2" (:projectId (c.lib/find-project-by-id projects "proj-2"))))
       (is (nil? (c.lib/find-project-by-id projects "proj-99"))))))

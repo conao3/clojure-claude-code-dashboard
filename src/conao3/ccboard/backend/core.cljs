@@ -122,7 +122,7 @@
                              (c.util/paginate (js-args->pagination-args args))
                              clj->js))
             "node" (fn [_ args] (clj->js (node-resolver args)))}
-   "Node" {"__resolveType" (fn [obj] (aget obj "__typename"))}
+   "Node" {"__resolveType" (fn [obj] (aget obj "typename"))}
    "Project" {"sessions"
               (fn [parent ^js args]
                 (-> (list-sessions (aget parent "projectId"))
@@ -150,7 +150,7 @@
                                                       :hasPreviousPage (> start-idx 0)
                                                       :startCursor (when (seq items) (c.util/encode-cursor start-idx))
                                                       :endCursor (when (seq items) (c.util/encode-cursor (+ start-idx (dec (count items)))))}})))))))}
-   "Message" {"__resolveType" (fn [obj] (aget obj "__typename"))}})
+   "Message" {"__resolveType" (fn [obj] (aget obj "typename"))}})
 
 (defn ^:private get-public-dir []
   ;; In release mode, static files are at ../public relative to this script

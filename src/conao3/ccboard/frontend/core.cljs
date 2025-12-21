@@ -206,7 +206,7 @@
 (s/defn ^:private parse-project-node :- c.schema/Project
   [node :- s/Any]
   (let [^js node node]
-    {:__typename "Project"
+    {:typename "Project"
      :id (.-id node)
      :name (.-name node)
      :projectId (.-projectId node)
@@ -295,7 +295,7 @@
 (s/defn ^:private parse-session-node :- c.schema/Session
   [node :- s/Any]
   (let [^js node node]
-    {:__typename "Session"
+    {:typename "Session"
      :id (.-id node)
      :projectId (.-projectId node)
      :sessionId (.-sessionId node)
@@ -336,7 +336,7 @@
       [:div.flex-1.overflow-x-hidden.overflow-y-auto.pb-2
        {:ref scroll-container-ref}
        (for [^js session (.-items async-list)]
-         (let [s {:__typename "Session" :id (.-id session) :projectId (.-projectId session) :sessionId (.-sessionId session) :createdAt (.-createdAt session)}]
+         (let [s {:typename "Session" :id (.-id session) :projectId (.-projectId session) :sessionId (.-sessionId session) :createdAt (.-createdAt session)}]
            ^{:key (:id s)}
            [SessionItem {:session s
                          :active (= (:id s) current-session-id)
@@ -801,7 +801,7 @@
 (s/defn safe-render-message :- (s/maybe c.schema/Hiccup)
   [{:keys [message tool-results]} :- c.schema/SafeRenderMessageProps]
   (try
-    (case (:__typename message)
+    (case (:typename message)
       "AssistantMessage" [AssistantMessage {:message message :tool-results tool-results}]
       "UserMessage" [UserMessage {:message message}]
       "UnknownMessage" [UnknownMessage {:message message}]
@@ -821,9 +821,8 @@
 (s/defn ^:private parse-message-node :- c.schema/FrontendMessage
   [node :- s/Any]
   (let [^js node node
-        typename (.-__typename node)
         ^js snapshot (.-snapshot node)]
-    {:__typename typename
+    {:typename (.-__typename node)
      :id (.-id node)
      :messageId (.-messageId node)
      :isSnapshotUpdate (.-isSnapshotUpdate node)
@@ -843,7 +842,7 @@
                          :preTokens (.-preTokens cm)})
      :summary (.-summary node)
      :leafUuid (.-leafUuid node)
-     :message (case typename
+     :message (case (.-__typename node)
                 "AssistantMessage"
                 (when-let [^js msg (.-assistantMessage node)]
                   {:content (mapv (fn [^js block]
@@ -927,7 +926,7 @@
                      (js->clj item :keywordize-keys true))
           has-next-page (.-current has-next-page-ref)
           tool-results (->> messages
-                            (filter #(= "UserMessage" (:__typename %)))
+                            (filter #(= "UserMessage" (:typename %)))
                             (mapcat (fn [msg]
                                       (->> (get-in msg [:message :content])
                                            (filter #(= "tool_result" (:type %)))
@@ -935,7 +934,7 @@
                             (reduce (fn [m block] (assoc m (:tool_use_id block) block)) {}))
           message-count (count messages)
           tool-call-count (->> messages
-                               (filter #(= "AssistantMessage" (:__typename %)))
+                               (filter #(= "AssistantMessage" (:typename %)))
                                (mapcat #(get-in % [:message :content]))
                                (filter #(= "tool_use" (:type %)))
                                count)]

@@ -56,7 +56,7 @@
    idx :- s/Int
    line :- s/Str
    stringify-fn :- s/Any]
-  {:__typename "UserMessage"
+  {:typename "UserMessage"
    :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
    :projectId project-id
    :sessionId session-id
@@ -101,7 +101,7 @@
   (let [msg (:message data)
         usage (:usage msg)
         cache-creation (:cache_creation usage)]
-    {:__typename "AssistantMessage"
+    {:typename "AssistantMessage"
      :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
      :projectId project-id
      :sessionId session-id
@@ -140,7 +140,7 @@
    line :- s/Str
    stringify-fn :- s/Any]
   (let [snapshot (:snapshot data)]
-    {:__typename "FileHistorySnapshotMessage"
+    {:typename "FileHistorySnapshotMessage"
      :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
      :projectId project-id
      :sessionId session-id
@@ -158,7 +158,7 @@
    message-id :- c.schema/MessageId
    idx :- s/Int
    line :- s/Str]
-  {:__typename "QueueOperationMessage"
+  {:typename "QueueOperationMessage"
    :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
    :projectId project-id
    :sessionId session-id
@@ -176,7 +176,7 @@
    message-id :- c.schema/MessageId
    idx :- s/Int
    line :- s/Str]
-  {:__typename "SystemMessage"
+  {:typename "SystemMessage"
    :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
    :projectId project-id
    :sessionId session-id
@@ -205,7 +205,7 @@
    message-id :- c.schema/MessageId
    idx :- s/Int
    line :- s/Str]
-  {:__typename "SummaryMessage"
+  {:typename "SummaryMessage"
    :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
    :projectId project-id
    :sessionId session-id
@@ -220,7 +220,7 @@
    message-id :- c.schema/MessageId
    idx :- s/Int
    line :- s/Str]
-  {:__typename "UnknownMessage"
+  {:typename "UnknownMessage"
    :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
    :projectId project-id
    :sessionId session-id
@@ -232,7 +232,7 @@
    session-id :- c.schema/SessionId
    idx :- s/Int
    line :- s/Str]
-  {:__typename "BrokenMessage"
+  {:typename "BrokenMessage"
    :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
    :projectId project-id
    :sessionId session-id
@@ -259,7 +259,7 @@
 (s/defn make-project :- c.schema/Project
   [project-path :- s/Str]
   (let [project-id (c.util/path->slug project-path)]
-    {:__typename "Project"
+    {:typename "Project"
      :id (c.util/encode-id "Project" project-id)
      :projectId project-id
      :name project-path}))
@@ -268,7 +268,7 @@
   [project-id :- c.schema/ProjectId
    session-id :- c.schema/SessionId
    created-at :- c.schema/Timestamp]
-  {:__typename "Session"
+  {:typename "Session"
    :id (c.util/encode-id "Session" (str project-id "/" session-id))
    :projectId project-id
    :sessionId session-id

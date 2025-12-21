@@ -20,14 +20,14 @@
    (s/optional-key :session-id) (s/maybe s/Str)})
 
 (def Project
-  {:__typename s/Str
+  {:typename s/Str
    :id ID
    :projectId ProjectId
    :name s/Str
    (s/optional-key :hasSessions) s/Bool})
 
 (def Session
-  {:__typename s/Str
+  {:typename s/Str
    :id ID
    :projectId ProjectId
    :sessionId SessionId
@@ -142,7 +142,7 @@
    (s/optional-key :timestamp) (s/maybe Timestamp)})
 
 (def BaseMessage
-  {:__typename s/Str
+  {:typename s/Str
    :id ID
    :projectId ProjectId
    :sessionId SessionId
@@ -212,18 +212,18 @@
 
 (def Message
   (s/conditional
-   #(= "UserMessage" (:__typename %)) UserMessage
-   #(= "AssistantMessage" (:__typename %)) AssistantMessage
-   #(= "FileHistorySnapshotMessage" (:__typename %)) FileHistorySnapshotMessage
-   #(= "QueueOperationMessage" (:__typename %)) QueueOperationMessage
-   #(= "SystemMessage" (:__typename %)) SystemMessage
-   #(= "SummaryMessage" (:__typename %)) SummaryMessage
-   #(= "UnknownMessage" (:__typename %)) UnknownMessage
-   #(= "BrokenMessage" (:__typename %)) BrokenMessage
+   #(= "UserMessage" (:typename %)) UserMessage
+   #(= "AssistantMessage" (:typename %)) AssistantMessage
+   #(= "FileHistorySnapshotMessage" (:typename %)) FileHistorySnapshotMessage
+   #(= "QueueOperationMessage" (:typename %)) QueueOperationMessage
+   #(= "SystemMessage" (:typename %)) SystemMessage
+   #(= "SummaryMessage" (:typename %)) SummaryMessage
+   #(= "UnknownMessage" (:typename %)) UnknownMessage
+   #(= "BrokenMessage" (:typename %)) BrokenMessage
    :else s/Any))
 
 (def FrontendMessage
-  {:__typename s/Str
+  {:typename s/Str
    (s/optional-key :id) (s/maybe ID)
    (s/optional-key :messageId) (s/maybe MessageId)
    (s/optional-key :isSnapshotUpdate) (s/maybe s/Bool)
