@@ -120,13 +120,17 @@
             "projects" (fn [_ ^js args]
                          (-> (list-projects)
                              (c.util/paginate (js-args->pagination-args args))
+                             c.util/->camelCaseKeywordMap
                              clj->js))
-            "node" (fn [_ args] (clj->js (node-resolver args)))}
+            "node" (fn [_ args] (-> (node-resolver args)
+                                    c.util/->camelCaseKeywordMap
+                                    clj->js))}
    "Node" {"__resolveType" (fn [obj] (aget obj "typename"))}
    "Project" {"sessions"
               (fn [parent ^js args]
                 (-> (list-sessions (aget parent "projectId"))
                     (c.util/paginate (js-args->pagination-args args))
+                    c.util/->camelCaseKeywordMap
                     clj->js))}
    "Session" {"messages"
               (fn [parent ^js args]
@@ -142,14 +146,16 @@
                                                 (map-indexed (fn [i line]
                                                                (parse-message-line project-id session-id (+ start-idx i) line)))
                                                 vec)]
-                                 (clj->js {:edges (map-indexed (fn [i item]
+                                 (-> {:edges (map-indexed (fn [i item]
                                                                  {:cursor (c.util/encode-cursor (+ start-idx i))
                                                                   :node item})
                                                                items)
                                            :pageInfo {:hasNextPage has-more
                                                       :hasPreviousPage (> start-idx 0)
                                                       :startCursor (when (seq items) (c.util/encode-cursor start-idx))
-                                                      :endCursor (when (seq items) (c.util/encode-cursor (+ start-idx (dec (count items)))))}})))))))}
+                                                      :endCursor (when (seq items) (c.util/encode-cursor (+ start-idx (dec (count items)))))}}
+                                     c.util/->camelCaseKeywordMap
+                                     clj->js)))))))}
    "Message" {"__resolveType" (fn [obj] (aget obj "typename"))}})
 
 (defn ^:private get-public-dir []

@@ -195,7 +195,7 @@
   }"))
 
 (s/defn ProjectItem :- c.schema/Hiccup
-  [{:keys [project is-selected on-press]} :- c.schema/ProjectItemProps]
+  [{:keys [project is-selected on-press]} :- {:project s/Any :is-selected s/Bool :on-press s/Any}]
   [:> rac/ToggleButton
    {:class (c.util/clsx "flex items-center gap-2 rounded px-3 py-2 text-left aria-pressed:bg-gray-200 not-aria-pressed:hover:bg-gray-100")
     :onPress on-press
@@ -213,7 +213,7 @@
      :hasSessions (pos? (count (-> node .-sessions .-edges)))}))
 
 (s/defn ProjectsList :- c.schema/Hiccup
-  [{:keys [on-select-project]} :- c.schema/ProjectsListProps]
+  [{:keys [on-select-project]} :- {:on-select-project s/Any}]
   (let [scroll-container-ref (react/useRef nil)
         current-project-id @selected-project-id
         async-list (stately/useAsyncList
@@ -260,7 +260,6 @@
          [:div.flex.items-center.justify-center.py-2.text-gray-600
           [:> lucide/Loader2 {:size 14 :class "animate-spin"}]])])))
 
-
 (s/defn format-relative-date :- s/Str
   [date-str :- (s/maybe s/Str)]
   (if-not date-str
@@ -276,7 +275,7 @@
         :else (.toLocaleDateString date "en-US" #js {:month "short" :day "numeric"})))))
 
 (s/defn SessionItem :- c.schema/Hiccup
-  [{:keys [session active on-click]} :- c.schema/SessionItemProps]
+  [{:keys [session active on-click]} :- {:session s/Any :active s/Bool :on-click s/Any}]
   [:> rac/Button
    {:class (c.util/clsx "w-full text-left px-3 py-2 outline-none transition-all rounded"
                         {:bg-gray-50 active
@@ -302,7 +301,7 @@
      :createdAt (.-createdAt node)}))
 
 (s/defn SessionsList :- c.schema/Hiccup
-  [{:keys [project-id on-select-session]} :- c.schema/SessionsListProps]
+  [{:keys [project-id on-select-session]} :- {:project-id (s/maybe s/Str) :on-select-session s/Any}]
   (let [scroll-container-ref (react/useRef nil)
         project-id-ref (react/useRef project-id)
         current-session-id @selected-session-id
@@ -346,7 +345,7 @@
           [:> lucide/Loader2 {:size 16 :class "animate-spin"}]])])))
 
 (s/defn Sidebar :- c.schema/Hiccup
-  [{:keys [on-select-project on-select-session project]} :- c.schema/SidebarProps]
+  [{:keys [on-select-project on-select-session project]} :- {:on-select-project s/Any :on-select-session s/Any :project (s/maybe {:id s/Str :name (s/maybe s/Str)})}]
   (let [l-padding "pl-3"]
     [:div.flex.h-full.w-80.flex-col.overflow-hidden.border-r.border-gray-200.bg-background-layer-2
      [:div.flex.items-center.gap-2.p-3.py-2
@@ -375,7 +374,7 @@
 (s/defn CopyButton :- c.schema/Hiccup
   []
   (let [copied? (r/atom false)]
-    (s/fn [{:keys [text label class]} :- c.schema/CopyButtonProps]
+    (s/fn [{:keys [text label class]} :- {:text s/Str (s/optional-key :label) (s/maybe s/Str) (s/optional-key :class) (s/maybe s/Str)}]
       [:> rac/Button
        {:class (c.util/clsx "px-2 py-1 rounded bg-gray-200 text-gray-700 group-hover:opacity-70 hover:opacity-100 pressed:opacity-100 flex items-center gap-1 text-xs" class)
         :onPress (fn []
@@ -406,7 +405,7 @@
    :td (fn [props] (r/as-element [:td.border.border-gray-400.px-2.py-1 (.-children props)]))})
 
 (s/defn Markdown :- c.schema/Hiccup
-  [{:keys [children class]} :- c.schema/MarkdownProps]
+  [{:keys [children class]} :- {:children (s/maybe s/Str) (s/optional-key :class) (s/maybe s/Str)}]
   [:> ReactMarkdown/default
    {:remarkPlugins #js [remarkGfm/default]
     :components (clj->js markdown-components)
@@ -594,7 +593,7 @@
       [:f> RawDetailsContent {:message-id message-id}]]]]])
 
 (s/defn ContentBlock :- c.schema/Hiccup
-  [{:keys [block tool-results]} :- c.schema/ContentBlockProps]
+  [{:keys [block tool-results]} :- {:block s/Any (s/optional-key :tool-results) (s/maybe s/Any)}]
   (case (:type block)
     "text"
     [:div.flex.min-w-0.flex-col.gap-1
@@ -675,10 +674,9 @@
     [:div.min-w-0.flex-1 content]
     raw-details]])
 
-
 (s/defn AssistantMessage :- c.schema/Hiccup
-  [{:keys [message tool-results]} :- c.schema/AssistantMessageProps]
-  (let [content-blocks (get-in message [:message :content])]
+  [{:keys [message tool-results]} :- {:message s/Any (s/optional-key :tool-results) (s/maybe s/Any)}]
+  (let [content-blocks (get-in message [:assistant-message :content])]
     [AssistantMessageBubble
      {:content (into [:div.flex.min-w-0.flex-col.gap-2]
                      (map-indexed
@@ -688,8 +686,8 @@
       :raw-details [RawDetails {:message-id (:id message)}]}]))
 
 (s/defn UserMessage :- c.schema/Hiccup
-  [{:keys [message]} :- c.schema/UserMessageProps]
-  (let [content-blocks (get-in message [:message :content])
+  [{:keys [message]} :- {:message s/Any}]
+  (let [content-blocks (get-in message [:user-message :content])
         text-blocks (filter #(= "text" (:type %)) content-blocks)
         has-text? (seq text-blocks)]
     (when has-text?
@@ -705,7 +703,7 @@
         :raw-details [RawDetails {:message-id (:id message)}]}])))
 
 (s/defn SystemMessageItem :- c.schema/Hiccup
-  [{:keys [message]} :- c.schema/SystemMessageItemProps]
+  [{:keys [message]} :- {:message s/Any}]
   (let [subtype (:subtype message)
         timestamp (:timestamp message)]
     [:div.group.relative.flex.w-full.justify-between
@@ -721,7 +719,7 @@
      [RawDetails {:message-id (:id message)}]]))
 
 (s/defn SummaryMessageItem :- c.schema/Hiccup
-  [{:keys [message]} :- c.schema/SummaryMessageItemProps]
+  [{:keys [message]} :- {:message s/Any}]
   (let [summary-text (:summary message)
         truncated-summary (if (> (count summary-text) 80)
                             (str (subs summary-text 0 80) "...")
@@ -737,9 +735,9 @@
      [RawDetails {:message-id (:id message)}]]))
 
 (s/defn FileHistorySnapshotMessage :- c.schema/Hiccup
-  [{:keys [message]} :- c.schema/FileHistorySnapshotMessageProps]
+  [{:keys [message]} :- {:message s/Any}]
   (let [snapshot (:snapshot message)
-        tracked-file-backups (-> (:trackedFileBackups snapshot) js/JSON.parse js/Object.keys js->clj)
+        tracked-file-backups (-> (:tracked-file-backups snapshot) js/JSON.parse js/Object.keys js->clj)
         file-count (count tracked-file-backups)
         files-text (str/join "\n" tracked-file-backups)]
     [:div.group.relative.flex.w-full.justify-between
@@ -761,7 +759,7 @@
      [RawDetails {:message-id (:id message)}]]))
 
 (s/defn QueueOperationMessage :- c.schema/Hiccup
-  [{:keys [message]} :- c.schema/QueueOperationMessageProps]
+  [{:keys [message]} :- {:message s/Any}]
   (let [operation (:operation message)
         timestamp (:timestamp message)]
     [:div.group.relative.flex.w-full.justify-between
@@ -777,7 +775,7 @@
      [RawDetails {:message-id (:id message)}]]))
 
 (s/defn UnknownMessage :- c.schema/Hiccup
-  [{:keys [message]} :- c.schema/UnknownMessageProps]
+  [{:keys [message]} :- {:message s/Any}]
   [:div.group.relative.flex.w-full.justify-between
    [:div.flex.flex-col.gap-1.opacity-60
     [:div.flex.items-baseline.gap-2
@@ -788,7 +786,7 @@
    [RawDetails {:message-id (:id message)}]])
 
 (s/defn BrokenMessage :- c.schema/Hiccup
-  [{:keys [message]} :- c.schema/BrokenMessageProps]
+  [{:keys [message]} :- {:message s/Any}]
   [:div.group.relative.flex.w-full.justify-between
    [:div.flex.flex-col.gap-1
     [:div.flex.items-baseline.gap-2
@@ -798,8 +796,8 @@
      [:div.truncate.text-xs.text-gray-600 (:messageId message)]]]
    [RawDetails {:message-id (:id message)}]])
 
-(s/defn safe-render-message :- (s/maybe c.schema/Hiccup)
-  [{:keys [message tool-results]} :- c.schema/SafeRenderMessageProps]
+(s/defn SafeRenderMessage :- (s/maybe c.schema/Hiccup)
+  [{:keys [message tool-results]} :- {:message s/Any :tool-results s/Any}]
   (try
     (case (:typename message)
       "AssistantMessage" [AssistantMessage {:message message :tool-results tool-results}]
@@ -809,75 +807,13 @@
       "FileHistorySnapshotMessage" [FileHistorySnapshotMessage {:message message}]
       "QueueOperationMessage" [QueueOperationMessage {:message message}]
       "SystemMessage" [SystemMessageItem {:message message}]
-      "SummaryMessage" [SummaryMessageItem {:message message}]
-      nil)
+      "SummaryMessage" [SummaryMessageItem {:message message}])
     (catch :default e
       [:div
        [:div.rounded.bg-negative-700.p-3.text-negative-1400
         [:div.flex.items-center.gap-2.text-xs
          [:> lucide/AlertTriangle {:size 12}]
          [:span (str "Render error: " (.-message e))]]]])))
-
-(s/defn ^:private parse-message-node :- c.schema/FrontendMessage
-  [node :- s/Any]
-  (let [^js node node
-        ^js snapshot (.-snapshot node)]
-    {:typename (.-__typename node)
-     :id (.-id node)
-     :messageId (.-messageId node)
-     :isSnapshotUpdate (.-isSnapshotUpdate node)
-     :snapshot (when snapshot
-                 {:messageId (.-messageId snapshot)
-                  :trackedFileBackups (.-trackedFileBackups snapshot)})
-     :operation (.-operation node)
-     :timestamp (.-timestamp node)
-     :content (.-content node)
-     :queueSessionId (.-queueSessionId node)
-     :subtype (.-subtype node)
-     :systemContent (.-systemContent node)
-     :isMeta (.-isMeta node)
-     :level (.-level node)
-     :compactMetadata (when-let [^js cm (.-compactMetadata node)]
-                        {:trigger (.-trigger cm)
-                         :preTokens (.-preTokens cm)})
-     :summary (.-summary node)
-     :leafUuid (.-leafUuid node)
-     :message (case (.-__typename node)
-                "AssistantMessage"
-                (when-let [^js msg (.-assistantMessage node)]
-                  {:content (mapv (fn [^js block]
-                                    {:type (.-type block)
-                                     :text (.-text block)
-                                     :thinking (.-thinking block)
-                                     :id (.-id block)
-                                     :name (.-name block)
-                                     :input (.-input block)
-                                     :tool_use_id (.-tool_use_id block)
-                                     :content (.-content block)})
-                                  (.-content msg))})
-                "UserMessage"
-                (when-let [^js msg (.-userMessage node)]
-                  {:content (mapv (fn [^js block]
-                                    {:type (.-type block)
-                                     :text (.-text block)
-                                     :tool_use_id (.-tool_use_id block)
-                                     :content (.-content block)
-                                     :toolUseResult (when-let [^js tur (.-toolUseResult block)]
-                                                      {:type (.-type tur)
-                                                       :filePath (.-filePath tur)
-                                                       :oldString (.-oldString tur)
-                                                       :newString (.-newString tur)
-                                                       :content (.-content tur)
-                                                       :structuredPatch (when-let [sp (.-structuredPatch tur)]
-                                                                          (mapv (fn [^js hunk]
-                                                                                  {:oldStart (.-oldStart hunk)
-                                                                                   :oldLines (.-oldLines hunk)
-                                                                                   :newStart (.-newStart hunk)
-                                                                                   :newLines (.-newLines hunk)
-                                                                                   :lines (js->clj (.-lines hunk))})
-                                                                                sp))})})
-                                  (.-content msg))})
-                nil)}))
 
 (s/defn MessageList :- c.schema/Hiccup
   []
@@ -896,12 +832,11 @@
                                            (.then (fn [^js result]
                                                     (let [data (.-data result)
                                                           edges (-> data .-node .-messages .-edges)
-                                                          page-info (-> data .-node .-messages .-pageInfo)
-                                                          items (mapv #(parse-message-node (.-node %)) edges)]
+                                                          page-info (-> data .-node .-messages .-pageInfo)]
                                                       (set! (.-current has-next-page-ref) (.-hasNextPage page-info))
-                                                      (clj->js {:items items
-                                                                :cursor (when (.-hasNextPage page-info)
-                                                                          (.-endCursor page-info))})))))))))})
+                                                      #js {:items (map #(.-node %) edges)
+                                                           :cursor (when (.-hasNextPage page-info)
+                                                                     (.-endCursor page-info))}))))))))})
         check-scroll-and-load (fn []
                                 (when-let [container (.-current scroll-container-ref)]
                                   (let [scroll-top (.-scrollTop container)
@@ -923,7 +858,7 @@
        js/undefined)
      #js [(count (.-items async-list)) (.-isLoading async-list)])
     (let [messages (for [^js item (.-items async-list)]
-                     (js->clj item :keywordize-keys true))
+                     (-> item js->clj c.util/->kebab-case-keyword-map))
           has-next-page (.-current has-next-page-ref)
           tool-results (->> messages
                             (filter #(= "UserMessage" (:typename %)))
@@ -931,6 +866,7 @@
                                       (->> (get-in msg [:message :content])
                                            (filter #(= "tool_result" (:type %)))
                                            (map #(assoc % :source-message-id (:id msg))))))
+                            (filter :tool_use_id)
                             (reduce (fn [m block] (assoc m (:tool_use_id block) block)) {}))
           message-count (count messages)
           tool-call-count (->> messages
@@ -956,8 +892,8 @@
             [:<>
              (for [[idx message] (map-indexed vector messages)]
                ^{:key idx}
-               [safe-render-message {:message message
-                                     :tool-results tool-results}])
+               [SafeRenderMessage {:message message
+                                   :tool-results tool-results}])
              (when (.-isLoading async-list)
                [:div.flex.items-center.justify-center.py-4.text-gray-600
                 [:> lucide/Loader2 {:size 20 :class "mr-2 animate-spin"}]

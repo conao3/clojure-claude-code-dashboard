@@ -18,8 +18,11 @@
        (remove str/blank?)
        (str/join " ")))
 
-(defn keyword-map [m]
+(defn ->kebab-case-keyword-map [m]
   (cske/transform-keys csk/->kebab-case-keyword m))
+
+(defn ->camelCaseKeywordMap [m]
+  (cske/transform-keys csk/->camelCaseKeyword m))
 
 (defn encode-id [node-type raw-id]
   (js/btoa (str node-type ":" raw-id)))

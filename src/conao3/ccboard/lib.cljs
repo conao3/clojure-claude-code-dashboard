@@ -58,20 +58,20 @@
    stringify-fn :- s/Any]
   {:typename "UserMessage"
    :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
-   :projectId project-id
-   :sessionId session-id
-   :messageId message-id
-   :rawMessage line
-   :parentUuid (:parentUuid data)
-   :isSidechain (boolean (:isSidechain data))
-   :userType (:userType data)
+   :project-id project-id
+   :session-id session-id
+   :message-id message-id
+   :raw-message line
+   :parent-uuid (:parentUuid data)
+   :is-sidechain (boolean (:isSidechain data))
+   :user-type (:userType data)
    :cwd (:cwd data)
    :version (:version data)
-   :gitBranch (:gitBranch data)
+   :git-branch (:gitBranch data)
    :timestamp (:timestamp data)
    :message {:role (get-in data [:message :role])
              :content (parse-user-content (get-in data [:message :content]) stringify-fn (:toolUseResult data))}
-   :thinkingMetadata (when-let [tm (:thinkingMetadata data)]
+   :thinking-metadata (when-let [tm (:thinkingMetadata data)]
                        {:level (:level tm)
                         :disabled (boolean (:disabled tm))
                         :triggers (or (:triggers tm) [])})})
@@ -103,20 +103,20 @@
         cache-creation (:cache_creation usage)]
     {:typename "AssistantMessage"
      :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
-     :projectId project-id
-     :sessionId session-id
-     :messageId message-id
-     :rawMessage line
-     :parentUuid (:parentUuid data)
-     :isSidechain (boolean (:isSidechain data))
-     :userType (:userType data)
+     :project-id project-id
+     :session-id session-id
+     :message-id message-id
+     :raw-message line
+     :parent-uuid (:parentUuid data)
+     :is-sidechain (boolean (:isSidechain data))
+     :user-type (:userType data)
      :cwd (:cwd data)
      :version (:version data)
-     :gitBranch (:gitBranch data)
-     :requestId (:requestId data)
+     :git-branch (:gitBranch data)
+     :request-id (:requestId data)
      :timestamp (:timestamp data)
      :message {:model (:model msg)
-               :messageId (:id msg)
+               :message-id (:id msg)
                :type (:type msg)
                :role (:role msg)
                :content (mapv #(parse-assistant-content-block % stringify-fn) (:content msg))
@@ -142,14 +142,14 @@
   (let [snapshot (:snapshot data)]
     {:typename "FileHistorySnapshotMessage"
      :id (c.util/encode-id "Message" (str project-id "/" session-id "/" idx))
-     :projectId project-id
-     :sessionId session-id
-     :messageId message-id
-     :rawMessage line
-     :snapshot {:messageId (:messageId snapshot)
-                :trackedFileBackups (stringify-fn (:trackedFileBackups snapshot))
+     :project-id project-id
+     :session-id session-id
+     :message-id message-id
+     :raw-message line
+     :snapshot {:message-id (:messageId snapshot)
+                :tracked-file-backups (stringify-fn (:trackedFileBackups snapshot))
                 :timestamp (:timestamp snapshot)}
-     :isSnapshotUpdate (boolean (:isSnapshotUpdate data))}))
+     :is-snapshot-update (boolean (:isSnapshotUpdate data))}))
 
 (s/defn parse-queue-operation-message :- c.schema/QueueOperationMessage
   [data :- s/Any
